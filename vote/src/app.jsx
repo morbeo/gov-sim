@@ -43,21 +43,27 @@ const loadSavedDoc = () => {
 
 const nextIdOf = (items) => items.reduce((max, item) => Math.max(max, item.id), 0) + 1;
 
-// Number field that lets you type intermediate values ("", "12.") and commits valid ones live
+// Vote % field: edits stay local until Enter or leaving the field, so tiles don't jump while typing.
+// Escape (or an invalid value) restores the current value.
 const VotesInput = ({ value, onCommit, className }) => {
   const [draft, setDraft] = useState(String(value));
-  useEffect(() => { if (parseFloat(draft) !== value) setDraft(String(value)); }, [value]);
+  useEffect(() => { setDraft(String(value)); }, [value]);
+  const submit = () => {
+    const v = parseFloat(draft.replace(',', '.'));
+    if (!isNaN(v) && v >= 0 && v <= 100 && v !== value) onCommit(v);
+    else setDraft(String(value));
+  };
   return (
     <input
       type="text"
       inputMode="decimal"
       value={draft}
-      onChange={(e) => {
-        setDraft(e.target.value);
-        const v = parseFloat(e.target.value.replace(',', '.'));
-        if (!isNaN(v) && v >= 0 && v <= 100) onCommit(v);
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={submit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.target.blur();
+        else if (e.key === 'Escape') { setDraft(String(value)); setTimeout(() => e.target.blur()); }
       }}
-      onBlur={() => setDraft(String(value))}
       className={className}
     />
   );
@@ -143,7 +149,7 @@ const ParliamentSimulator = () => {
   const updateParty = (id, field, value) => {
     setParties(parties.map(party =>
       party.id === id ? { ...party, [field]: value } : party
-    ), `party:${id}:${field}`);
+    ), field === 'votes' ? null : `party:${id}:${field}`); // votes are submitted explicitly: one undo step each
   };
 
   const deleteParty = (id) => {

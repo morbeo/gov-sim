@@ -31,10 +31,10 @@
 
 ## Тестове
 
-Изчисляването на мандатите (метод на най-големия остатък) и CSV са в `allocate.js`:
+Изчисляването на мандатите (метод на най-големия остатък) и CSV са в `src/allocate.js`:
 
 ```sh
-node --test vote-sim/allocate.test.js
+node --test vote/test/*.test.js
 ```
 
 ## Лиценз

@@ -1,7 +1,7 @@
-// Run: node --test vote-sim/allocate.test.js
+// Run: node --test vote/test/*.test.js
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { allocateSeats, parseCSV, toCSV, partiesFromCSV } = require('./allocate.js');
+const { allocateSeats, parseCSV, toCSV, partiesFromCSV } = require('../src/allocate.js');
 
 const seatsOf = (parties, n = 240, t = 4) =>
   Object.fromEntries(allocateSeats(parties, n, t).map(p => [p.name, p.seats]));
