@@ -1,0 +1,308 @@
+{
+  "election": {
+    "name": "Президентски избори в България 2026",
+    "firstRound": "2026-10-25",
+    "runoff": "2026-11-01",
+    "dayOfContemplation": "2026-10-24",
+    "candidatesRegistered": 27,
+    "rule": "Двойка печели на първи тур само с повече от половината действителни гласове и активност над 50%. Иначе първите двама отиват на балотаж."
+  },
+  "notes": [
+    "Shares are % of respondents who intend to vote, as each pollster published them.",
+    "'other' is the published share for unlisted candidates; when omitted the page shows the unexplained remainder as 'Others / unlisted'.",
+    "'undecided' and 'none' are excluded when the page renormalises to decided voters.",
+    "Candidate 'backers' use party ids from timeline/bg-parties.json.",
+    "To add a forecast, append an object to 'presets'. 'kind' is 'poll' or 'forecast'. 'inAverage': false keeps it out of the computed poll average.",
+    "Names are in Bulgarian; nameEn / runningMateEn keep the Latin spelling. Party colours and Bulgarian abbreviations come from timeline/bg-parties.json (fields color, shortBg) by party id."
+  ],
+  "candidates": [
+    {
+      "id": "yotova",
+      "name": "Илияна Йотова",
+      "runningMate": "Кирил Вълчев",
+      "backers": [
+        "pb",
+        "bsp",
+        "abv"
+      ],
+      "label": "ПБ, БСП, АБВ",
+      "nameEn": "Iliana Yotova",
+      "runningMateEn": "Kiril Valchev"
+    },
+    {
+      "id": "gyurov",
+      "name": "Андрей Гюров",
+      "runningMate": "Георги Кандев",
+      "backers": [
+        "pp",
+        "db"
+      ],
+      "label": "ПП, ДБ",
+      "nameEn": "Andrey Gyurov",
+      "runningMateEn": "Georgi Kandev"
+    },
+    {
+      "id": "kostadinov",
+      "name": "Костадин Костадинов",
+      "runningMate": "Петър Волгин",
+      "backers": [
+        "vaz"
+      ],
+      "label": "Възраждане",
+      "nameEn": "Kostadin Kostadinov",
+      "runningMateEn": "Petar Volgin"
+    },
+    {
+      "id": "vasilev",
+      "name": "Радостин Василев",
+      "runningMate": "Красимир Манов",
+      "backers": [
+        "mech"
+      ],
+      "label": "МЕЧ",
+      "nameEn": "Radostin Vasilev",
+      "runningMateEn": "Krasimir Manov"
+    },
+    {
+      "id": "mihaylov",
+      "name": "Ивелин Михайлов",
+      "runningMate": "Юлиана Матеева",
+      "backers": [
+        "velichie"
+      ],
+      "label": "Величие",
+      "nameEn": "Ivelin Mihaylov",
+      "runningMateEn": "Yuliana Mateeva"
+    },
+    {
+      "id": "hristanov",
+      "name": "Иван Христанов",
+      "runningMate": "Стоянка Черкезова",
+      "backers": [],
+      "label": "Независим",
+      "nameEn": "Ivan Hristanov",
+      "runningMateEn": "Stoyanka Cherkezova"
+    },
+    {
+      "id": "nenchev",
+      "name": "Николай Ненчев",
+      "runningMate": "Цвета Кирилова",
+      "backers": [
+        "bzns"
+      ],
+      "label": "БЗНС",
+      "nameEn": "Nikolay Nenchev",
+      "runningMateEn": "Tsveta Kirilova"
+    },
+    {
+      "id": "simeonov",
+      "name": "Ивайло Симеонов",
+      "runningMate": "Косьо Стойчев",
+      "backers": [],
+      "label": "Инициативен комитет",
+      "nameEn": "Ivaylo Simeonov",
+      "runningMateEn": "Kosyo Stoychev"
+    }
+  ],
+  "presets": [
+    {
+      "id": "sova-0928",
+      "kind": "poll",
+      "name": "Сова Харис",
+      "client": "в. „Труд“",
+      "fieldwork": [
+        "2026-09-23",
+        "2026-09-28"
+      ],
+      "published": "2026-10-02",
+      "sample": 1000,
+      "method": "Лице в лице",
+      "turnout": {
+        "value": 47.4,
+        "note": "дял на заявилите, че ще гласуват"
+      },
+      "shares": {
+        "yotova": 50.2,
+        "gyurov": 23.7,
+        "kostadinov": 12.7
+      },
+      "other": 13.4,
+      "source": "https://www.novinite.com/view_news.php?id=240849",
+      "nameEn": "Sova Harris"
+    },
+    {
+      "id": "marketlinks-0929",
+      "kind": "poll",
+      "name": "Market LINKS",
+      "client": "bTV",
+      "fieldwork": [
+        "2026-09-26",
+        "2026-09-29"
+      ],
+      "published": "2026-09-30",
+      "sample": 1006,
+      "method": "Лице в лице и онлайн",
+      "turnout": {
+        "value": 40,
+        "note": "агенцията очаква „над 40%“"
+      },
+      "shares": {
+        "yotova": 41.4,
+        "gyurov": 21.9,
+        "kostadinov": 6.4,
+        "mihaylov": 3.9,
+        "vasilev": 1.6,
+        "hristanov": 0.9
+      },
+      "other": 3.7,
+      "undecided": 20.4,
+      "source": "https://btvnovinite.bg/bulgaria/parvo-prouchvane-na-market-links-kakvi-sa-naglasite-predi-prezidentskite-izbori.html",
+      "nameEn": "Market Links"
+    },
+    {
+      "id": "alpha-1001",
+      "kind": "poll",
+      "name": "Alpha Research",
+      "client": "собствени средства",
+      "fieldwork": [
+        "2026-09-24",
+        "2026-10-01"
+      ],
+      "published": "2026-10-05",
+      "sample": 1000,
+      "method": "Лице в лице, с таблети",
+      "turnout": {
+        "value": 37.5,
+        "note": "оценка на агенцията 37–38%"
+      },
+      "shares": {
+        "yotova": 44.5,
+        "gyurov": 26.1,
+        "kostadinov": 10.5
+      },
+      "source": "https://sofiaglobe.com/2026/10/05/bulgarias-2026-presidential-elections-yotova-44-5-gyurov-26-1-alpha-research-poll/",
+      "nameEn": "Alpha Research"
+    },
+    {
+      "id": "trend-1002",
+      "kind": "poll",
+      "name": "Тренд",
+      "client": "в. „24 часа“",
+      "fieldwork": [
+        "2026-09-26",
+        "2026-10-02"
+      ],
+      "published": "2026-10-06",
+      "sample": 1003,
+      "method": "Лице в лице",
+      "turnout": {
+        "value": 38,
+        "note": "дял на „сигурно“ гласуващите"
+      },
+      "shares": {
+        "yotova": 47.8,
+        "gyurov": 24.6,
+        "kostadinov": 9.7,
+        "vasilev": 4.6,
+        "mihaylov": 2.4,
+        "hristanov": 1.9
+      },
+      "source": "https://www.mediapool.bg/prezidentski-izbori-2026/trend-478-za-yotova-i-246-za-gyurov/",
+      "nameEn": "Trend"
+    },
+    {
+      "id": "myara-1004",
+      "kind": "poll",
+      "name": "Мяра",
+      "client": "собствени средства",
+      "fieldwork": [
+        "2026-09-26",
+        "2026-10-04"
+      ],
+      "published": "2026-10-05",
+      "sample": 1000,
+      "method": "Лице в лице и онлайн",
+      "turnout": {
+        "value": 35.4,
+        "note": "оценка на агенцията"
+      },
+      "shares": {
+        "yotova": 46.9,
+        "gyurov": 25.3,
+        "kostadinov": 8.8,
+        "mihaylov": 4.2,
+        "hristanov": 2.7,
+        "vasilev": 2.2
+      },
+      "none": 2.3,
+      "remark": "Симеонов, Георги Димов и Росен Миленов са с „около 1%“ всеки, без точни стойности.",
+      "source": "https://banker.bg/2026/10/05/jotova-i-valchev-sa-s-469-podkrepa/",
+      "nameEn": "Myara"
+    },
+    {
+      "id": "gallup-1006",
+      "kind": "poll",
+      "name": "Gallup International Balkan",
+      "client": "собствени средства",
+      "fieldwork": [
+        "2026-09-26",
+        "2026-10-06"
+      ],
+      "published": "2026-10-08",
+      "sample": 987,
+      "method": "Лице в лице, с таблети",
+      "turnout": {
+        "value": 36,
+        "note": "2,3–2,4 милиона гласоподаватели"
+      },
+      "shares": {
+        "yotova": 44.9,
+        "gyurov": 24.8,
+        "kostadinov": 10.9,
+        "hristanov": 4.1,
+        "vasilev": 2.6,
+        "nenchev": 2.1,
+        "simeonov": 1.7,
+        "mihaylov": 1.6
+      },
+      "source": "https://banker.bg/2026/10/08/jotova-valchev-gyurov-kandev-galup/",
+      "nameEn": "Gallup International Balkan"
+    },
+    {
+      "id": "progres-1008",
+      "kind": "poll",
+      "name": "Прогрес консулт",
+      "client": "инициативния комитет на Симеонов",
+      "fieldwork": [
+        "2026-10-04",
+        "2026-10-08"
+      ],
+      "published": "2026-10-12",
+      "sample": 820,
+      "method": "Лице в лице и онлайн",
+      "shares": {
+        "yotova": 44.9,
+        "gyurov": 26.5,
+        "kostadinov": 8.1,
+        "simeonov": 2.6,
+        "mihaylov": 2.2,
+        "hristanov": 1.7,
+        "vasilev": 1.4,
+        "nenchev": 1.4
+      },
+      "inAverage": false,
+      "remark": "Поръчано от инициативния комитет на кандидат. Не е включено в средното.",
+      "source": "https://dnes.dir.bg/politika/sotsiologat-d-r-rosen-kutelov-ivaylo-simeonov-izliza-chetvarti-za-prezident",
+      "nameEn": "Progres Consult"
+    }
+  ],
+  "parties": [
+    {
+      "id": "bzns",
+      "short": "БЗНС",
+      "name": "Български земеделски народен съюз",
+      "color": "#e8820c",
+      "note": "fallback; timeline/bg-parties.json wins when it has this id"
+    }
+  ]
+}

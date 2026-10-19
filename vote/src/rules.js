@@ -1,4 +1,4 @@
-// Pure helpers for the vote simulator: seat allocation and CSV.
+// Pure election rules and helpers: parliamentary seats, presidential rounds, referendums, CSV.
 // Loaded as a plain <script> in the browser (exposes window.VoteSim) and via require() in tests.
 (function (root) {
   // Largest remainder (Hare–Niemeyer) among parties at or above the threshold.
@@ -67,7 +67,50 @@
       });
   }
 
-  const api = { allocateSeats, parseCSV, toCSV, partiesFromCSV };
+  // Presidential round 1 (Bulgaria): more than half of valid votes AND turnout above 50% wins outright;
+  // otherwise the top two go to a runoff. Mayors use the same rule without the turnout condition.
+  // Rows flagged isOther ("Други") count towards the total but can't win or reach the runoff.
+  function firstRound(candidates, turnout, { requireTurnout = true } = {}) {
+    const total = candidates.reduce((sum, c) => sum + Math.max(0, c.votes), 0);
+    const ranked = candidates
+      .map(c => ({ ...c, share: total > 0 ? (Math.max(0, c.votes) / total) * 100 : 0 }))
+      .sort((a, b) => b.share - a.share);
+    const contenders = ranked.filter(c => !c.isOther && c.share > 0);
+    const leader = contenders[0] || null;
+    const hasMajority = !!leader && leader.share > 50;
+    const turnoutOk = !requireTurnout || turnout > 50;
+    if (hasMajority && turnoutOk) return { ranked, winner: leader, runoff: null, reason: null };
+    return {
+      ranked,
+      winner: null,
+      runoff: contenders.length >= 2 ? [contenders[0], contenders[1]] : null,
+      reason: hasMajority ? 'turnout' : 'majority'
+    };
+  }
+
+  // National referendum (Direct Participation Act, art. 23): adopted when turnout is at least the
+  // turnout of the last National Assembly election and more than half vote yes; with lower turnout
+  // but above 20% and a yes majority, the proposal goes to the National Assembly.
+  function referendumOutcome(yesShare, turnout, lastElectionTurnout) {
+    if (yesShare <= 50) return 'rejected';
+    if (turnout >= lastElectionTurnout) return 'adopted';
+    if (turnout > 20) return 'parliament';
+    return 'rejected';
+  }
+
+  // A published poll -> candidate shares among decided voters. Undecided and "none" are dropped;
+  // the published "other" share (or the unexplained remainder) becomes one "Други" row.
+  function pollToShares(poll) {
+    const listed = Object.entries(poll.shares).map(([id, share]) => ({ id, share }));
+    const listedSum = listed.reduce((sum, c) => sum + c.share, 0);
+    const excluded = (poll.undecided || 0) + (poll.none || 0);
+    const other = poll.other != null ? poll.other : Math.max(0, 100 - listedSum - excluded);
+    if (other >= 0.05) listed.push({ id: 'other', share: other, isOther: true });
+    const decided = listed.reduce((sum, c) => sum + c.share, 0);
+    return listed.map(c => ({ ...c, share: Math.round((c.share / decided) * 1000) / 10 }));
+  }
+
+  const api = { allocateSeats, parseCSV, toCSV, partiesFromCSV, firstRound, referendumOutcome, pollToShares };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.VoteSim = api;
 })(this);
