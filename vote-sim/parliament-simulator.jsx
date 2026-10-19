@@ -1,9 +1,36 @@
-import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+const { useState } = React;
+
+// Inline replacements for the lucide-react icons (no module loader in the browser)
+const Icon = ({ size = 16, children }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+);
+const Plus = ({ size }) => <Icon size={size}><path d="M12 5v14M5 12h14" /></Icon>;
+const Trash2 = ({ size }) => (
+  <Icon size={size}>
+    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" />
+  </Icon>
+);
+
+const DEFAULT_PARTIES = [
+  { id: 1, name: 'ГЕРБ-СДС', color: '#0054a6', votes: 26.5 },
+  { id: 2, name: 'ПП-ДБ', color: '#e0a800', votes: 24.3 },
+  { id: 3, name: 'ДПС', color: '#0b6fb8', votes: 17.2 },
+  { id: 4, name: 'Възраждане', color: '#b8962e', votes: 13.8 },
+  { id: 5, name: 'БСП', color: '#db0f28', votes: 9.0 },
+  { id: 6, name: 'ИТН', color: '#4bb9e5', votes: 5.2 },
+  { id: 7, name: 'Величие', color: '#8a1538', votes: 3.8 }
+];
+
+const DEFAULT_GROUPS = [
+  { id: 1, name: 'Група 1', color: '#6b7280', partyIds: [] },
+  { id: 2, name: 'Група 2', color: '#9ca3af', partyIds: [] }
+];
 
 const ParliamentSimulator = () => {
   const [assemblyType, setAssemblyType] = useState(240);
-x   
+  const [parties, setParties] = useState(DEFAULT_PARTIES);
+  const [groups, setGroups] = useState(DEFAULT_GROUPS);
   const [hoveredSeat, setHoveredSeat] = useState(null);
   const [hoveredParty, setHoveredParty] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -233,16 +260,25 @@ x
     reader.readAsText(file);
   };
 
-  // Generate rectangular grid visualization (3 groups of 8 rows x 10 seats)
+  // Seat grid: 3 blocks of 10 columns, rows sized to fit the assembly (8 for 240, 14 for 400)
+  const GRID_BLOCKS = 3;
+  const GRID_COLS = 10;
+  const SEAT_SIZE = 18;
+  const SEAT_SPACING = 4;
+  const BLOCK_SPACING = 20;
+  const gridRows = Math.ceil(assemblyType / (GRID_BLOCKS * GRID_COLS));
+  const gridWidth = GRID_BLOCKS * GRID_COLS * (SEAT_SIZE + SEAT_SPACING) + (GRID_BLOCKS - 1) * BLOCK_SPACING;
+  const gridHeight = gridRows * (SEAT_SIZE + SEAT_SPACING);
+
   const generateRectangularGrid = () => {
     const seats = [];
     let seatIndex = 0;
-    const groups = 3;
-    const rows = 8;
-    const cols = 10;
-    const seatSize = 18;
-    const spacing = 4;
-    const groupSpacing = 20;
+    const groups = GRID_BLOCKS;
+    const rows = gridRows;
+    const cols = GRID_COLS;
+    const seatSize = SEAT_SIZE;
+    const spacing = SEAT_SPACING;
+    const groupSpacing = BLOCK_SPACING;
 
     for (let group = 0; group < groups; group++) {
       for (let row = 0; row < rows; row++) {
@@ -717,7 +753,7 @@ x
 
           <div className="bg-gray-50 rounded-lg p-4 relative">
             {/* Rectangular Grid */}
-            <svg viewBox="0 0 720 220" className="w-full mb-4">
+            <svg viewBox={`-4 -4 ${gridWidth + 8} ${gridHeight + 8}`} className="w-full mb-4">
               {gridSeats.map((seat, i) => {
                 const isHovered = hoveredParty && seat.party && seat.party.id === hoveredParty;
                 const isInSelectedGroup = selectedGroup && seat.party &&
@@ -840,4 +876,3 @@ x
   );
 };
 
-export default ParliamentSimulator;
