@@ -1,4 +1,5 @@
-const { useState } = React;
+const { useState, useEffect, useMemo } = React;
+const { allocateSeats, toCSV, partiesFromCSV } = window.VoteSim;
 
 // Inline replacements for the lucide-react icons (no module loader in the browser)
 const Icon = ({ size = 16, children }) => (
@@ -27,58 +28,101 @@ const DEFAULT_GROUPS = [
   { id: 2, name: 'Група 2', color: '#9ca3af', partyIds: [] }
 ];
 
+const DEFAULT_DOC = { assemblyType: 240, parties: DEFAULT_PARTIES, groups: DEFAULT_GROUPS };
+const STORAGE_KEY = 'vote-sim:v1';
+const HISTORY_LIMIT = 100;
+const MERGE_WINDOW_MS = 1000; // consecutive edits of one field within this window are one undo step
+
+const loadSavedDoc = () => {
+  try {
+    const doc = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (doc && Array.isArray(doc.parties) && Array.isArray(doc.groups)) return { ...DEFAULT_DOC, ...doc };
+  } catch (e) { /* storage blocked or corrupt: start from defaults */ }
+  return DEFAULT_DOC;
+};
+
+const nextIdOf = (items) => items.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+
+// Number field that lets you type intermediate values ("", "12.") and commits valid ones live
+const VotesInput = ({ value, onCommit, className }) => {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => { if (parseFloat(draft) !== value) setDraft(String(value)); }, [value]);
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={draft}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        const v = parseFloat(e.target.value.replace(',', '.'));
+        if (!isNaN(v) && v >= 0 && v <= 100) onCommit(v);
+      }}
+      onBlur={() => setDraft(String(value))}
+      className={className}
+    />
+  );
+};
+
 const ParliamentSimulator = () => {
-  const [assemblyType, setAssemblyType] = useState(240);
-  const [parties, setParties] = useState(DEFAULT_PARTIES);
-  const [groups, setGroups] = useState(DEFAULT_GROUPS);
+  // Undoable document: assembly size, parties and groups (autosaved to localStorage)
+  const [history, setHistory] = useState(() => ({
+    past: [], present: loadSavedDoc(), future: [], lastKey: null, lastAt: 0
+  }));
+  const { assemblyType, parties, groups } = history.present;
+
+  const commit = (patch, key = null) => setHistory(h => {
+    const now = Date.now();
+    const merge = key !== null && key === h.lastKey && now - h.lastAt < MERGE_WINDOW_MS;
+    return {
+      past: merge ? h.past : [...h.past, h.present].slice(-HISTORY_LIMIT),
+      present: { ...h.present, ...patch },
+      future: [],
+      lastKey: key,
+      lastAt: now
+    };
+  });
+  const undo = () => setHistory(h => h.past.length === 0 ? h : {
+    past: h.past.slice(0, -1), present: h.past[h.past.length - 1],
+    future: [h.present, ...h.future], lastKey: null, lastAt: 0
+  });
+  const redo = () => setHistory(h => h.future.length === 0 ? h : {
+    past: [...h.past, h.present], present: h.future[0],
+    future: h.future.slice(1), lastKey: null, lastAt: 0
+  });
+  const setAssemblyType = (value) => commit({ assemblyType: value });
+  const setParties = (value, key) => commit({ parties: value }, key);
+  const setGroups = (value, key) => commit({ groups: value }, key);
+  const resetAll = () => {
+    if (confirm('Да се върнат ли партиите и групите по подразбиране?')) commit(DEFAULT_DOC);
+  };
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(history.present)); } catch (e) { /* ignore */ }
+  }, [history.present]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.target.type === 'text') return; // text fields keep native undo
+      const key = e.key.toLowerCase();
+      if (key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      else if (key === 'y' || (key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const [hoveredSeat, setHoveredSeat] = useState(null);
   const [hoveredParty, setHoveredParty] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [draggedParty, setDraggedParty] = useState(null);
   const [tileSize, setTileSize] = useState(120); // Default tile size in pixels
-  const [nextId, setNextId] = useState(8);
-  const [nextGroupId, setNextGroupId] = useState(3);
 
   const THRESHOLD = 4.0; // 4% electoral threshold
 
-  // Calculate seats using proportional distribution
-  const calculateSeats = () => {
-    // Filter parties that meet the threshold
-    const qualifiedParties = parties.filter(p => p.votes >= THRESHOLD);
-
-    if (qualifiedParties.length === 0) return parties.map(p => ({ ...p, seats: 0 }));
-
-    // Calculate total votes of qualified parties
-    const totalQualifiedVotes = qualifiedParties.reduce((sum, p) => sum + p.votes, 0);
-
-    // Distribute seats proportionally
-    const partiesWithSeats = parties.map(party => {
-      if (party.votes < THRESHOLD) {
-        return { ...party, seats: 0 };
-      }
-      const proportion = party.votes / totalQualifiedVotes;
-      const exactSeats = proportion * assemblyType;
-      return { ...party, exactSeats, seats: Math.floor(exactSeats) };
-    });
-
-    // Distribute remaining seats using largest remainder method
-    let assignedSeats = partiesWithSeats.reduce((sum, p) => sum + p.seats, 0);
-    const remainingSeats = assemblyType - assignedSeats;
-
-    if (remainingSeats > 0) {
-      const sortedByRemainder = partiesWithSeats
-        .filter(p => p.votes >= THRESHOLD)
-        .sort((a, b) => (b.exactSeats - b.seats) - (a.exactSeats - a.seats));
-
-      for (let i = 0; i < remainingSeats; i++) {
-        sortedByRemainder[i].seats++;
-      }
-    }
-
-    return partiesWithSeats;
-  };
-
-  const partiesWithSeats = calculateSeats();
+  const partiesWithSeats = useMemo(
+    () => allocateSeats(parties, assemblyType, THRESHOLD),
+    [parties, assemblyType]
+  );
   const totalVotes = parties.reduce((sum, party) => sum + party.votes, 0);
   const totalSeats = partiesWithSeats.reduce((sum, party) => sum + party.seats, 0);
 
@@ -86,41 +130,44 @@ const ParliamentSimulator = () => {
   const sortedParties = [...parties].sort((a, b) => b.votes - a.votes);
 
   const addParty = () => {
+    const id = nextIdOf(parties);
     const newParty = {
-      id: nextId,
-      name: `Партия ${nextId}`,
+      id,
+      name: `Партия ${id}`,
       color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`,
       votes: 5.0
     };
     setParties([...parties, newParty]);
-    setNextId(nextId + 1);
   };
 
   const updateParty = (id, field, value) => {
     setParties(parties.map(party =>
       party.id === id ? { ...party, [field]: value } : party
-    ));
+    ), `party:${id}:${field}`);
   };
 
   const deleteParty = (id) => {
-    setParties(parties.filter(party => party.id !== id));
+    commit({
+      parties: parties.filter(party => party.id !== id),
+      groups: groups.map(group => ({ ...group, partyIds: group.partyIds.filter(pid => pid !== id) }))
+    });
   };
 
   const addGroup = () => {
+    const id = nextIdOf(groups);
     const newGroup = {
-      id: nextGroupId,
-      name: `Група ${nextGroupId}`,
+      id,
+      name: `Група ${id}`,
       color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`,
       partyIds: []
     };
     setGroups([...groups, newGroup]);
-    setNextGroupId(nextGroupId + 1);
   };
 
   const updateGroup = (id, field, value) => {
     setGroups(groups.map(group =>
       group.id === id ? { ...group, [field]: value } : group
-    ));
+    ), `group:${id}:${field}`);
   };
 
   const deleteGroup = (id) => {
@@ -172,9 +219,7 @@ const ParliamentSimulator = () => {
     const data = {
       assemblyType,
       parties,
-      groups,
-      nextId,
-      nextGroupId
+      groups
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -193,25 +238,21 @@ const ParliamentSimulator = () => {
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        setAssemblyType(data.assemblyType || 240);
-        setParties(data.parties || []);
-        setGroups(data.groups || []);
-        setNextId(data.nextId || 1);
-        setNextGroupId(data.nextGroupId || 1);
+        commit({
+          assemblyType: data.assemblyType || 240,
+          parties: data.parties || [],
+          groups: data.groups || []
+        });
       } catch (error) {
         alert('Грешка при зареждане на файла');
       }
     };
     reader.readAsText(file);
+    event.target.value = ''; // allow loading the same file again
   };
 
   const exportToCSV = () => {
-    const csvHeader = 'Име,Цвят,Гласове (%)\n';
-    const csvRows = parties.map(p =>
-      `"${p.name}",${p.color},${p.votes}`
-    ).join('\n');
-
-    const csv = csvHeader + csvRows;
+    const csv = toCSV([['Име', 'Цвят', 'Гласове (%)'], ...parties.map(p => [p.name, p.color, p.votes])]);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -227,37 +268,15 @@ const ParliamentSimulator = () => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      try {
-        const text = e.target.result;
-        const lines = text.split('\n').filter(line => line.trim());
-
-        // Skip header
-        const dataLines = lines.slice(1);
-
-        const importedParties = dataLines.map((line, index) => {
-          // Handle CSV parsing with quotes
-          const matches = line.match(/(?:"([^"]*)"|([^,]+)),([^,]+),([^,]+)/);
-          if (!matches) return null;
-
-          const name = matches[1] || matches[2];
-          const color = matches[3].trim();
-          const votes = parseFloat(matches[4].trim());
-
-          return {
-            id: nextId + index,
-            name: name.trim(),
-            color: color,
-            votes: isNaN(votes) ? 0 : votes
-          };
-        }).filter(p => p !== null);
-
-        setParties([...parties, ...importedParties]);
-        setNextId(nextId + importedParties.length);
-      } catch (error) {
-        alert('Грешка при импортиране на CSV файла');
+      const imported = partiesFromCSV(e.target.result, nextIdOf(parties));
+      if (imported.length === 0) {
+        alert('Грешка при импортиране на CSV файла: няма разпознати партии');
+        return;
       }
+      setParties([...parties, ...imported]);
     };
     reader.readAsText(file);
+    event.target.value = '';
   };
 
   // Seat grid: 3 blocks of 10 columns, rows sized to fit the assembly (8 for 240, 14 for 400)
@@ -326,6 +345,29 @@ const ParliamentSimulator = () => {
         <h1 className="text-3xl font-bold text-gray-800">Симулатор на Народно събрание</h1>
         <div className="flex gap-2">
           <button
+            onClick={undo}
+            disabled={history.past.length === 0}
+            title="Отмени (Ctrl+Z)"
+            className="px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 text-sm font-medium"
+          >
+            ↶
+          </button>
+          <button
+            onClick={redo}
+            disabled={history.future.length === 0}
+            title="Върни (Ctrl+Y)"
+            className="px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 text-sm font-medium"
+          >
+            ↷
+          </button>
+          <button
+            onClick={resetAll}
+            title="Партии и групи по подразбиране"
+            className="px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium"
+          >
+            Нулирай
+          </button>
+          <button
             onClick={saveToFile}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
           >
@@ -344,10 +386,10 @@ const ParliamentSimulator = () => {
             onClick={exportToCSV}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
           >
-            📊 CSV Export
+            📊 Експорт CSV
           </button>
           <label className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium cursor-pointer">
-            📥 CSV Import
+            📥 Импорт CSV
             <input
               type="file"
               accept=".csv"
@@ -503,18 +545,9 @@ const ParliamentSimulator = () => {
                     </div>
 
                     <div className="flex items-center gap-1 mb-2">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
+                      <VotesInput
                         value={party.votes}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          if (!isNaN(value) && value >= 0 && value <= 100) {
-                            updateParty(party.id, 'votes', value);
-                          }
-                        }}
+                        onCommit={(value) => updateParty(party.id, 'votes', value)}
                         className="w-14 px-1 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                       <span className="text-xs text-gray-600">%</span>
