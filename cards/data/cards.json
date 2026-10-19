@@ -1,0 +1,614 @@
+{
+ "generated": "2026-10",
+ "cards": [
+  {
+   "id": "dogan",
+   "name": "Ахмед Доган",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 6,
+    "experience": 10,
+    "loyalty": 8
+   },
+   "cost": 6,
+   "rarity": "legendary",
+   "rarityLabel": "Легендарна",
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    },
+    {
+     "id": "veteran",
+     "name": "Ветеран",
+     "text": "Не може да бъде отстранен през първия си ход."
+    }
+   ],
+   "party": "aps",
+   "parties": [
+    "dps",
+    "aps"
+   ],
+   "years": 36.8,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Оглавява отцепилия се АПС",
+   "number": "001/011"
+  },
+  {
+   "id": "parvanov",
+   "name": "Георги Първанов",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 9,
+    "experience": 8,
+    "loyalty": 8
+   },
+   "cost": 6,
+   "rarity": "legendary",
+   "rarityLabel": "Легендарна",
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "president",
+     "name": "Държавен глава",
+     "text": "Вето: отмени една карта „Закон“ този ход."
+    },
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    }
+   ],
+   "party": "abv",
+   "parties": [
+    "bsp",
+    "abv"
+   ],
+   "years": 26.9,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Основава АБВ",
+   "number": "002/011"
+  },
+  {
+   "id": "mestan",
+   "name": "Лютви Местан",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 6,
+    "experience": 8,
+    "loyalty": 8
+   },
+   "cost": 6,
+   "rarity": "rare",
+   "rarityLabel": "Рядка",
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    },
+    {
+     "id": "veteran",
+     "name": "Ветеран",
+     "text": "Не може да бъде отстранен през първия си ход."
+    }
+   ],
+   "party": "dost",
+   "parties": [
+    "dps",
+    "dost"
+   ],
+   "years": 26.9,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Основава ДОСТ след изключването си",
+   "number": "003/011"
+  },
+  {
+   "id": "borisov",
+   "name": "Бойко Борисов",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 7,
+    "experience": 6,
+    "loyalty": 8
+   },
+   "cost": 5,
+   "rarity": "rare",
+   "rarityLabel": "Рядка",
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "pm",
+     "name": "Премиер",
+     "text": "Веднъж на игра: изтегли 2 карти."
+    },
+    {
+     "id": "veteran",
+     "name": "Ветеран",
+     "text": "Не може да бъде отстранен през първия си ход."
+    }
+   ],
+   "party": "gerb",
+   "parties": [
+    "ndsv",
+    "gerb"
+   ],
+   "years": 21.3,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Основава ГЕРБ, три пъти министър-председател",
+   "number": "004/011"
+  },
+  {
+   "id": "kostov",
+   "name": "Иван Костов",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 7,
+    "experience": 7,
+    "loyalty": 5
+   },
+   "cost": 5,
+   "rarity": "rare",
+   "rarityLabel": "Рядка",
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "pm",
+     "name": "Премиер",
+     "text": "Веднъж на игра: изтегли 2 карти."
+    },
+    {
+     "id": "nomad",
+     "name": "Номад",
+     "text": "Може да се присъедини към всяка коалиция."
+    }
+   ],
+   "party": "blue",
+   "parties": [
+    "sds",
+    "dsb",
+    "blue"
+   ],
+   "years": 23.3,
+   "terms": 0,
+   "switches": 2,
+   "flavor": "Депутат от Синята коалиция",
+   "number": "005/011"
+  },
+  {
+   "id": "siderov",
+   "name": "Волен Сидеров",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 6,
+    "experience": 5,
+    "loyalty": 5
+   },
+   "cost": 4,
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    }
+   ],
+   "party": "ataka",
+   "parties": [
+    "ataka",
+    "up"
+   ],
+   "years": 16.0,
+   "terms": 0,
+   "switches": 2,
+   "flavor": "Атака напуска коалицията",
+   "number": "006/011"
+  },
+  {
+   "id": "petkov",
+   "name": "Кирил Петков",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 7,
+    "experience": 1,
+    "loyalty": 8
+   },
+   "cost": 4,
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "pm",
+     "name": "Премиер",
+     "text": "Веднъж на игра: изтегли 2 карти."
+    }
+   ],
+   "party": "ppdb",
+   "parties": [
+    "pp",
+    "ppdb"
+   ],
+   "years": 5.1,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Обща листа ПП–ДБ",
+   "number": "007/011"
+  },
+  {
+   "id": "manolova",
+   "name": "Мая Манолова",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 4,
+    "experience": 4,
+    "loyalty": 8
+   },
+   "cost": 4,
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "keywords": [
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    }
+   ],
+   "party": "ismv",
+   "parties": [
+    "bsp",
+    "ismv"
+   ],
+   "years": 12.3,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Води „Изправи се! Мутри вън!“",
+   "number": "008/011"
+  },
+  {
+   "id": "ivanov",
+   "name": "Христо Иванов",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 4,
+    "experience": 2,
+    "loyalty": 8
+   },
+   "cost": 4,
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "keywords": [
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    }
+   ],
+   "party": "ppdb",
+   "parties": [
+    "db",
+    "ppdb"
+   ],
+   "years": 8.5,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Обща листа ПП–ДБ",
+   "number": "009/011"
+  },
+  {
+   "id": "kuneva",
+   "name": "Меглена Кунева",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 4,
+    "experience": 4,
+    "loyalty": 5
+   },
+   "cost": 3,
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "nomad",
+     "name": "Номад",
+     "text": "Може да се присъедини към всяка коалиция."
+    }
+   ],
+   "party": "rb",
+   "parties": [
+    "ndsv",
+    "bfc",
+    "rb"
+   ],
+   "years": 15.7,
+   "terms": 0,
+   "switches": 2,
+   "flavor": "Вицепремиер от Реформаторския блок",
+   "number": "010/011"
+  },
+  {
+   "id": "vasilev",
+   "name": "Радостин Василев",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "influence": 4,
+    "experience": 2,
+    "loyalty": 1
+   },
+   "cost": 2,
+   "rarity": "common",
+   "rarityLabel": "Обикновена",
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "nomad",
+     "name": "Номад",
+     "text": "Може да се присъедини към всяка коалиция."
+    },
+    {
+     "id": "indep",
+     "name": "Независим",
+     "text": "Не е засегнат от ефекти на коалиции."
+    }
+   ],
+   "party": "mech",
+   "parties": [
+    "itn",
+    "pp",
+    "ppdb",
+    "mech"
+   ],
+   "years": 5.5,
+   "terms": 0,
+   "switches": 3,
+   "flavor": "Основава МЕЧ",
+   "number": "011/011"
+  }
+ ],
+ "parties": {
+  "sds": {
+   "short": "СДС",
+   "name": "Съюз на демократичните сили (ОДС 1997–2005)",
+   "color": "#102a83"
+  },
+  "dsb": {
+   "short": "ДСБ",
+   "name": "Демократи за силна България",
+   "color": "#1a5fb4"
+  },
+  "blue": {
+   "short": "СК",
+   "name": "Синята коалиция (СДС + ДСБ)",
+   "color": "#2e5aa8"
+  },
+  "bfc": {
+   "short": "ДБГ",
+   "name": "Движение „България на гражданите“",
+   "color": "#5b7fc0"
+  },
+  "rb": {
+   "short": "РБ",
+   "name": "Реформаторски блок",
+   "color": "#3a6fb0"
+  },
+  "db": {
+   "short": "ДБ",
+   "name": "Демократична България",
+   "color": "#0b4f8a"
+  },
+  "pp": {
+   "short": "ПП",
+   "name": "Продължаваме промяната",
+   "color": "#f7c600"
+  },
+  "ppdb": {
+   "short": "ПП–ДБ",
+   "name": "Продължаваме промяната – Демократична България",
+   "color": "#e0a800"
+  },
+  "ns": {
+   "short": "НС",
+   "name": "Народен съюз (БЗНС + ДП)",
+   "color": "#f28c28"
+  },
+  "ndsv": {
+   "short": "НДСВ",
+   "name": "Национално движение Симеон Втори",
+   "color": "#f2b705"
+  },
+  "gerb": {
+   "short": "ГЕРБ",
+   "name": "Граждани за европейско развитие на България (ГЕРБ–СДС от 2021)",
+   "color": "#0054a6"
+  },
+  "bsp": {
+   "short": "БСП",
+   "name": "Българска социалистическа партия и коалициите ѝ",
+   "color": "#db0f28"
+  },
+  "euroleft": {
+   "short": "ЕЛ",
+   "name": "Евролевица",
+   "color": "#e4572e"
+  },
+  "abv": {
+   "short": "АБВ",
+   "name": "Алтернатива за българско възраждане",
+   "color": "#a3162b"
+  },
+  "dps": {
+   "short": "ДПС",
+   "name": "Движение за права и свободи (ОНС 1997, ДПС–Ново начало 2024)",
+   "color": "#0b6fb8"
+  },
+  "dost": {
+   "short": "ДОСТ",
+   "name": "Демократи за отговорност, свобода и толерантност",
+   "color": "#1f7a8c"
+  },
+  "aps": {
+   "short": "АПС",
+   "name": "Алианс за права и свободи",
+   "color": "#1c9ad6"
+  },
+  "ataka": {
+   "short": "Атака",
+   "name": "Атака",
+   "color": "#4d6b2a"
+  },
+  "pf": {
+   "short": "ПФ",
+   "name": "Патриотичен фронт (НФСБ + ВМРО)",
+   "color": "#8b5a2b"
+  },
+  "up": {
+   "short": "ОП",
+   "name": "Обединени патриоти (НФСБ + ВМРО + Атака)",
+   "color": "#7a4e2d"
+  },
+  "vaz": {
+   "short": "Възраждане",
+   "name": "Възраждане",
+   "color": "#b8962e"
+  },
+  "velichie": {
+   "short": "Величие",
+   "name": "Величие",
+   "color": "#8a1538"
+  },
+  "bbb": {
+   "short": "БББ",
+   "name": "Български бизнес блок",
+   "color": "#5a6f8f"
+  },
+  "bns": {
+   "short": "БНС",
+   "name": "Български народен съюз",
+   "color": "#c0392b"
+  },
+  "rzs": {
+   "short": "РЗС",
+   "name": "Ред, законност и справедливост",
+   "color": "#2b3990"
+  },
+  "bbts": {
+   "short": "ББЦ",
+   "name": "България без цензура",
+   "color": "#d7141a"
+  },
+  "volya": {
+   "short": "Воля",
+   "name": "Воля",
+   "color": "#9e1f63"
+  },
+  "itn": {
+   "short": "ИТН",
+   "name": "Има такъв народ",
+   "color": "#4bb9e5"
+  },
+  "ismv": {
+   "short": "ИСМВ",
+   "name": "Изправи се! Мутри вън!",
+   "color": "#d6336c"
+  },
+  "bv": {
+   "short": "БВ",
+   "name": "Български възход",
+   "color": "#1e3a5f"
+  },
+  "mech": {
+   "short": "МЕЧ",
+   "name": "Морал, единство, чест",
+   "color": "#c8102e"
+  },
+  "pb": {
+   "short": "ПБ",
+   "name": "Прогресивна България (Румен Радев)",
+   "color": "#6a3d9a"
+  },
+  "bzns": {
+   "short": "БЗНС",
+   "name": "Български земеделски народен съюз",
+   "color": "#ee7f00"
+  }
+ }
+}

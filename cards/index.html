@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Политико: карти</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Serif:ital,wght@1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f1ea;
+  --ink: #1d1d1f;
+  --muted: #6b6760;
+  --panel: #fffdf8;
+  --line: #d9d3c7;
+  --common: #8a8a8a;
+  --uncommon: #4f7ea8;
+  --rare: #c79a1e;
+  --legendary: #9b2c8f;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 "IBM Plex Sans", system-ui, sans-serif; }
+header { padding: 20px 16px 8px; max-width: 1200px; margin: 0 auto; }
+h1 { margin: 0 0 4px; font-size: 24px; }
+header p { margin: 0; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
+.controls input, .controls select, .controls button {
+  font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+}
+.controls input { flex: 1 1 180px; }
+.controls button { cursor: pointer; }
+.count { align-self: center; color: var(--muted); margin-left: auto; }
+main { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm, 1fr)); gap: 16px; padding: 8px 16px 32px; max-width: 1200px; margin: 0 auto; justify-items: center; }
+
+/* ---- card: 63 × 88 mm (poker size) ---- */
+.card {
+  --pc: #777; --pc-ink: #fff;
+  width: 63mm; height: 88mm; border-radius: 3.5mm; padding: 2.4mm;
+  background: var(--pc); box-shadow: 0 1px 3px rgba(0,0,0,.18), 0 6px 16px rgba(0,0,0,.08);
+  display: flex; flex-direction: column; gap: 1.4mm; position: relative; overflow: hidden;
+  break-inside: avoid;
+}
+.card.legendary { background: linear-gradient(135deg, var(--pc) 0%, var(--pc) 55%, #e8c766 75%, var(--pc) 95%); }
+.bar { display: flex; align-items: center; gap: 1.5mm; background: var(--panel); border-radius: 1.6mm; padding: 1mm 1.6mm; }
+.name { flex: 1; font-weight: 700; font-size: 3.5mm; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cost {
+  flex: none; width: 6.4mm; height: 6.4mm; border-radius: 50%; display: grid; place-items: center;
+  background: var(--pc); color: var(--pc-ink); font-weight: 700; font-size: 3.6mm; border: .5mm solid var(--panel); outline: .3mm solid var(--pc);
+}
+.art {
+  flex: 0 0 25mm; border-radius: 1.6mm; position: relative; overflow: hidden; color: var(--pc-ink);
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.35), transparent 55%), var(--pc);
+  display: grid; place-items: center;
+}
+.art .initials { font-size: 13mm; font-weight: 700; letter-spacing: -.5mm; opacity: .92; }
+.art .watermark { position: absolute; right: 1.6mm; bottom: .8mm; font-size: 2.6mm; font-weight: 600; opacity: .8; }
+.art .stripes { position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, rgba(255,255,255,.07) 0 2mm, transparent 2mm 4mm); }
+.type { font-size: 2.5mm; justify-content: space-between; }
+.type span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gem { flex: none; width: 2.8mm; height: 2.8mm; transform: rotate(45deg); border-radius: .4mm; }
+.common .gem { background: var(--common); }
+.uncommon .gem { background: var(--uncommon); }
+.rare .gem { background: var(--rare); }
+.legendary .gem { background: var(--legendary); }
+.text { flex: 1; background: var(--panel); border-radius: 1.6mm; padding: 1.2mm 1.8mm; font-size: 2.35mm; line-height: 1.25; overflow: hidden; display: flex; flex-direction: column; gap: .7mm; }
+.text b { font-weight: 700; }
+.flavor { margin-top: auto; font-family: "IBM Plex Serif", Georgia, serif; font-style: italic; color: var(--muted); border-top: .2mm solid var(--line); padding-top: .8mm; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2mm; }
+.stat { background: var(--panel); border-radius: 1.6mm; text-align: center; padding: .5mm 0 .7mm; }
+.stat .v { font-size: 4.2mm; font-weight: 700; line-height: 1; }
+.stat .k { font-size: 1.9mm; letter-spacing: .15mm; color: var(--muted); text-transform: uppercase; }
+.foot { display: flex; justify-content: space-between; font-size: 1.8mm; color: var(--pc-ink); opacity: .9; padding: 0 .6mm; }
+
+.legend { max-width: 1200px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: 13px; }
+.legend summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+.legend dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; }
+.legend dt { font-weight: 600; color: var(--ink); }
+.legend dd { margin: 0; }
+
+@media print {
+  @page { size: A4; margin: 8mm; }
+  body { background: #fff; }
+  header, .controls, .legend { display: none; }
+  main { display: grid; grid-template-columns: repeat(3, 63mm); gap: 2mm; padding: 0; max-width: none; justify-content: center; }
+  .card { box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Политико</h1>
+  <p>Пародийна колекционерска игра с карти. Показателите са изчислени от публични данни и не са оценка на личността.</p>
+</header>
+<div class="controls">
+  <input id="q" type="search" placeholder="Търсене по име…" aria-label="Търсене по име">
+  <select id="party" aria-label="Партия"><option value="">Всички партии</option></select>
+  <select id="rarity" aria-label="Рядкост"><option value="">Всяка рядкост</option></select>
+  <select id="sort" aria-label="Подреждане">
+    <option value="cost">По цена</option>
+    <option value="name">По име</option>
+    <option value="influence">По влияние</option>
+    <option value="experience">По стаж</option>
+    <option value="loyalty">По лоялност</option>
+  </select>
+  <button id="print" type="button">Печат (9 на лист A4)</button>
+  <span class="count" id="count"></span>
+</div>
+<main id="cards"></main>
+<details class="legend">
+  <summary>Как се изчисляват картите</summary>
+  <dl>
+    <dt>Влияние</dt><dd>Ръководни постове: министър-председател, президент, основател или лидер на партия, председател на група, брой мандати.</dd>
+    <dt>Стаж</dt><dd>Години в политиката (или в парламента), около 3,5 години на точка; поне 1,5 точки на мандат.</dd>
+    <dt>Лоялност</dt><dd>10 минус 2,5 за всяка смяна на партия или група, минус 1,5 за период като независим.</dd>
+    <dt>Цена</dt><dd>Сборът от трите показателя, разделен на 4 (от 1 до 7).</dd>
+    <dt>Рядкост</dt><dd>Сбор 24+ легендарна, 18+ рядка, 12+ необичайна, иначе обикновена.</dd>
+  </dl>
+</details>
+<script>
+const DATA = {"generated": "2026-10", "cards": [{"id": "dogan", "name": "Ахмед Доган", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 6, "experience": 10, "loyalty": 8}, "cost": 6, "rarity": "legendary", "rarityLabel": "Легендарна", "keywords": [{"id": "founder", "name": "Основател", "text": "Щом влезе в игра, създай жетон „Нова партия“."}, {"id": "leader", "name": "Лидер", "text": "Другите ти карти от същата партия получават +1 Влияние."}, {"id": "veteran", "name": "Ветеран", "text": "Не може да бъде отстранен през първия си ход."}], "party": "aps", "parties": ["dps", "aps"], "years": 36.8, "terms": 0, "switches": 1, "flavor": "Оглавява отцепилия се АПС", "number": "001/011"}, {"id": "parvanov", "name": "Георги Първанов", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 9, "experience": 8, "loyalty": 8}, "cost": 6, "rarity": "legendary", "rarityLabel": "Легендарна", "keywords": [{"id": "founder", "name": "Основател", "text": "Щом влезе в игра, създай жетон „Нова партия“."}, {"id": "president", "name": "Държавен глава", "text": "Вето: отмени една карта „Закон“ този ход."}, {"id": "leader", "name": "Лидер", "text": "Другите ти карти от същата партия получават +1 Влияние."}], "party": "abv", "parties": ["bsp", "abv"], "years": 26.9, "terms": 0, "switches": 1, "flavor": "Основава АБВ", "number": "002/011"}, {"id": "mestan", "name": "Лютви Местан", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 6, "experience": 8, "loyalty": 8}, "cost": 6, "rarity": "rare", "rarityLabel": "Рядка", "keywords": [{"id": "founder", "name": "Основател", "text": "Щом влезе в игра, създай жетон „Нова партия“."}, {"id": "leader", "name": "Лидер", "text": "Другите ти карти от същата партия получават +1 Влияние."}, {"id": "veteran", "name": "Ветеран", "text": "Не може да бъде отстранен през първия си ход."}], "party": "dost", "parties": ["dps", "dost"], "years": 26.9, "terms": 0, "switches": 1, "flavor": "Основава ДОСТ след изключването си", "number": "003/011"}, {"id": "borisov", "name": "Бойко Борисов", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 7, "experience": 6, "loyalty": 8}, "cost": 5, "rarity": "rare", "rarityLabel": "Рядка", "keywords": [{"id": "founder", "name": "Основател", "text": "Щом влезе в игра, създай жетон „Нова партия“."}, {"id": "pm", "name": "Премиер", "text": "Веднъж на игра: изтегли 2 карти."}, {"id": "veteran", "name": "Ветеран", "text": "Не може да бъде отстранен през първия си ход."}], "party": "gerb", "parties": ["ndsv", "gerb"], "years": 21.3, "terms": 0, "switches": 1, "flavor": "Основава ГЕРБ, три пъти министър-председател", "number": "004/011"}, {"id": "kostov", "name": "Иван Костов", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 7, "experience": 7, "loyalty": 5}, "cost": 5, "rarity": "rare", "rarityLabel": "Рядка", "keywords": [{"id": "founder", "name": "Основател", "text": "Щом влезе в игра, създай жетон „Нова партия“."}, {"id": "pm", "name": "Премиер", "text": "Веднъж на игра: изтегли 2 карти."}, {"id": "nomad", "name": "Номад", "text": "Може да се присъедини към всяка коалиция."}], "party": "blue", "parties": ["sds", "dsb", "blue"], "years": 23.3, "terms": 0, "switches": 2, "flavor": "Депутат от Синята коалиция", "number": "005/011"}, {"id": "siderov", "name": "Волен Сидеров", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 6, "experience": 5, "loyalty": 5}, "cost": 4, "rarity": "uncommon", "rarityLabel": "Необичайна", "keywords": [{"id": "founder", "name": "Основател", "text": "Щом влезе в игра, създай жетон „Нова партия“."}, {"id": "leader", "name": "Лидер", "text": "Другите ти карти от същата партия получават +1 Влияние."}], "party": "ataka", "parties": ["ataka", "up"], "years": 16.0, "terms": 0, "switches": 2, "flavor": "Атака напуска коалицията", "number": "006/011"}, {"id": "petkov", "name": "Кирил Петков", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 7, "experience": 1, "loyalty": 8}, "cost": 4, "rarity": "uncommon", "rarityLabel": "Необичайна", "keywords": [{"id": "founder", "name": "Основател", "text": "Щом влезе в игра, създай жетон „Нова партия“."}, {"id": "pm", "name": "Премиер", "text": "Веднъж на игра: изтегли 2 карти."}], "party": "ppdb", "parties": ["pp", "ppdb"], "years": 5.1, "terms": 0, "switches": 1, "flavor": "Обща листа ПП–ДБ", "number": "007/011"}, {"id": "manolova", "name": "Мая Манолова", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 4, "experience": 4, "loyalty": 8}, "cost": 4, "rarity": "uncommon", "rarityLabel": "Необичайна", "keywords": [{"id": "leader", "name": "Лидер", "text": "Другите ти карти от същата партия получават +1 Влияние."}], "party": "ismv", "parties": ["bsp", "ismv"], "years": 12.3, "terms": 0, "switches": 1, "flavor": "Води „Изправи се! Мутри вън!“", "number": "008/011"}, {"id": "ivanov", "name": "Христо Иванов", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 4, "experience": 2, "loyalty": 8}, "cost": 4, "rarity": "uncommon", "rarityLabel": "Необичайна", "keywords": [{"id": "leader", "name": "Лидер", "text": "Другите ти карти от същата партия получават +1 Влияние."}], "party": "ppdb", "parties": ["db", "ppdb"], "years": 8.5, "terms": 0, "switches": 1, "flavor": "Обща листа ПП–ДБ", "number": "009/011"}, {"id": "kuneva", "name": "Меглена Кунева", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 4, "experience": 4, "loyalty": 5}, "cost": 3, "rarity": "uncommon", "rarityLabel": "Необичайна", "keywords": [{"id": "founder", "name": "Основател", "text": "Щом влезе в игра, създай жетон „Нова партия“."}, {"id": "nomad", "name": "Номад", "text": "Може да се присъедини към всяка коалиция."}], "party": "rb", "parties": ["ndsv", "bfc", "rb"], "years": 15.7, "terms": 0, "switches": 2, "flavor": "Вицепремиер от Реформаторския блок", "number": "010/011"}, {"id": "vasilev", "name": "Радостин Василев", "born": null, "region": null, "source": "хронология на партиите", "termList": [], "stats": {"influence": 4, "experience": 2, "loyalty": 1}, "cost": 2, "rarity": "common", "rarityLabel": "Обикновена", "keywords": [{"id": "founder", "name": "Основател", "text": "Щом влезе в игра, създай жетон „Нова партия“."}, {"id": "nomad", "name": "Номад", "text": "Може да се присъедини към всяка коалиция."}, {"id": "indep", "name": "Независим", "text": "Не е засегнат от ефекти на коалиции."}], "party": "mech", "parties": ["itn", "pp", "ppdb", "mech"], "years": 5.5, "terms": 0, "switches": 3, "flavor": "Основава МЕЧ", "number": "011/011"}], "parties": {"sds": {"short": "СДС", "name": "Съюз на демократичните сили (ОДС 1997–2005)", "color": "#102a83"}, "dsb": {"short": "ДСБ", "name": "Демократи за силна България", "color": "#1a5fb4"}, "blue": {"short": "СК", "name": "Синята коалиция (СДС + ДСБ)", "color": "#2e5aa8"}, "bfc": {"short": "ДБГ", "name": "Движение „България на гражданите“", "color": "#5b7fc0"}, "rb": {"short": "РБ", "name": "Реформаторски блок", "color": "#3a6fb0"}, "db": {"short": "ДБ", "name": "Демократична България", "color": "#0b4f8a"}, "pp": {"short": "ПП", "name": "Продължаваме промяната", "color": "#f7c600"}, "ppdb": {"short": "ПП–ДБ", "name": "Продължаваме промяната – Демократична България", "color": "#e0a800"}, "ns": {"short": "НС", "name": "Народен съюз (БЗНС + ДП)", "color": "#f28c28"}, "ndsv": {"short": "НДСВ", "name": "Национално движение Симеон Втори", "color": "#f2b705"}, "gerb": {"short": "ГЕРБ", "name": "Граждани за европейско развитие на България (ГЕРБ–СДС от 2021)", "color": "#0054a6"}, "bsp": {"short": "БСП", "name": "Българска социалистическа партия и коалициите ѝ", "color": "#db0f28"}, "euroleft": {"short": "ЕЛ", "name": "Евролевица", "color": "#e4572e"}, "abv": {"short": "АБВ", "name": "Алтернатива за българско възраждане", "color": "#a3162b"}, "dps": {"short": "ДПС", "name": "Движение за права и свободи (ОНС 1997, ДПС–Ново начало 2024)", "color": "#0b6fb8"}, "dost": {"short": "ДОСТ", "name": "Демократи за отговорност, свобода и толерантност", "color": "#1f7a8c"}, "aps": {"short": "АПС", "name": "Алианс за права и свободи", "color": "#1c9ad6"}, "ataka": {"short": "Атака", "name": "Атака", "color": "#4d6b2a"}, "pf": {"short": "ПФ", "name": "Патриотичен фронт (НФСБ + ВМРО)", "color": "#8b5a2b"}, "up": {"short": "ОП", "name": "Обединени патриоти (НФСБ + ВМРО + Атака)", "color": "#7a4e2d"}, "vaz": {"short": "Възраждане", "name": "Възраждане", "color": "#b8962e"}, "velichie": {"short": "Величие", "name": "Величие", "color": "#8a1538"}, "bbb": {"short": "БББ", "name": "Български бизнес блок", "color": "#5a6f8f"}, "bns": {"short": "БНС", "name": "Български народен съюз", "color": "#c0392b"}, "rzs": {"short": "РЗС", "name": "Ред, законност и справедливост", "color": "#2b3990"}, "bbts": {"short": "ББЦ", "name": "България без цензура", "color": "#d7141a"}, "volya": {"short": "Воля", "name": "Воля", "color": "#9e1f63"}, "itn": {"short": "ИТН", "name": "Има такъв народ", "color": "#4bb9e5"}, "ismv": {"short": "ИСМВ", "name": "Изправи се! Мутри вън!", "color": "#d6336c"}, "bv": {"short": "БВ", "name": "Български възход", "color": "#1e3a5f"}, "mech": {"short": "МЕЧ", "name": "Морал, единство, чест", "color": "#c8102e"}, "pb": {"short": "ПБ", "name": "Прогресивна България (Румен Радев)", "color": "#6a3d9a"}, "bzns": {"short": "БЗНС", "name": "Български земеделски народен съюз", "color": "#ee7f00"}}};
+const STAT = { influence: "Влияние", experience: "Стаж", loyalty: "Лоялност" };
+const RANK = { legendary: 0, rare: 1, uncommon: 2, common: 3 };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+function inkFor(hex) {
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => {
+    v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+  });
+  const L = .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+  return L > .35 ? "#1d1d1f" : "#ffffff";
+}
+const initials = n => n.split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+const party = id => DATA.parties[id] || { short: "Независим", name: "Независим", color: "#7a7a7a" };
+
+function card(c) {
+  const p = party(c.party), ink = inkFor(p.color);
+  const role = c.source === "parliament.bg" ? `Депутат · ${c.terms} ${c.terms === 1 ? "мандат" : "мандата"}` : "Политик";
+  const kws = c.keywords.map(k => `<div><b>${esc(k.name)}.</b> ${esc(k.text)}</div>`).join("")
+    || `<div>Без особени способности.</div>`;
+  return `<article class="card ${c.rarity}" style="--pc:${p.color};--pc-ink:${ink}" title="${esc(p.name)}">
+    <div class="bar"><span class="name">${esc(c.name)}</span><span class="cost" title="Цена">${c.cost}</span></div>
+    <div class="art"><div class="stripes"></div><span class="initials">${esc(initials(c.name))}</span><span class="watermark">${esc(p.short)}</span></div>
+    <div class="bar type"><span>${role} · ${esc(p.short)}</span><span class="gem" title="${esc(c.rarityLabel)}"></span></div>
+    <div class="text">${kws}${c.flavor ? `<div class="flavor">${esc(c.flavor)}</div>` : ""}</div>
+    <div class="stats">${Object.entries(STAT).map(([k, l]) =>
+      `<div class="stat"><div class="v">${c.stats[k]}</div><div class="k">${l}</div></div>`).join("")}</div>
+    <div class="foot"><span>${c.number}</span><span>${esc(c.rarityLabel)}</span><span>${esc(c.source)}</span></div>
+  </article>`;
+}
+
+function render() {
+  const q = $("#q").value.trim().toLowerCase(), pf = $("#party").value, rf = $("#rarity").value, sort = $("#sort").value;
+  const list = DATA.cards
+    .filter(c => (!q || c.name.toLowerCase().includes(q)) && (!pf || c.party === pf) && (!rf || c.rarity === rf))
+    .sort((a, b) => sort === "name" ? a.name.localeCompare(b.name, "bg")
+      : sort === "cost" ? b.cost - a.cost || RANK[a.rarity] - RANK[b.rarity] || a.name.localeCompare(b.name, "bg")
+      : b.stats[sort] - a.stats[sort] || a.name.localeCompare(b.name, "bg"));
+  $("#cards").innerHTML = list.map(card).join("");
+  $("#count").textContent = `${list.length} от ${DATA.cards.length} карти`;
+}
+
+const used = [...new Set(DATA.cards.map(c => c.party))];
+$("#party").insertAdjacentHTML("beforeend", used.map(id => `<option value="${esc(id ?? "")}">${esc(party(id).short)}</option>`).join(""));
+const rar = [...new Map(DATA.cards.map(c => [c.rarity, c.rarityLabel]))].sort((a, b) => RANK[a[0]] - RANK[b[0]]);
+$("#rarity").insertAdjacentHTML("beforeend", rar.map(([id, l]) => `<option value="${id}">${esc(l)}</option>`).join(""));
+["q", "party", "rarity", "sort"].forEach(id => $("#" + id).addEventListener("input", render));
+$("#print").addEventListener("click", () => window.print());
+render();
+</script>
+</body>
+</html>
