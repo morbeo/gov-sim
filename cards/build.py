@@ -101,11 +101,32 @@ KEYWORDS = {
     "diligent": ("Прилежен", "Изтегли карта, когато гласуваш."),
     "lawmaker": ("Законотворец", "Картите „Закон“ ти струват 1 по-малко."),
 }
+# Official public records only (see data/records.json); each adds starting
+# "Компромат" tokens and a keyword that is always shown.
+RECORD_KW = {
+    "sanction":  ("Под санкции", 2, "Започва с 2 „Компромат“. Схемите ти струват 1 по-малко."),
+    "conviction": ("Осъден", 3, "Започва с 3 „Компромат“."),
+    "conflict":  ("Конфликт на интереси", 1, "Започва с 1 „Компромат“."),
+}
 RARITY = [(24, "legendary", "Легендарна"), (18, "rare", "Рядка"),
           (12, "uncommon", "Необичайна"), (0, "common", "Обикновена")]
 
 
-def score(p: dict) -> dict:
+def load_records(path: Path | None) -> dict[str, list[dict]]:
+    """Records by person name; refuses entries without an official source."""
+    if not path or not path.exists():
+        return {}
+    out: dict[str, list[dict]] = {}
+    for r in json.loads(path.read_text("utf-8")).get("records", []):
+        if r.get("type") not in RECORD_KW:
+            raise SystemExit(f"{path}: unknown record type {r.get('type')!r} for {r.get('name')}")
+        if not str(r.get("source", "")).startswith("http"):
+            raise SystemExit(f"{path}: record for {r.get('name')} has no source URL")
+        out.setdefault(r["name"].lower(), []).append(r)
+    return out
+
+
+def score(p: dict, records: list[dict] | None = None) -> dict:
     text = " ".join(s["note"] + " " + s["role"] for s in p["spells"])
     office_text = " ".join(o["title"] for o in p["offices"])
     parties = [s["party"] for s in p["spells"] if s["party"]]
@@ -147,21 +168,29 @@ def score(p: dict) -> dict:
     rarity = next((r, label) for floor, r, label in RARITY if total >= floor)
     cost = clamp(total / 4 - ("rookie" in kw), 1, 7)
 
+    records = sorted(records or [], key=lambda r: r.get("date") or "")
+    rec_kw = list(dict.fromkeys(r["type"] for r in records))
+    keywords = [{"id": t, "name": RECORD_KW[t][0], "text": RECORD_KW[t][2], "record": True} for t in rec_kw] \
+        + [{"id": k, "name": KEYWORDS[k][0], "text": KEYWORDS[k][1]} for k in kw][:max(1, 2 - len(rec_kw))]
+    kompromat = sum(RECORD_KW[t][1] for t in rec_kw)
+
     current = next((s for s in reversed(p["spells"]) if s["party"]), None)
     flavor = next((s["note"] for s in reversed(p["spells"]) if s["note"]), "")
     return {"stats": stats, "cost": cost, "rarity": rarity[0], "rarityLabel": rarity[1],
-            "keywords": [{"id": k, "name": KEYWORDS[k][0], "text": KEYWORDS[k][1]} for k in kw[:3]],
+            "keywords": keywords, "kompromat": kompromat,
+            "records": [{k: r.get(k) for k in ("type", "date", "summary", "source")} for r in records],
             "party": current["party"] if current else None, "parties": distinct,
             "years": round(years, 1), "terms": terms, "switches": switches, "flavor": flavor}
 
 
-def build_cards(people: list[dict], register: dict) -> list[dict]:
+def build_cards(people: list[dict], register: dict, records: dict | None = None) -> list[dict]:
     pinfo = {p["id"]: {"short": p["short"], "name": p["name"], "color": p["color"]}
              for p in register.get("parties", [])}
     cards = []
     for p in people:
         c = {"id": p["id"], "name": p["name"], "born": p["born"], "region": p["region"],
-             "source": p["source"], "termList": p["terms"], **score(p)}
+             "source": p["source"], "termList": p["terms"],
+             **score(p, (records or {}).get(p["name"].lower()))}
         cards.append(c)
     cards.sort(key=lambda c: (-c["cost"], c["name"]))
     for i, c in enumerate(cards, 1):
@@ -177,6 +206,10 @@ def main(argv=None) -> None:
     ap.add_argument("--mps", type=Path, help="mps.json from parliament_scrape.py (default: sample politicians from --parties)")
     ap.add_argument("--parties", type=Path, default=HERE.parent / "vote" / "data" / "parties.json",
                     help="party register with colours (default ../vote/data/parties.json)")
+    ap.add_argument("--records", type=Path, default=HERE / "data" / "records.json",
+                    help="sourced public records: sanctions, convictions, conflicts of interest (default ./data/records.json)")
+    ap.add_argument("--shadow", type=Path, default=HERE / "data" / "shadow.json",
+                    help="scheme and counter cards (default ./data/shadow.json)")
     ap.add_argument("--current", action="store_true", help="with --mps: sitting MPs only")
     ap.add_argument("--name", help="only people whose name contains this text")
     ap.add_argument("--template", type=Path, default=HERE / "template.html", help="gallery template")
@@ -194,14 +227,17 @@ def main(argv=None) -> None:
     if not people:
         raise SystemExit("no people matched; check --mps/--name/--current")
 
-    cards, parties = build_cards(people, register)
-    payload = {"generated": TODAY, "cards": cards, "parties": parties}
+    cards, parties = build_cards(people, register, load_records(args.records))
+    shadow = json.loads(args.shadow.read_text("utf-8"))["cards"] if args.shadow.exists() else []
+    for i, c in enumerate(shadow, 1):
+        c["number"] = f"С{i:02d}/{len(shadow):02d}"
+    payload = {"generated": TODAY, "cards": cards, "shadow": shadow, "parties": parties}
     args.json.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + "\n", "utf-8")
     page = args.template.read_text("utf-8").replace(
         "/*CARDS*/null", json.dumps(payload, ensure_ascii=False).replace("</", "<\\/"))
     args.out.write_text(page, "utf-8")
-    print(f"{len(cards)} cards -> {args.out}, {args.json}", file=sys.stderr)
+    print(f"{len(cards)} politician + {len(shadow)} shadow cards -> {args.out}, {args.json}", file=sys.stderr)
 
 
 if __name__ == "__main__":

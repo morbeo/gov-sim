@@ -42,6 +42,25 @@ class StatsModel(unittest.TestCase):
             self.assertTrue(1 <= v <= 10)
         self.assertTrue(1 <= s["cost"] <= 7)
 
+    def test_record_adds_keyword_and_kompromat(self):
+        p = build.from_mps(MPS, current=False)[1]
+        rec = [{"name": "Мария Бивша", "type": "conflict", "date": "2024-01",
+                "summary": "Решение за конфликт на интереси", "source": "https://example.org/act"}]
+        s = build.score(p, rec)
+        self.assertEqual(s["keywords"][0]["name"], "Конфликт на интереси")
+        self.assertEqual(s["kompromat"], 1)
+        self.assertLessEqual(len(s["keywords"]), 3)
+        self.assertEqual(build.score(p)["kompromat"], 0)
+
+    def test_records_without_source_are_refused(self):
+        import json, tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "r.json"
+            f.write_text(json.dumps({"records": [{"name": "X", "type": "sanction", "source": ""}]}))
+            with self.assertRaises(SystemExit):
+                build.load_records(f)
+
     def test_months(self):
         self.assertEqual(build.months("2020-01", "2021-03"), 14)
         self.assertEqual(build.months(None, "2021-03"), 0)
