@@ -82,8 +82,9 @@ def from_mps(mps: list[dict], current: bool) -> list[dict]:
         last = terms[-1]
         people.append({"id": f"mp{last['mpId']}", "name": p["name"], "born": p.get("born"),
                        "region": last.get("region"), "terms": sorted({t["na"] for t in terms}),
-                       "spells": spells, "offices": offices,
+                       "spells": spells, "offices": offices, "regions": [t.get("region") for t in terms],
                        "bills": p.get("bills"), "attendance": p.get("attendance"),
+                       "preferences": p.get("preferences"),
                        "source": "parliament.bg"})
     return people
 
@@ -103,13 +104,29 @@ KEYWORDS = {
 }
 # Official public records only (see data/records.json); each adds starting
 # "Компромат" tokens and a keyword that is always shown.
+# The last number is the Корупция stat; without a record that stat stays empty.
 RECORD_KW = {
-    "sanction":  ("Под санкции", 2, "Започва с 2 „Компромат“. Схемите ти струват 1 по-малко."),
-    "conviction": ("Осъден", 3, "Започва с 3 „Компромат“."),
-    "conflict":  ("Конфликт на интереси", 1, "Започва с 1 „Компромат“."),
+    "sanction":  ("Под санкции", 2, "Започва с 2 „Компромат“. Схемите ти струват 1 по-малко.", 7),
+    "conviction": ("Осъден", 3, "Започва с 3 „Компромат“.", 9),
+    "conflict":  ("Конфликт на интереси", 1, "Започва с 1 „Компромат“.", 4),
 }
-RARITY = [(24, "legendary", "Легендарна"), (18, "rare", "Рядка"),
-          (12, "uncommon", "Необичайна"), (0, "common", "Обикновена")]
+# id: (name, abbreviation, what it is computed from). None = no data for that person.
+STATS = {
+    "charisma":   ("Харизма", "ХАР", "води листи, основава партии, печели преки избори; преференции"),
+    "scheming":   ("Интриги", "ИНТ", "смени на партия, отцепвания, коалиции, периоди като независим"),
+    "influence":  ("Влияние", "ВЛИ", "постове: премиер, президент, министър, лидер; мандати"),
+    "negotiation": ("Преговори", "ПРГ", "коалиции, общи листи, съпредседателство"),
+    "network":    ("Връзки", "ВРЪ", "брой партии, коалиции и държавни постове"),
+    "survival":   ("Оцеляване", "ОЦЛ", "завръщания след други постове, още е активен, дължина на кариерата"),
+    "experience": ("Опит", "ОПТ", "години в политиката или в парламента, мандати"),
+    "loyalty":    ("Лоялност", "ЛОЯ", "10 минус смените на партия и периодите като независим"),
+    "corruption": ("Корупция", "КОР", "само официални актове от data/records.json"),
+    "lawmaking":  ("Законотворчество", "ЗАК", "внесени законопроекти (поле bills)"),
+    "attendance": ("Присъствие", "ПРС", "присъствие на заседания (поле attendance)"),
+    "base":       ("Регионална база", "РЕГ", "мандати от един и същи избирателен район"),
+}
+RARITY = [(26, "legendary", "Легендарна"), (23, "rare", "Рядка"),
+          (19, "uncommon", "Необичайна"), (0, "common", "Обикновена")]
 
 
 def load_records(path: Path | None) -> dict[str, list[dict]]:
@@ -126,7 +143,7 @@ def load_records(path: Path | None) -> dict[str, list[dict]]:
     return out
 
 
-def score(p: dict, records: list[dict] | None = None) -> dict:
+def score(p: dict, records: list[dict] | None = None, coalitions: set | None = None) -> dict:
     text = " ".join(s["note"] + " " + s["role"] for s in p["spells"])
     office_text = " ".join(o["title"] for o in p["offices"])
     parties = [s["party"] for s in p["spells"] if s["party"]]
@@ -157,41 +174,75 @@ def score(p: dict, records: list[dict] | None = None) -> dict:
     if terms <= 1 and years < 4 and not kw:
         kw.append("rookie")
 
-    # Влияние: leadership and office; Стаж: time served; Лоялност: party switches.
-    influence = 2 + 3 * ("pm" in kw) + 3 * ("president" in kw) + 2 * ("founder" in kw) \
-        + 2 * ("leader" in kw) + 0.5 * terms + (p.get("bills") or 0) / 20
-    experience = max(years / 3.5, terms * 1.5)
-    loyalty = 10 - 2.5 * switches - 1.5 * ("indep" in kw)
-    stats = {"influence": clamp(influence), "experience": clamp(experience), "loyalty": clamp(loyalty)}
-
-    total = sum(stats.values())
-    rarity = next((r, label) for floor, r, label in RARITY if total >= floor)
-    cost = clamp(total / 4 - ("rookie" in kw), 1, 7)
-
     records = sorted(records or [], key=lambda r: r.get("date") or "")
     rec_kw = list(dict.fromkeys(r["type"] for r in records))
     keywords = [{"id": t, "name": RECORD_KW[t][0], "text": RECORD_KW[t][2], "record": True} for t in rec_kw] \
         + [{"id": k, "name": KEYWORDS[k][0], "text": KEYWORDS[k][1]} for k in kw][:max(1, 2 - len(rec_kw))]
     kompromat = sum(RECORD_KW[t][1] for t in rec_kw)
 
+    coalition = sum(1 for s in p["spells"] if s["party"] in (coalitions or ()))
+    minister = has(text, "министър", "вицепремиер", "еврокомисар", "зам.-председател на нс")
+    active = any(not s["to"] for s in p["spells"])
+    starts = [s["from"] for s in p["spells"] + p["offices"] if s["from"]]
+    span = months(min(starts), None if active else max(s["to"] or TODAY for s in p["spells"] + p["offices"])) / 12 \
+        if starts else 0
+    regions = [r for r in p.get("regions") or [] if r]
+    posts = [o for o in p["offices"] if not has(o["title"], "независим")]
+    raw = {
+        "charisma": 2 + 3 * ("president" in kw) + 2 * ("pm" in kw) + 2 * ("founder" in kw)
+        + 1.5 * ("leader" in kw) + (p.get("preferences") or 0) / 5000,
+        "scheming": 2 + 2 * switches + 2 * ("founder" in kw and switches > 0) + coalition + ("indep" in kw),
+        "corruption": max((RECORD_KW[t][3] for t in rec_kw), default=None),
+        "influence": 2 + 4 * ("pm" in kw) + 4 * ("president" in kw) + 2 * minister + 1.5 * ("leader" in kw)
+        + 0.3 * terms,
+        "experience": max(years / 3.5, terms * 1.5),
+        "loyalty": 9 - 2.5 * switches - 1.5 * ("indep" in kw),
+        "survival": 2 + 3 * active + 2 * len(posts) + span / 8,
+        "network": 2 + len(distinct) + coalition + minister + len(posts),
+        "negotiation": 2 + 2 * coalition + 2 * has(text, "съпредседател", "съосновател", "обща листа")
+        + ("pm" in kw),
+        "lawmaking": p["bills"] / 5 if p.get("bills") is not None else None,
+        "attendance": p["attendance"] * 10 if p.get("attendance") is not None else None,
+        "base": 2 * max(regions.count(r) for r in regions) if regions else None,
+    }
+    stats = {k: None if v is None else clamp(v) for k, v in raw.items()}
     current = next((s for s in reversed(p["spells"]) if s["party"]), None)
     flavor = next((s["note"] for s in reversed(p["spells"]) if s["note"]), "")
-    return {"stats": stats, "cost": cost, "rarity": rarity[0], "rarityLabel": rarity[1],
+    return {"stats": stats, "rookie": "rookie" in kw,
             "keywords": keywords, "kompromat": kompromat,
             "records": [{k: r.get(k) for k in ("type", "date", "summary", "source")} for r in records],
             "party": current["party"] if current else None, "parties": distinct,
             "years": round(years, 1), "terms": terms, "switches": switches, "flavor": flavor}
 
 
+def pick_main(cards: list[dict]) -> None:
+    """Main stats are the three that stand out most against the deck's median,
+    so a card shows what makes the politician distinctive; then cost and rarity."""
+    med = {}
+    for k in STATS:
+        vals = sorted(c["stats"][k] for c in cards if c["stats"][k] is not None)
+        med[k] = vals[len(vals) // 2] if vals else 0
+    order = list(STATS)
+    for c in cards:
+        known = [k for k in STATS if c["stats"][k] is not None]
+        c["main"] = sorted(known, key=lambda k: (-(c["stats"][k] - med[k]), -c["stats"][k], order.index(k)))[:3]
+        total = sum(c["stats"][k] for k in c["main"])
+        c["rarity"], c["rarityLabel"] = next((r, label) for floor, r, label in RARITY if total >= floor)
+        c["cost"] = clamp(total / 4 - c.pop("rookie"), 1, 7)
+
+
 def build_cards(people: list[dict], register: dict, records: dict | None = None) -> list[dict]:
     pinfo = {p["id"]: {"short": p["short"], "name": p["name"], "color": p["color"]}
              for p in register.get("parties", [])}
+    coalitions = {p["id"] for p in register.get("parties", [])
+                  if has(p["name"], "+", "коалиция", "блок", " – ", "обединени")}
     cards = []
     for p in people:
         c = {"id": p["id"], "name": p["name"], "born": p["born"], "region": p["region"],
              "source": p["source"], "termList": p["terms"],
-             **score(p, (records or {}).get(p["name"].lower()))}
+             **score(p, (records or {}).get(p["name"].lower()), coalitions)}
         cards.append(c)
+    pick_main(cards)
     cards.sort(key=lambda c: (-c["cost"], c["name"]))
     for i, c in enumerate(cards, 1):
         c["number"] = f"{i:03d}/{len(cards):03d}"
@@ -231,7 +282,8 @@ def main(argv=None) -> None:
     shadow = json.loads(args.shadow.read_text("utf-8"))["cards"] if args.shadow.exists() else []
     for i, c in enumerate(shadow, 1):
         c["number"] = f"С{i:02d}/{len(shadow):02d}"
-    payload = {"generated": TODAY, "cards": cards, "shadow": shadow, "parties": parties}
+    payload = {"generated": TODAY, "stats": {k: {"name": n, "abbr": a, "from": f} for k, (n, a, f) in STATS.items()},
+               "cards": cards, "shadow": shadow, "parties": parties}
     args.json.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + "\n", "utf-8")
     page = args.template.read_text("utf-8").replace(

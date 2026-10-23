@@ -50,11 +50,11 @@ main { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm, 1fr)
   background: var(--pc); color: var(--pc-ink); font-weight: 700; font-size: 3.6mm; border: .5mm solid var(--panel); outline: .3mm solid var(--pc);
 }
 .art {
-  flex: 0 0 25mm; border-radius: 1.6mm; position: relative; overflow: hidden; color: var(--pc-ink);
+  flex: 0 0 21mm; border-radius: 1.6mm; position: relative; overflow: hidden; color: var(--pc-ink);
   background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.35), transparent 55%), var(--pc);
   display: grid; place-items: center;
 }
-.art .initials { font-size: 13mm; font-weight: 700; letter-spacing: -.5mm; opacity: .92; }
+.art .initials { font-size: 11mm; font-weight: 700; letter-spacing: -.5mm; opacity: .92; }
 .art .watermark { position: absolute; right: 1.6mm; bottom: .8mm; font-size: 2.6mm; font-weight: 600; opacity: .8; }
 .art .stripes { position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, rgba(255,255,255,.07) 0 2mm, transparent 2mm 4mm); }
 .type { font-size: 2.5mm; justify-content: space-between; }
@@ -80,6 +80,10 @@ main { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm, 1fr)
 .text .rec b { color: #8a1c1c; }
 .records { font-size: 1.9mm; color: var(--muted); border-top: .2mm solid var(--line); padding-top: .6mm; }
 .records a { color: inherit; }
+.minor { display: flex; flex-wrap: wrap; gap: .5mm 1.6mm; background: var(--panel); border-radius: 1.6mm; padding: .6mm 1.6mm; font-size: 1.95mm; color: var(--muted); }
+.minor b { color: var(--ink); }
+.minor:empty { display: none; }
+.stat .k.long { font-size: 1.6mm; letter-spacing: 0; }
 .foot { display: flex; justify-content: space-between; font-size: 1.8mm; color: var(--pc-ink); opacity: .9; padding: 0 .6mm; }
 
 .legend { max-width: 1200px; margin: 0 auto; padding: 0 16px 32px; color: var(--muted); font-size: 13px; }
@@ -115,9 +119,6 @@ main { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm, 1fr)
   <select id="sort" aria-label="Подреждане">
     <option value="cost">По цена</option>
     <option value="name">По име</option>
-    <option value="influence">По влияние</option>
-    <option value="experience">По стаж</option>
-    <option value="loyalty">По лоялност</option>
   </select>
   <button id="print" type="button">Печат (9 на лист A4)</button>
   <span class="count" id="count"></span>
@@ -126,11 +127,12 @@ main { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm, 1fr)
 <details class="legend">
   <summary>Как се изчисляват картите</summary>
   <dl>
-    <dt>Влияние</dt><dd>Ръководни постове: министър-председател, президент, основател или лидер на партия, председател на група, брой мандати.</dd>
-    <dt>Стаж</dt><dd>Години в политиката (или в парламента), около 3,5 години на точка; поне 1,5 точки на мандат.</dd>
-    <dt>Лоялност</dt><dd>10 минус 2,5 за всяка смяна на партия или група, минус 1,5 за период като независим.</dd>
-    <dt>Цена</dt><dd>Сборът от трите показателя, разделен на 4 (от 1 до 7).</dd>
-    <dt>Рядкост</dt><dd>Сбор 24+ легендарна, 18+ рядка, 12+ необичайна, иначе обикновена.</dd>
+    <dt>Показатели</dt><dd>12 показателя от 1 до 10. Показател без данни за човека остава празен. Основните три на картата са тези, с които политикът най-много се откроява спрямо медианата на колодата; останалите са в реда със съкращения.</dd>
+    <dt>Цена</dt><dd>Сборът от трите основни показателя, разделен на 4 (от 1 до 7).</dd>
+    <dt>Рядкост</dt><dd>Сбор на основните 26+ легендарна, 23+ рядка, 19+ необичайна, иначе обикновена.</dd>
+  </dl>
+  <dl id="statdefs"></dl>
+  <dl>
     <dt>Схеми и контрамерки</dt><dd>Карти за механизмите на задкулисието (лобизъм, кумовщина, корупция, медии) и за контрола над тях. Описват механизми, не конкретни хора.</dd>
     <dt>Компромат</dt><dd>Всеки жетон намалява Влиянието с 1. Щом Компроматът стане равен на Лоялността, депутатът минава на страната на противника.</dd>
     <dt>Ресурс</dt><dd>Жетони от схемите; плащат цената на схеми и купени гласове.</dd>
@@ -139,7 +141,7 @@ main { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm, 1fr)
 </details>
 <script>
 const DATA = /*CARDS*/null;
-const STAT = { influence: "Влияние", experience: "Стаж", loyalty: "Лоялност" };
+const STAT = DATA.stats;
 const RANK = { legendary: 0, rare: 1, uncommon: 2, common: 3 };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -163,10 +165,12 @@ function card(c) {
     <div class="bar"><span class="name${c.name.length > 20 ? " long" : ""}">${esc(c.name)}</span><span class="cost" title="Цена">${c.cost}</span></div>
     <div class="art"><div class="stripes"></div><span class="initials">${esc(initials(c.name))}</span><span class="watermark">${esc(p.short)}</span>${c.kompromat ? `<span class="kompromat" title="Начален Компромат">Компромат ${c.kompromat}</span>` : ""}</div>
     <div class="bar type"><span>${role} · ${esc(p.short)}</span><span class="gem" title="${esc(c.rarityLabel)}"></span></div>
+    <div class="minor">${Object.keys(STAT).filter(k => !c.main.includes(k) && c.stats[k] != null).map(k =>
+      `<span title="${esc(STAT[k].name)}">${STAT[k].abbr} <b>${c.stats[k]}</b></span>`).join("")}</div>
     <div class="text">${kws}${c.records.length ? `<div class="records">${c.records.map(r =>
       `<a href="${esc(r.source)}" target="_blank" rel="noopener">${esc(r.summary)}, ${esc(r.date)}</a>`).join("; ")}</div>` : ""}${c.flavor ? `<div class="flavor">${esc(c.flavor)}</div>` : ""}</div>
-    <div class="stats">${Object.entries(STAT).map(([k, l]) =>
-      `<div class="stat"><div class="v">${c.stats[k]}</div><div class="k">${l}</div></div>`).join("")}</div>
+    <div class="stats">${c.main.map(k =>
+      `<div class="stat" title="${esc(STAT[k].from)}"><div class="v">${c.stats[k]}</div><div class="k${STAT[k].name.length > 10 ? " long" : ""}">${esc(STAT[k].name)}</div></div>`).join("")}</div>
     <div class="foot"><span>${c.number}</span><span>${esc(c.rarityLabel)}</span><span>${esc(c.source)}</span></div>
   </article>`;
 }
@@ -190,7 +194,7 @@ function render() {
     .filter(c => (!q || c.name.toLowerCase().includes(q)) && (!pf || c.party === pf) && (!rf || c.rarity === rf))
     .sort((a, b) => sort === "name" ? byName(a, b)
       : sort === "cost" ? b.cost - a.cost || RANK[a.rarity] - RANK[b.rarity] || byName(a, b)
-      : b.stats[sort] - a.stats[sort] || byName(a, b));
+      : (b.stats[sort] ?? -1) - (a.stats[sort] ?? -1) || byName(a, b));
   const shadow = kf === "politician" || pf || rf ? [] : (DATA.shadow || [])
     .filter(c => (!kf || c.kind === kf) && (!q || c.name.toLowerCase().includes(q)))
     .sort((a, b) => sort === "name" ? byName(a, b) : sort === "cost" ? b.cost - a.cost || byName(a, b) : 0);
@@ -199,6 +203,9 @@ function render() {
   $("#count").textContent = `${list.length + shadow.length} от ${total} карти`;
 }
 
+$("#sort").insertAdjacentHTML("beforeend", Object.entries(STAT).map(([k, s]) =>
+  `<option value="${k}">По ${esc(s.name.toLowerCase())}</option>`).join(""));
+$("#statdefs").innerHTML = Object.values(STAT).map(s => `<dt>${esc(s.name)} (${s.abbr})</dt><dd>${esc(s.from)}</dd>`).join("");
 const used = [...new Set(DATA.cards.map(c => c.party))];
 $("#party").insertAdjacentHTML("beforeend", used.map(id => `<option value="${esc(id ?? "")}">${esc(party(id).short)}</option>`).join(""));
 const rar = [...new Map(DATA.cards.map(c => [c.rarity, c.rarityLabel]))].sort((a, b) => RANK[a[0]] - RANK[b[0]]);

@@ -39,8 +39,12 @@ class StatsModel(unittest.TestCase):
             for p in "abcdefgh"]}]}
         s = build.score(build.from_register(register)[0])
         for v in s["stats"].values():
-            self.assertTrue(1 <= v <= 10)
-        self.assertTrue(1 <= s["cost"] <= 7)
+            self.assertTrue(v is None or 1 <= v <= 10)
+        self.assertIsNone(s["stats"]["corruption"])   # no record, no corruption score
+        cards, _ = build.build_cards(build.from_register(register), {})
+        self.assertTrue(1 <= cards[0]["cost"] <= 7)
+        self.assertEqual(len(cards[0]["main"]), 3)
+        self.assertNotIn("corruption", cards[0]["main"])
 
     def test_record_adds_keyword_and_kompromat(self):
         p = build.from_mps(MPS, current=False)[1]
@@ -50,6 +54,7 @@ class StatsModel(unittest.TestCase):
         self.assertEqual(s["keywords"][0]["name"], "Конфликт на интереси")
         self.assertEqual(s["kompromat"], 1)
         self.assertLessEqual(len(s["keywords"]), 3)
+        self.assertEqual(s["stats"]["corruption"], 4)
         self.assertEqual(build.score(p)["kompromat"], 0)
 
     def test_records_without_source_are_refused(self):

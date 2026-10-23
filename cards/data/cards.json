@@ -1,5 +1,67 @@
 {
  "generated": "2026-10",
+ "stats": {
+  "charisma": {
+   "name": "Харизма",
+   "abbr": "ХАР",
+   "from": "води листи, основава партии, печели преки избори; преференции"
+  },
+  "scheming": {
+   "name": "Интриги",
+   "abbr": "ИНТ",
+   "from": "смени на партия, отцепвания, коалиции, периоди като независим"
+  },
+  "influence": {
+   "name": "Влияние",
+   "abbr": "ВЛИ",
+   "from": "постове: премиер, президент, министър, лидер; мандати"
+  },
+  "negotiation": {
+   "name": "Преговори",
+   "abbr": "ПРГ",
+   "from": "коалиции, общи листи, съпредседателство"
+  },
+  "network": {
+   "name": "Връзки",
+   "abbr": "ВРЪ",
+   "from": "брой партии, коалиции и държавни постове"
+  },
+  "survival": {
+   "name": "Оцеляване",
+   "abbr": "ОЦЛ",
+   "from": "завръщания след други постове, още е активен, дължина на кариерата"
+  },
+  "experience": {
+   "name": "Опит",
+   "abbr": "ОПТ",
+   "from": "години в политиката или в парламента, мандати"
+  },
+  "loyalty": {
+   "name": "Лоялност",
+   "abbr": "ЛОЯ",
+   "from": "10 минус смените на партия и периодите като независим"
+  },
+  "corruption": {
+   "name": "Корупция",
+   "abbr": "КОР",
+   "from": "само официални актове от data/records.json"
+  },
+  "lawmaking": {
+   "name": "Законотворчество",
+   "abbr": "ЗАК",
+   "from": "внесени законопроекти (поле bills)"
+  },
+  "attendance": {
+   "name": "Присъствие",
+   "abbr": "ПРС",
+   "from": "присъствие на заседания (поле attendance)"
+  },
+  "base": {
+   "name": "Регионална база",
+   "abbr": "РЕГ",
+   "from": "мандати от един и същи избирателен район"
+  }
+ },
  "cards": [
   {
    "id": "dogan",
@@ -9,13 +71,19 @@
    "source": "хронология на партиите",
    "termList": [],
    "stats": {
-    "influence": 6,
+    "charisma": 6,
+    "scheming": 6,
+    "corruption": null,
+    "influence": 4,
     "experience": 10,
-    "loyalty": 8
+    "loyalty": 6,
+    "survival": 10,
+    "network": 4,
+    "negotiation": 2,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
    },
-   "cost": 6,
-   "rarity": "legendary",
-   "rarityLabel": "Легендарна",
    "keywords": [
     {
      "id": "founder",
@@ -39,87 +107,15 @@
    "terms": 0,
    "switches": 1,
    "flavor": "Оглавява отцепилия се АПС",
-   "number": "001/011"
-  },
-  {
-   "id": "parvanov",
-   "name": "Георги Първанов",
-   "born": null,
-   "region": null,
-   "source": "хронология на партиите",
-   "termList": [],
-   "stats": {
-    "influence": 9,
-    "experience": 8,
-    "loyalty": 8
-   },
-   "cost": 6,
+   "main": [
+    "experience",
+    "survival",
+    "charisma"
+   ],
    "rarity": "legendary",
    "rarityLabel": "Легендарна",
-   "keywords": [
-    {
-     "id": "founder",
-     "name": "Основател",
-     "text": "Щом влезе в игра, създай жетон „Нова партия“."
-    },
-    {
-     "id": "president",
-     "name": "Държавен глава",
-     "text": "Вето: отмени една карта „Закон“ този ход."
-    }
-   ],
-   "kompromat": 0,
-   "records": [],
-   "party": "abv",
-   "parties": [
-    "bsp",
-    "abv"
-   ],
-   "years": 26.9,
-   "terms": 0,
-   "switches": 1,
-   "flavor": "Основава АБВ",
-   "number": "002/011"
-  },
-  {
-   "id": "mestan",
-   "name": "Лютви Местан",
-   "born": null,
-   "region": null,
-   "source": "хронология на партиите",
-   "termList": [],
-   "stats": {
-    "influence": 6,
-    "experience": 8,
-    "loyalty": 8
-   },
    "cost": 6,
-   "rarity": "rare",
-   "rarityLabel": "Рядка",
-   "keywords": [
-    {
-     "id": "founder",
-     "name": "Основател",
-     "text": "Щом влезе в игра, създай жетон „Нова партия“."
-    },
-    {
-     "id": "leader",
-     "name": "Лидер",
-     "text": "Другите ти карти от същата партия получават +1 Влияние."
-    }
-   ],
-   "kompromat": 0,
-   "records": [],
-   "party": "dost",
-   "parties": [
-    "dps",
-    "dost"
-   ],
-   "years": 26.9,
-   "terms": 0,
-   "switches": 1,
-   "flavor": "Основава ДОСТ след изключването си",
-   "number": "003/011"
+   "number": "001/011"
   },
   {
    "id": "borisov",
@@ -129,13 +125,19 @@
    "source": "хронология на партиите",
    "termList": [],
    "stats": {
-    "influence": 7,
+    "charisma": 6,
+    "scheming": 6,
+    "corruption": null,
+    "influence": 8,
     "experience": 6,
-    "loyalty": 8
+    "loyalty": 6,
+    "survival": 8,
+    "network": 5,
+    "negotiation": 3,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
    },
-   "cost": 5,
-   "rarity": "rare",
-   "rarityLabel": "Рядка",
    "keywords": [
     {
      "id": "founder",
@@ -159,7 +161,69 @@
    "terms": 0,
    "switches": 1,
    "flavor": "Основава ГЕРБ, три пъти министър-председател",
-   "number": "004/011"
+   "main": [
+    "influence",
+    "survival",
+    "experience"
+   ],
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "cost": 6,
+   "number": "002/011"
+  },
+  {
+   "id": "parvanov",
+   "name": "Георги Първанов",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "charisma": 8,
+    "scheming": 6,
+    "corruption": null,
+    "influence": 8,
+    "experience": 8,
+    "loyalty": 6,
+    "survival": 7,
+    "network": 5,
+    "negotiation": 2,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
+   },
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "president",
+     "name": "Държавен глава",
+     "text": "Вето: отмени една карта „Закон“ този ход."
+    }
+   ],
+   "kompromat": 0,
+   "records": [],
+   "party": "abv",
+   "parties": [
+    "bsp",
+    "abv"
+   ],
+   "years": 26.9,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Основава АБВ",
+   "main": [
+    "influence",
+    "experience",
+    "charisma"
+   ],
+   "rarity": "rare",
+   "rarityLabel": "Рядка",
+   "cost": 6,
+   "number": "003/011"
   },
   {
    "id": "kostov",
@@ -169,13 +233,19 @@
    "source": "хронология на партиите",
    "termList": [],
    "stats": {
-    "influence": 7,
+    "charisma": 6,
+    "scheming": 9,
+    "corruption": null,
+    "influence": 8,
     "experience": 7,
-    "loyalty": 5
+    "loyalty": 4,
+    "survival": 5,
+    "network": 7,
+    "negotiation": 5,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
    },
-   "cost": 5,
-   "rarity": "rare",
-   "rarityLabel": "Рядка",
    "keywords": [
     {
      "id": "founder",
@@ -200,47 +270,15 @@
    "terms": 0,
    "switches": 2,
    "flavor": "Депутат от Синята коалиция",
-   "number": "005/011"
-  },
-  {
-   "id": "siderov",
-   "name": "Волен Сидеров",
-   "born": null,
-   "region": null,
-   "source": "хронология на партиите",
-   "termList": [],
-   "stats": {
-    "influence": 6,
-    "experience": 5,
-    "loyalty": 5
-   },
-   "cost": 4,
-   "rarity": "uncommon",
-   "rarityLabel": "Необичайна",
-   "keywords": [
-    {
-     "id": "founder",
-     "name": "Основател",
-     "text": "Щом влезе в игра, създай жетон „Нова партия“."
-    },
-    {
-     "id": "leader",
-     "name": "Лидер",
-     "text": "Другите ти карти от същата партия получават +1 Влияние."
-    }
+   "main": [
+    "influence",
+    "scheming",
+    "network"
    ],
-   "kompromat": 0,
-   "records": [],
-   "party": "ataka",
-   "parties": [
-    "ataka",
-    "up"
-   ],
-   "years": 16.0,
-   "terms": 0,
-   "switches": 2,
-   "flavor": "Атака напуска коалицията",
-   "number": "006/011"
+   "rarity": "rare",
+   "rarityLabel": "Рядка",
+   "cost": 6,
+   "number": "004/011"
   },
   {
    "id": "petkov",
@@ -250,13 +288,19 @@
    "source": "хронология на партиите",
    "termList": [],
    "stats": {
-    "influence": 7,
+    "charisma": 6,
+    "scheming": 7,
+    "corruption": null,
+    "influence": 8,
     "experience": 1,
-    "loyalty": 8
+    "loyalty": 6,
+    "survival": 6,
+    "network": 6,
+    "negotiation": 7,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
    },
-   "cost": 4,
-   "rarity": "uncommon",
-   "rarityLabel": "Необичайна",
    "keywords": [
     {
      "id": "founder",
@@ -280,118 +324,15 @@
    "terms": 0,
    "switches": 1,
    "flavor": "Обща листа ПП–ДБ",
-   "number": "007/011"
-  },
-  {
-   "id": "manolova",
-   "name": "Мая Манолова",
-   "born": null,
-   "region": null,
-   "source": "хронология на партиите",
-   "termList": [],
-   "stats": {
-    "influence": 4,
-    "experience": 4,
-    "loyalty": 8
-   },
-   "cost": 4,
+   "main": [
+    "influence",
+    "negotiation",
+    "scheming"
+   ],
    "rarity": "uncommon",
    "rarityLabel": "Необичайна",
-   "keywords": [
-    {
-     "id": "leader",
-     "name": "Лидер",
-     "text": "Другите ти карти от същата партия получават +1 Влияние."
-    }
-   ],
-   "kompromat": 0,
-   "records": [],
-   "party": "ismv",
-   "parties": [
-    "bsp",
-    "ismv"
-   ],
-   "years": 12.3,
-   "terms": 0,
-   "switches": 1,
-   "flavor": "Води „Изправи се! Мутри вън!“",
-   "number": "008/011"
-  },
-  {
-   "id": "ivanov",
-   "name": "Христо Иванов",
-   "born": null,
-   "region": null,
-   "source": "хронология на партиите",
-   "termList": [],
-   "stats": {
-    "influence": 4,
-    "experience": 2,
-    "loyalty": 8
-   },
-   "cost": 4,
-   "rarity": "uncommon",
-   "rarityLabel": "Необичайна",
-   "keywords": [
-    {
-     "id": "leader",
-     "name": "Лидер",
-     "text": "Другите ти карти от същата партия получават +1 Влияние."
-    }
-   ],
-   "kompromat": 0,
-   "records": [],
-   "party": "ppdb",
-   "parties": [
-    "db",
-    "ppdb"
-   ],
-   "years": 8.5,
-   "terms": 0,
-   "switches": 1,
-   "flavor": "Обща листа ПП–ДБ",
-   "number": "009/011"
-  },
-  {
-   "id": "kuneva",
-   "name": "Меглена Кунева",
-   "born": null,
-   "region": null,
-   "source": "хронология на партиите",
-   "termList": [],
-   "stats": {
-    "influence": 4,
-    "experience": 4,
-    "loyalty": 5
-   },
-   "cost": 3,
-   "rarity": "uncommon",
-   "rarityLabel": "Необичайна",
-   "keywords": [
-    {
-     "id": "founder",
-     "name": "Основател",
-     "text": "Щом влезе в игра, създай жетон „Нова партия“."
-    },
-    {
-     "id": "nomad",
-     "name": "Номад",
-     "text": "Може да се присъедини към всяка коалиция."
-    }
-   ],
-   "kompromat": 0,
-   "records": [],
-   "party": "rb",
-   "parties": [
-    "ndsv",
-    "bfc",
-    "rb"
-   ],
-   "years": 15.7,
-   "terms": 0,
-   "switches": 2,
-   "flavor": "Вицепремиер от Реформаторския блок",
-   "number": "010/011"
+   "cost": 6,
+   "number": "005/011"
   },
   {
    "id": "vasilev",
@@ -401,13 +342,19 @@
    "source": "хронология на партиите",
    "termList": [],
    "stats": {
+    "charisma": 4,
+    "scheming": 10,
+    "corruption": null,
     "influence": 4,
     "experience": 2,
-    "loyalty": 1
+    "loyalty": 1,
+    "survival": 6,
+    "network": 8,
+    "negotiation": 4,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
    },
-   "cost": 2,
-   "rarity": "common",
-   "rarityLabel": "Обикновена",
    "keywords": [
     {
      "id": "founder",
@@ -433,6 +380,275 @@
    "terms": 0,
    "switches": 3,
    "flavor": "Основава МЕЧ",
+   "main": [
+    "scheming",
+    "network",
+    "survival"
+   ],
+   "rarity": "rare",
+   "rarityLabel": "Рядка",
+   "cost": 6,
+   "number": "006/011"
+  },
+  {
+   "id": "siderov",
+   "name": "Волен Сидеров",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "charisma": 6,
+    "scheming": 9,
+    "corruption": null,
+    "influence": 4,
+    "experience": 5,
+    "loyalty": 4,
+    "survival": 4,
+    "network": 5,
+    "negotiation": 6,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
+   },
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    }
+   ],
+   "kompromat": 0,
+   "records": [],
+   "party": "ataka",
+   "parties": [
+    "ataka",
+    "up"
+   ],
+   "years": 16.0,
+   "terms": 0,
+   "switches": 2,
+   "flavor": "Атака напуска коалицията",
+   "main": [
+    "scheming",
+    "negotiation",
+    "charisma"
+   ],
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "cost": 5,
+   "number": "007/011"
+  },
+  {
+   "id": "mestan",
+   "name": "Лютви Местан",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "charisma": 6,
+    "scheming": 6,
+    "corruption": null,
+    "influence": 4,
+    "experience": 8,
+    "loyalty": 6,
+    "survival": 5,
+    "network": 4,
+    "negotiation": 2,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
+   },
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    }
+   ],
+   "kompromat": 0,
+   "records": [],
+   "party": "dost",
+   "parties": [
+    "dps",
+    "dost"
+   ],
+   "years": 26.9,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Основава ДОСТ след изключването си",
+   "main": [
+    "experience",
+    "charisma",
+    "scheming"
+   ],
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "cost": 5,
+   "number": "008/011"
+  },
+  {
+   "id": "kuneva",
+   "name": "Меглена Кунева",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "charisma": 4,
+    "scheming": 9,
+    "corruption": null,
+    "influence": 4,
+    "experience": 4,
+    "loyalty": 4,
+    "survival": 4,
+    "network": 7,
+    "negotiation": 4,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
+   },
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "nomad",
+     "name": "Номад",
+     "text": "Може да се присъедини към всяка коалиция."
+    }
+   ],
+   "kompromat": 0,
+   "records": [],
+   "party": "rb",
+   "parties": [
+    "ndsv",
+    "bfc",
+    "rb"
+   ],
+   "years": 15.7,
+   "terms": 0,
+   "switches": 2,
+   "flavor": "Вицепремиер от Реформаторския блок",
+   "main": [
+    "scheming",
+    "network",
+    "influence"
+   ],
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "cost": 5,
+   "number": "009/011"
+  },
+  {
+   "id": "manolova",
+   "name": "Мая Манолова",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "charisma": 4,
+    "scheming": 4,
+    "corruption": null,
+    "influence": 6,
+    "experience": 4,
+    "loyalty": 6,
+    "survival": 6,
+    "network": 6,
+    "negotiation": 2,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
+   },
+   "keywords": [
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    }
+   ],
+   "kompromat": 0,
+   "records": [],
+   "party": "ismv",
+   "parties": [
+    "bsp",
+    "ismv"
+   ],
+   "years": 12.3,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Води „Изправи се! Мутри вън!“",
+   "main": [
+    "influence",
+    "network",
+    "survival"
+   ],
+   "rarity": "common",
+   "rarityLabel": "Обикновена",
+   "cost": 4,
+   "number": "010/011"
+  },
+  {
+   "id": "ivanov",
+   "name": "Христо Иванов",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "charisma": 4,
+    "scheming": 5,
+    "corruption": null,
+    "influence": 4,
+    "experience": 2,
+    "loyalty": 6,
+    "survival": 6,
+    "network": 5,
+    "negotiation": 6,
+    "lawmaking": null,
+    "attendance": null,
+    "base": null
+   },
+   "keywords": [
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    }
+   ],
+   "kompromat": 0,
+   "records": [],
+   "party": "ppdb",
+   "parties": [
+    "db",
+    "ppdb"
+   ],
+   "years": 8.5,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Обща листа ПП–ДБ",
+   "main": [
+    "negotiation",
+    "survival",
+    "loyalty"
+   ],
+   "rarity": "common",
+   "rarityLabel": "Обикновена",
+   "cost": 4,
    "number": "011/011"
   }
  ],
