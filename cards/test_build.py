@@ -66,6 +66,12 @@ class StatsModel(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 build.load_records(f)
 
+    def test_efficiency_needs_activity_data(self):
+        self.assertIsNone(build.efficiency({}, 4))
+        busy = build.efficiency({"bills": 10, "billsPassed": 8, "questions": 40}, 4)
+        idle = build.efficiency({"bills": 10, "billsPassed": 0, "questions": 0}, 4)
+        self.assertGreater(busy, idle)
+
     def test_months(self):
         self.assertEqual(build.months("2020-01", "2021-03"), 14)
         self.assertEqual(build.months(None, "2021-03"), 0)

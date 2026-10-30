@@ -82,8 +82,9 @@ def from_mps(mps: list[dict], current: bool) -> list[dict]:
         last = terms[-1]
         people.append({"id": f"mp{last['mpId']}", "name": p["name"], "born": p.get("born"),
                        "region": last.get("region"), "terms": sorted({t["na"] for t in terms}),
-                       "spells": spells, "offices": offices, "regions": [t.get("region") for t in terms],
-                       "bills": p.get("bills"), "attendance": p.get("attendance"),
+                       "spells": spells, "offices": offices,
+                       "bills": p.get("bills"), "billsPassed": p.get("billsPassed"),
+                       "questions": p.get("questions"), "attendance": p.get("attendance"),
                        "preferences": p.get("preferences"),
                        "source": "parliament.bg"})
     return people
@@ -116,14 +117,13 @@ STATS = {
     "scheming":   ("Интриги", "ИНТ", "смени на партия, отцепвания, коалиции, периоди като независим"),
     "influence":  ("Влияние", "ВЛИ", "постове: премиер, президент, министър, лидер; мандати"),
     "negotiation": ("Преговори", "ПРГ", "коалиции, общи листи, съпредседателство"),
-    "network":    ("Връзки", "ВРЪ", "брой партии, коалиции и държавни постове"),
     "survival":   ("Оцеляване", "ОЦЛ", "завръщания след други постове, още е активен, дължина на кариерата"),
     "experience": ("Опит", "ОПТ", "години в политиката или в парламента, мандати"),
     "loyalty":    ("Лоялност", "ЛОЯ", "10 минус смените на партия и периодите като независим"),
     "corruption": ("Корупция", "КОР", "само официални актове от data/records.json"),
-    "lawmaking":  ("Законотворчество", "ЗАК", "внесени законопроекти (поле bills)"),
+    "efficiency": ("Ефективност", "ЕФК", "резултат на година в парламента: приети законопроекти, дял приети от внесените, "
+                   "парламентарен контрол (полета bills, billsPassed, questions)"),
     "attendance": ("Присъствие", "ПРС", "присъствие на заседания (поле attendance)"),
-    "base":       ("Регионална база", "РЕГ", "мандати от един и същи избирателен район"),
 }
 RARITY = [(26, "legendary", "Легендарна"), (23, "rare", "Рядка"),
           (19, "uncommon", "Необичайна"), (0, "common", "Обикновена")]
@@ -141,6 +141,16 @@ def load_records(path: Path | None) -> dict[str, list[dict]]:
             raise SystemExit(f"{path}: record for {r.get('name')} has no source URL")
         out.setdefault(r["name"].lower(), []).append(r)
     return out
+
+
+def efficiency(p: dict, years: float) -> float | None:
+    """Output per year in parliament; None when no activity data was scraped."""
+    bills, passed, questions = p.get("bills"), p.get("billsPassed"), p.get("questions")
+    if bills is None and passed is None and questions is None:
+        return None
+    yrs = max(years, 1)
+    rate = passed / bills if bills and passed is not None else 0
+    return 1 + (passed or 0) / yrs + 4 * rate + (questions or 0) / yrs / 4
 
 
 def score(p: dict, records: list[dict] | None = None, coalitions: set | None = None) -> dict:
@@ -186,7 +196,6 @@ def score(p: dict, records: list[dict] | None = None, coalitions: set | None = N
     starts = [s["from"] for s in p["spells"] + p["offices"] if s["from"]]
     span = months(min(starts), None if active else max(s["to"] or TODAY for s in p["spells"] + p["offices"])) / 12 \
         if starts else 0
-    regions = [r for r in p.get("regions") or [] if r]
     posts = [o for o in p["offices"] if not has(o["title"], "независим")]
     raw = {
         "charisma": 2 + 3 * ("president" in kw) + 2 * ("pm" in kw) + 2 * ("founder" in kw)
@@ -198,12 +207,10 @@ def score(p: dict, records: list[dict] | None = None, coalitions: set | None = N
         "experience": max(years / 3.5, terms * 1.5),
         "loyalty": 9 - 2.5 * switches - 1.5 * ("indep" in kw),
         "survival": 2 + 3 * active + 2 * len(posts) + span / 8,
-        "network": 2 + len(distinct) + coalition + minister + len(posts),
         "negotiation": 2 + 2 * coalition + 2 * has(text, "съпредседател", "съосновател", "обща листа")
         + ("pm" in kw),
-        "lawmaking": p["bills"] / 5 if p.get("bills") is not None else None,
+        "efficiency": efficiency(p, years),
         "attendance": p["attendance"] * 10 if p.get("attendance") is not None else None,
-        "base": 2 * max(regions.count(r) for r in regions) if regions else None,
     }
     stats = {k: None if v is None else clamp(v) for k, v in raw.items()}
     current = next((s for s in reversed(p["spells"]) if s["party"]), None)

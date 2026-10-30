@@ -21,11 +21,6 @@
    "abbr": "ПРГ",
    "from": "коалиции, общи листи, съпредседателство"
   },
-  "network": {
-   "name": "Връзки",
-   "abbr": "ВРЪ",
-   "from": "брой партии, коалиции и държавни постове"
-  },
   "survival": {
    "name": "Оцеляване",
    "abbr": "ОЦЛ",
@@ -46,20 +41,15 @@
    "abbr": "КОР",
    "from": "само официални актове от data/records.json"
   },
-  "lawmaking": {
-   "name": "Законотворчество",
-   "abbr": "ЗАК",
-   "from": "внесени законопроекти (поле bills)"
+  "efficiency": {
+   "name": "Ефективност",
+   "abbr": "ЕФК",
+   "from": "резултат на година в парламента: приети законопроекти, дял приети от внесените, парламентарен контрол (полета bills, billsPassed, questions)"
   },
   "attendance": {
    "name": "Присъствие",
    "abbr": "ПРС",
    "from": "присъствие на заседания (поле attendance)"
-  },
-  "base": {
-   "name": "Регионална база",
-   "abbr": "РЕГ",
-   "from": "мандати от един и същи избирателен район"
   }
  },
  "cards": [
@@ -78,11 +68,9 @@
     "experience": 10,
     "loyalty": 6,
     "survival": 10,
-    "network": 4,
     "negotiation": 2,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
+    "efficiency": null,
+    "attendance": null
    },
    "keywords": [
     {
@@ -132,11 +120,9 @@
     "experience": 6,
     "loyalty": 6,
     "survival": 8,
-    "network": 5,
     "negotiation": 3,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
+    "efficiency": null,
+    "attendance": null
    },
    "keywords": [
     {
@@ -186,11 +172,9 @@
     "experience": 8,
     "loyalty": 6,
     "survival": 7,
-    "network": 5,
     "negotiation": 2,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
+    "efficiency": null,
+    "attendance": null
    },
    "keywords": [
     {
@@ -240,11 +224,9 @@
     "experience": 7,
     "loyalty": 4,
     "survival": 5,
-    "network": 7,
     "negotiation": 5,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
+    "efficiency": null,
+    "attendance": null
    },
    "keywords": [
     {
@@ -273,7 +255,7 @@
    "main": [
     "influence",
     "scheming",
-    "network"
+    "experience"
    ],
    "rarity": "rare",
    "rarityLabel": "Рядка",
@@ -295,11 +277,9 @@
     "experience": 1,
     "loyalty": 6,
     "survival": 6,
-    "network": 6,
     "negotiation": 7,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
+    "efficiency": null,
+    "attendance": null
    },
    "keywords": [
     {
@@ -335,62 +315,6 @@
    "number": "005/011"
   },
   {
-   "id": "vasilev",
-   "name": "Радостин Василев",
-   "born": null,
-   "region": null,
-   "source": "хронология на партиите",
-   "termList": [],
-   "stats": {
-    "charisma": 4,
-    "scheming": 10,
-    "corruption": null,
-    "influence": 4,
-    "experience": 2,
-    "loyalty": 1,
-    "survival": 6,
-    "network": 8,
-    "negotiation": 4,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
-   },
-   "keywords": [
-    {
-     "id": "founder",
-     "name": "Основател",
-     "text": "Щом влезе в игра, създай жетон „Нова партия“."
-    },
-    {
-     "id": "nomad",
-     "name": "Номад",
-     "text": "Може да се присъедини към всяка коалиция."
-    }
-   ],
-   "kompromat": 0,
-   "records": [],
-   "party": "mech",
-   "parties": [
-    "itn",
-    "pp",
-    "ppdb",
-    "mech"
-   ],
-   "years": 5.5,
-   "terms": 0,
-   "switches": 3,
-   "flavor": "Основава МЕЧ",
-   "main": [
-    "scheming",
-    "network",
-    "survival"
-   ],
-   "rarity": "rare",
-   "rarityLabel": "Рядка",
-   "cost": 6,
-   "number": "006/011"
-  },
-  {
    "id": "siderov",
    "name": "Волен Сидеров",
    "born": null,
@@ -405,11 +329,9 @@
     "experience": 5,
     "loyalty": 4,
     "survival": 4,
-    "network": 5,
     "negotiation": 6,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
+    "efficiency": null,
+    "attendance": null
    },
    "keywords": [
     {
@@ -442,7 +364,7 @@
    "rarity": "uncommon",
    "rarityLabel": "Необичайна",
    "cost": 5,
-   "number": "007/011"
+   "number": "006/011"
   },
   {
    "id": "mestan",
@@ -459,11 +381,9 @@
     "experience": 8,
     "loyalty": 6,
     "survival": 5,
-    "network": 4,
     "negotiation": 2,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
+    "efficiency": null,
+    "attendance": null
    },
    "keywords": [
     {
@@ -496,7 +416,108 @@
    "rarity": "uncommon",
    "rarityLabel": "Необичайна",
    "cost": 5,
+   "number": "007/011"
+  },
+  {
+   "id": "vasilev",
+   "name": "Радостин Василев",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "charisma": 4,
+    "scheming": 10,
+    "corruption": null,
+    "influence": 4,
+    "experience": 2,
+    "loyalty": 1,
+    "survival": 6,
+    "negotiation": 4,
+    "efficiency": null,
+    "attendance": null
+   },
+   "keywords": [
+    {
+     "id": "founder",
+     "name": "Основател",
+     "text": "Щом влезе в игра, създай жетон „Нова партия“."
+    },
+    {
+     "id": "nomad",
+     "name": "Номад",
+     "text": "Може да се присъедини към всяка коалиция."
+    }
+   ],
+   "kompromat": 0,
+   "records": [],
+   "party": "mech",
+   "parties": [
+    "itn",
+    "pp",
+    "ppdb",
+    "mech"
+   ],
+   "years": 5.5,
+   "terms": 0,
+   "switches": 3,
+   "flavor": "Основава МЕЧ",
+   "main": [
+    "scheming",
+    "survival",
+    "influence"
+   ],
+   "rarity": "uncommon",
+   "rarityLabel": "Необичайна",
+   "cost": 5,
    "number": "008/011"
+  },
+  {
+   "id": "manolova",
+   "name": "Мая Манолова",
+   "born": null,
+   "region": null,
+   "source": "хронология на партиите",
+   "termList": [],
+   "stats": {
+    "charisma": 4,
+    "scheming": 4,
+    "corruption": null,
+    "influence": 6,
+    "experience": 4,
+    "loyalty": 6,
+    "survival": 6,
+    "negotiation": 2,
+    "efficiency": null,
+    "attendance": null
+   },
+   "keywords": [
+    {
+     "id": "leader",
+     "name": "Лидер",
+     "text": "Другите ти карти от същата партия получават +1 Влияние."
+    }
+   ],
+   "kompromat": 0,
+   "records": [],
+   "party": "ismv",
+   "parties": [
+    "bsp",
+    "ismv"
+   ],
+   "years": 12.3,
+   "terms": 0,
+   "switches": 1,
+   "flavor": "Води „Изправи се! Мутри вън!“",
+   "main": [
+    "influence",
+    "survival",
+    "loyalty"
+   ],
+   "rarity": "common",
+   "rarityLabel": "Обикновена",
+   "cost": 4,
+   "number": "009/011"
   },
   {
    "id": "kuneva",
@@ -513,11 +534,9 @@
     "experience": 4,
     "loyalty": 4,
     "survival": 4,
-    "network": 7,
     "negotiation": 4,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
+    "efficiency": null,
+    "attendance": null
    },
    "keywords": [
     {
@@ -545,57 +564,8 @@
    "flavor": "Вицепремиер от Реформаторския блок",
    "main": [
     "scheming",
-    "network",
-    "influence"
-   ],
-   "rarity": "uncommon",
-   "rarityLabel": "Необичайна",
-   "cost": 5,
-   "number": "009/011"
-  },
-  {
-   "id": "manolova",
-   "name": "Мая Манолова",
-   "born": null,
-   "region": null,
-   "source": "хронология на партиите",
-   "termList": [],
-   "stats": {
-    "charisma": 4,
-    "scheming": 4,
-    "corruption": null,
-    "influence": 6,
-    "experience": 4,
-    "loyalty": 6,
-    "survival": 6,
-    "network": 6,
-    "negotiation": 2,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
-   },
-   "keywords": [
-    {
-     "id": "leader",
-     "name": "Лидер",
-     "text": "Другите ти карти от същата партия получават +1 Влияние."
-    }
-   ],
-   "kompromat": 0,
-   "records": [],
-   "party": "ismv",
-   "parties": [
-    "bsp",
-    "ismv"
-   ],
-   "years": 12.3,
-   "terms": 0,
-   "switches": 1,
-   "flavor": "Води „Изправи се! Мутри вън!“",
-   "main": [
     "influence",
-    "network",
-    "survival"
+    "negotiation"
    ],
    "rarity": "common",
    "rarityLabel": "Обикновена",
@@ -617,11 +587,9 @@
     "experience": 2,
     "loyalty": 6,
     "survival": 6,
-    "network": 5,
     "negotiation": 6,
-    "lawmaking": null,
-    "attendance": null,
-    "base": null
+    "efficiency": null,
+    "attendance": null
    },
    "keywords": [
     {
