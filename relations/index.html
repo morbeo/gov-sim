@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Политико: връзки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f1ea;
+  --panel: #fffdf8;
+  --ink: #1d1d1f;
+  --muted: #6b6760;
+  --line: #d9d3c7;
+  --accent: #0b4f8a;
+  --formal: #8c877d;
+  --informal: #b23a2b;
+  --acts: #5b3f99;
+  --warn: #9a5b00;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 "IBM Plex Sans", system-ui, sans-serif; }
+header { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); background: var(--panel); }
+h1 { margin: 0; font-size: 20px; }
+header p { margin: 2px 0 0; color: var(--muted); }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 360px; height: calc(100vh - 66px); }
+#stage { position: relative; overflow: hidden; touch-action: none; }
+#graph { width: 100%; height: 100%; display: block; cursor: grab; user-select: none; }
+#graph.panning { cursor: grabbing; }
+.zoom { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px; }
+.zoom button { width: 34px; height: 34px; padding: 0; font-size: 18px; }
+#tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 12px; max-width: 280px; box-shadow: 0 2px 8px rgba(0,0,0,.08); display: none; }
+aside { border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; border: 0; border-radius: 0; background: none; padding: 10px 4px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.pane { padding: 14px 16px 24px; overflow: auto; flex: 1; display: none; }
+.pane.on { display: block; }
+h2 { font-size: 16px; margin: 0 0 6px; }
+h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 16px 0 6px; }
+button, input, select, textarea { font: inherit; color: var(--ink); }
+button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.danger { color: #a3162b; }
+input[type=text], input[type=url], input[type=search], select, textarea { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+textarea { min-height: 56px; resize: vertical; }
+label.f { display: block; margin: 8px 0 2px; font-size: 12px; color: var(--muted); }
+.row { display: flex; gap: 8px; } .row > * { flex: 1; min-width: 0; }
+.checks label { display: inline-flex; align-items: center; gap: 4px; margin: 0 10px 4px 0; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.badge { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 10px; border: 1px solid currentColor; white-space: nowrap; }
+.st-documented { color: #2e6b3a; } .st-claim { color: var(--warn); } .st-rumor { color: #7a7368; }
+.conn { border-top: 1px solid var(--line); padding: 8px 0; }
+.conn .who { font-weight: 600; cursor: pointer; } .conn .who:hover { text-decoration: underline; }
+.conn .src { word-break: break-all; }
+.legend svg { vertical-align: middle; }
+.legend div { margin: 3px 0; }
+.warn { color: var(--warn); font-size: 12px; margin-top: 4px; }
+.banner { background: #fff4d6; border: 1px solid #e6c873; border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 12px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.node text { font-size: calc(11px / var(--k, 1)); paint-order: stroke; stroke: var(--bg); stroke-width: calc(3px / var(--k, 1)); stroke-linejoin: round; fill: var(--ink); pointer-events: none; }
+.node.party text { font-weight: 700; font-size: calc(12px / var(--k, 1)); }
+.node { cursor: pointer; }
+.edge { fill: none; }
+.edge-hit { fill: none; stroke: transparent; stroke-width: 10px; cursor: pointer; }
+.dim { opacity: .12; }
+.sel-ring { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 3 2; }
+#year { width: 100%; }
+@media (max-width: 820px) {
+  main { grid-template-columns: 1fr; height: auto; }
+  #stage { height: 62vh; }
+  aside { border-left: 0; border-top: 1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Политико: карта на връзките</h1>
+  <p>Партии, хора и задкулисно влияние. Плътна линия: документирано; пунктир: твърдение; точки: слух.</p>
+</header>
+<main>
+  <div id="stage">
+    <svg id="graph" aria-label="Мрежа на връзките">
+      <defs id="defs"></defs>
+      <g id="view"><g id="edges"></g><g id="nodes"></g></g>
+    </svg>
+    <div class="zoom">
+      <button id="zin" title="Приближи">+</button>
+      <button id="zout" title="Отдалечи">−</button>
+      <button id="zfit" title="Покажи всичко">⤢</button>
+      <button id="zshake" title="Подреди отново">↻</button>
+    </div>
+    <div id="tip"></div>
+  </div>
+  <aside>
+    <div class="tabs" role="tablist">
+      <button data-tab="info" aria-selected="true">Детайли</button>
+      <button data-tab="filters" aria-selected="false">Филтри</button>
+      <button data-tab="add" aria-selected="false">Добави</button>
+      <button data-tab="data" aria-selected="false">Данни</button>
+    </div>
+    <section class="pane on" id="pane-info"></section>
+    <section class="pane" id="pane-filters">
+      <label class="f" for="q">Търсене</label>
+      <input type="search" id="q" placeholder="Име или партия">
+      <h3>Статус</h3><div class="checks" id="f-status"></div>
+      <h3>Вид връзка</h3><div class="checks" id="f-cat"></div>
+      <div class="checks"><label><input type="checkbox" id="f-member" checked> членства в партии</label></div>
+      <h3>Вид възел</h3><div class="checks" id="f-ntype"></div>
+      <div class="checks"><label><input type="checkbox" id="f-iso"> показвай и възли без видими връзки</label></div>
+      <h3>Към година: <span id="year-lbl">всички</span></h3>
+      <input type="range" id="year" min="1989" max="2027" value="2027">
+      <h3>Легенда</h3><div class="legend" id="legend"></div>
+    </section>
+    <section class="pane" id="pane-add">
+      <h2 id="edge-h">Нова връзка</h2>
+      <form id="edge-form" autocomplete="off">
+        <input type="hidden" name="id">
+        <label class="f">От</label><input type="text" name="from" list="node-list" required placeholder="Започнете да пишете име">
+        <label class="f">Към</label><input type="text" name="to" list="node-list" required>
+        <div class="row">
+          <div><label class="f">Вид</label><select name="type"></select></div>
+          <div><label class="f">Статус</label><select name="status"></select></div>
+        </div>
+        <div class="row">
+          <div><label class="f">От дата (ГГГГ-ММ)</label><input type="text" name="date" pattern="\d{4}(-\d{2})?" placeholder="2021-06"></div>
+          <div><label class="f">До дата</label><input type="text" name="end" pattern="\d{4}(-\d{2})?"></div>
+        </div>
+        <label class="f">Източник (адрес или кой твърди)</label><input type="text" name="source" placeholder="https://…">
+        <div class="warn" id="src-warn" hidden>Без източник връзката ще се показва като твърдение, не като факт.</div>
+        <label class="f">Бележка</label><textarea name="note" placeholder="Какво точно се твърди; отговор на засегнатите"></textarea>
+        <div class="warn" id="edge-msg" hidden></div>
+        <div class="actions"><button class="primary" type="submit">Запази връзката</button><button type="button" id="edge-clear">Изчисти</button></div>
+      </form>
+      <h2 id="node-h" style="margin-top:22px">Нов възел</h2>
+      <form id="node-form" autocomplete="off">
+        <input type="hidden" name="id">
+        <div class="row">
+          <div><label class="f">Тип</label><select name="type"></select></div>
+          <div><label class="f">Партия</label><select name="party"><option value="">—</option></select></div>
+        </div>
+        <label class="f">Име</label><input type="text" name="label" required>
+        <label class="f">Бележка</label><textarea name="note"></textarea>
+        <div class="actions"><button class="primary" type="submit">Запази възела</button><button type="button" id="node-clear">Изчисти</button></div>
+      </form>
+      <datalist id="node-list"></datalist>
+    </section>
+    <section class="pane" id="pane-data">
+      <div id="data-banner"></div>
+      <p class="small">Промените се пазят само в този браузър. За да останат в проекта, изтеглете или копирайте данните и заменете с тях <code>relations/data/relations.json</code>, после пуснете <code>./build.py</code>.</p>
+      <p class="small" id="data-count"></p>
+      <div class="actions">
+        <button class="primary" id="dl">Изтегли relations.json</button>
+        <button id="copy">Копирай JSON</button>
+        <button id="ul">Зареди файл…</button>
+        <button class="danger" id="reset">Отмени промените</button>
+      </div>
+      <div class="warn" id="data-msg" hidden></div>
+      <label class="f" for="json">relations.json (може да поставите тук свой и да натиснете „Зареди от полето“)</label>
+      <textarea id="json" spellcheck="false" style="min-height:160px;font:12px/1.35 ui-monospace,monospace"></textarea>
+      <div class="actions"><button id="paste-load">Зареди от полето</button></div>
+      <input type="file" id="file" accept=".json,application/json" hidden>
+      <h3>Бележки</h3><ul class="small" id="notes"></ul>
+    </section>
+  </aside>
+</main>
+<script>
+const DATA = {"schema":{"nodeTypes":{"party":"Партия","person":"Политик","oligarch":"Бизнесмен / олигарх","company":"Фирма","media":"Медия","institution":"Институция","government":"Правителство","network":"Неформален кръг"},"edgeTypes":{"member":{"label":"Член на","cat":"formal","directed":true},"leader":{"label":"Води / председател","cat":"formal","directed":true},"founder":{"label":"Основател","cat":"formal","directed":true},"split":{"label":"Отцепване","cat":"formal","directed":true},"joins":{"label":"Влиза в / обща листа","cat":"formal","directed":true},"coalition":{"label":"Коалиция","cat":"formal","directed":false},"government":{"label":"Участва в управлението","cat":"formal","directed":true},"influence":{"label":"Влияние / контрол","cat":"informal","directed":true},"funding":{"label":"Финансиране","cat":"informal","directed":true},"business":{"label":"Бизнес връзка","cat":"informal","directed":false},"family":{"label":"Лична / роднинска връзка","cat":"informal","directed":false},"media":{"label":"Медийна подкрепа","cat":"informal","directed":true},"conflict":{"label":"Противопоставяне","cat":"informal","directed":false},"sanction":{"label":"Санкция","cat":"acts","directed":true},"investigation":{"label":"Разследване","cat":"acts","directed":true},"conviction":{"label":"Присъда","cat":"acts","directed":true}},"categories":{"formal":"Публични роли","informal":"Задкулисие","acts":"Официални актове"},"statuses":{"documented":"Документирано","claim":"Твърдение","rumor":"Слух"}},"parties":[{"id":"sds","short":"СДС","name":"Съюз на демократичните сили (ОДС 1997–2005)","color":"#102a83"},{"id":"dsb","short":"ДСБ","name":"Демократи за силна България","color":"#1a5fb4"},{"id":"blue","short":"СК","name":"Синята коалиция (СДС + ДСБ)","color":"#2e5aa8"},{"id":"bfc","short":"ДБГ","name":"Движение „България на гражданите“","color":"#5b7fc0"},{"id":"rb","short":"РБ","name":"Реформаторски блок","color":"#3a6fb0"},{"id":"db","short":"ДБ","name":"Демократична България","color":"#0b4f8a"},{"id":"pp","short":"ПП","name":"Продължаваме промяната","color":"#f7c600"},{"id":"ppdb","short":"ПП–ДБ","name":"Продължаваме промяната – Демократична България","color":"#e0a800"},{"id":"ns","short":"НС","name":"Народен съюз (БЗНС + ДП)","color":"#f28c28"},{"id":"ndsv","short":"НДСВ","name":"Национално движение Симеон Втори","color":"#f2b705"},{"id":"gerb","short":"ГЕРБ","name":"Граждани за европейско развитие на България (ГЕРБ–СДС от 2021)","color":"#0054a6"},{"id":"bsp","short":"БСП","name":"Българска социалистическа партия и коалициите ѝ","color":"#db0f28"},{"id":"euroleft","short":"ЕЛ","name":"Евролевица","color":"#e4572e"},{"id":"abv","short":"АБВ","name":"Алтернатива за българско възраждане","color":"#a3162b"},{"id":"dps","short":"ДПС","name":"Движение за права и свободи (ОНС 1997, ДПС–Ново начало 2024)","color":"#0b6fb8"},{"id":"dost","short":"ДОСТ","name":"Демократи за отговорност, свобода и толерантност","color":"#1f7a8c"},{"id":"aps","short":"АПС","name":"Алианс за права и свободи","color":"#1c9ad6"},{"id":"ataka","short":"Атака","name":"Атака","color":"#4d6b2a"},{"id":"pf","short":"ПФ","name":"Патриотичен фронт (НФСБ + ВМРО)","color":"#8b5a2b"},{"id":"up","short":"ОП","name":"Обединени патриоти (НФСБ + ВМРО + Атака)","color":"#7a4e2d"},{"id":"vaz","short":"Възраждане","name":"Възраждане","color":"#b8962e"},{"id":"velichie","short":"Величие","name":"Величие","color":"#8a1538"},{"id":"bbb","short":"БББ","name":"Български бизнес блок","color":"#5a6f8f"},{"id":"bns","short":"БНС","name":"Български народен съюз","color":"#c0392b"},{"id":"rzs","short":"РЗС","name":"Ред, законност и справедливост","color":"#2b3990"},{"id":"bbts","short":"ББЦ","name":"България без цензура","color":"#d7141a"},{"id":"volya","short":"Воля","name":"Воля","color":"#9e1f63"},{"id":"itn","short":"ИТН","name":"Има такъв народ","color":"#4bb9e5"},{"id":"ismv","short":"ИСМВ","name":"Изправи се! Мутри вън!","color":"#d6336c"},{"id":"bv","short":"БВ","name":"Български възход","color":"#1e3a5f"},{"id":"mech","short":"МЕЧ","name":"Морал, единство, чест","color":"#c8102e"},{"id":"pb","short":"ПБ","name":"Прогресивна България (Румен Радев)","color":"#6a3d9a"},{"id":"bzns","short":"БЗНС","name":"Български земеделски народен съюз","color":"#ee7f00"}],"derived":{"nodes":[{"id":"p:sds","type":"party","label":"СДС","name":"Съюз на демократичните сили (ОДС 1997–2005)","party":"sds","seats":137,"start":"1989-12","end":null},{"id":"p:dsb","type":"party","label":"ДСБ","name":"Демократи за силна България","party":"dsb","seats":17,"start":"2004-05","end":null},{"id":"p:blue","type":"party","label":"СК","name":"Синята коалиция (СДС + ДСБ)","party":"blue","seats":15,"start":"2009-03","end":"2013-05"},{"id":"p:bfc","type":"party","label":"ДБГ","name":"Движение „България на гражданите“","party":"bfc","seats":0,"start":"2012-01","end":"2014-10"},{"id":"p:rb","type":"party","label":"РБ","name":"Реформаторски блок","party":"rb","seats":23,"start":"2013-12","end":"2017-03"},{"id":"p:db","type":"party","label":"ДБ","name":"Демократична България","party":"db","seats":34,"start":"2018-04","end":null},{"id":"p:pp","type":"party","label":"ПП","name":"Продължаваме промяната","party":"pp","seats":67,"start":"2021-09","end":null},{"id":"p:ppdb","type":"party","label":"ПП–ДБ","name":"Продължаваме промяната – Демократична България","party":"ppdb","seats":64,"start":"2023-02","end":null},{"id":"p:ns","type":"party","label":"НС","name":"Народен съюз (БЗНС + ДП)","party":"ns","seats":18,"start":"1994-12","end":"1997-04"},{"id":"p:ndsv","type":"party","label":"НДСВ","name":"Национално движение Симеон Втори","party":"ndsv","seats":120,"start":"2001-04","end":"2009-07"},{"id":"p:gerb","type":"party","label":"ГЕРБ","name":"Граждани за европейско развитие на България (ГЕРБ–СДС от 2021)","party":"gerb","seats":116,"start":"2006-12","end":null},{"id":"p:bsp","type":"party","label":"БСП","name":"Българска социалистическа партия и коалициите ѝ","party":"bsp","seats":125,"start":"1990-04","end":null},{"id":"p:euroleft","type":"party","label":"ЕЛ","name":"Евролевица","party":"euroleft","seats":14,"start":"1997-02","end":"2001-06"},{"id":"p:abv","type":"party","label":"АБВ","name":"Алтернатива за българско възраждане","party":"abv","seats":11,"start":"2014-01","end":"2017-03"},{"id":"p:dps","type":"party","label":"ДПС","name":"Движение за права и свободи (ОНС 1997, ДПС–Ново начало 2024)","party":"dps","seats":47,"start":"1990-01","end":null},{"id":"p:dost","type":"party","label":"ДОСТ","name":"Демократи за отговорност, свобода и толерантност","party":"dost","seats":0,"start":"2016-03","end":"2017-03"},{"id":"p:aps","type":"party","label":"АПС","name":"Алианс за права и свободи","party":"aps","seats":19,"start":"2024-08","end":null},{"id":"p:ataka","type":"party","label":"Атака","name":"Атака","party":"ataka","seats":23,"start":"2005-04","end":"2021-04"},{"id":"p:pf","type":"party","label":"ПФ","name":"Патриотичен фронт (НФСБ + ВМРО)","party":"pf","seats":19,"start":"2014-08","end":"2017-03"},{"id":"p:up","type":"party","label":"ОП","name":"Обединени патриоти (НФСБ + ВМРО + Атака)","party":"up","seats":27,"start":"2017-01","end":"2021-04"},{"id":"p:vaz","type":"party","label":"Възраждане","name":"Възраждане","party":"vaz","seats":38,"start":"2014-08","end":null},{"id":"p:velichie","type":"party","label":"Величие","name":"Величие","party":"velichie","seats":13,"start":"2024-06","end":"2026-04"},{"id":"p:bbb","type":"party","label":"БББ","name":"Български бизнес блок","party":"bbb","seats":13,"start":"1994-12","end":"2001-06"},{"id":"p:bns","type":"party","label":"БНС","name":"Български народен съюз","party":"bns","seats":13,"start":"2005-06","end":"2009-07"},{"id":"p:rzs","type":"party","label":"РЗС","name":"Ред, законност и справедливост","party":"rzs","seats":10,"start":"2009-07","end":"2013-05"},{"id":"p:bbts","type":"party","label":"ББЦ","name":"България без цензура","party":"bbts","seats":15,"start":"2014-01","end":"2017-03"},{"id":"p:volya","type":"party","label":"Воля","name":"Воля","party":"volya","seats":12,"start":"2017-03","end":"2021-04"},{"id":"p:itn","type":"party","label":"ИТН","name":"Има такъв народ","party":"itn","seats":65,"start":"2020-01","end":null},{"id":"p:ismv","type":"party","label":"ИСМВ","name":"Изправи се! Мутри вън!","party":"ismv","seats":14,"start":"2020-06","end":"2021-11"},{"id":"p:bv","type":"party","label":"БВ","name":"Български възход","party":"bv","seats":12,"start":"2022-05","end":"2023-04"},{"id":"p:mech","type":"party","label":"МЕЧ","name":"Морал, единство, чест","party":"mech","seats":11,"start":"2023-10","end":null},{"id":"p:pb","type":"party","label":"ПБ","name":"Прогресивна България (Румен Радев)","party":"pb","seats":131,"start":"2026-02","end":null},{"id":"p:bzns","type":"party","label":"БЗНС","name":"Български земеделски народен съюз","party":"bzns","seats":0,"start":"1899-12","end":null},{"id":"pol:kostov","type":"person","label":"Иван Костов","party":"blue"},{"id":"pol:parvanov","type":"person","label":"Георги Първанов","party":"abv"},{"id":"pol:kuneva","type":"person","label":"Меглена Кунева","party":"rb"},{"id":"pol:borisov","type":"person","label":"Бойко Борисов","party":"gerb"},{"id":"pol:siderov","type":"person","label":"Волен Сидеров","party":"ataka"},{"id":"pol:mestan","type":"person","label":"Лютви Местан","party":"dost"},{"id":"pol:dogan","type":"person","label":"Ахмед Доган","party":"aps"},{"id":"pol:manolova","type":"person","label":"Мая Манолова","party":"ismv"},{"id":"pol:petkov","type":"person","label":"Кирил Петков","party":"ppdb"},{"id":"pol:ivanov","type":"person","label":"Христо Иванов","party":"ppdb"},{"id":"pol:vasilev","type":"person","label":"Радостин Василев","party":"mech"}],"edges":[{"id":"r:link0","from":"p:bsp","to":"p:euroleft","type":"split","status":"documented","date":"1997-02","source":"Хронология на партиите","note":"Евролевица се отцепва от БСП."},{"id":"r:link1","from":"p:sds","to":"p:dsb","type":"split","status":"documented","date":"2004-05","source":"Хронология на партиите","note":"Иван Костов напуска СДС и основава ДСБ."},{"id":"r:link2","from":"p:sds","to":"p:blue","type":"joins","status":"documented","date":"2009-03","source":"Хронология на партиите","note":"СДС и ДСБ се явяват заедно като Синята коалиция."},{"id":"r:link3","from":"p:dsb","to":"p:blue","type":"joins","status":"documented","date":"2009-03","source":"Хронология на партиите","note":"СДС и ДСБ се явяват заедно като Синята коалиция."},{"id":"r:link4","from":"p:sds","to":"p:rb","type":"joins","status":"documented","date":"2013-12","source":"Хронология на партиите","note":"СДС влиза в Реформаторския блок."},{"id":"r:link5","from":"p:dsb","to":"p:rb","type":"joins","status":"documented","date":"2013-12","source":"Хронология на партиите","note":"ДСБ влиза в Реформаторския блок."},{"id":"r:link6","from":"p:bfc","to":"p:rb","type":"joins","status":"documented","date":"2013-12","source":"Хронология на партиите","note":"„България на гражданите“ влиза в Реформаторския блок."},{"id":"r:link7","from":"p:bsp","to":"p:abv","type":"split","status":"documented","date":"2014-01","source":"Хронология на партиите","note":"АБВ на Георги Първанов се отделя от БСП."},{"id":"r:link8","from":"p:dps","to":"p:dost","type":"split","status":"documented","date":"2016-03","source":"Хронология на партиите","note":"Лютви Местан, изключен от ДПС, основава ДОСТ."},{"id":"r:link9","from":"p:pf","to":"p:up","type":"joins","status":"documented","date":"2017-01","source":"Хронология на партиите","note":"НФСБ и ВМРО се обединяват с Атака в Обединени патриоти."},{"id":"r:link10","from":"p:ataka","to":"p:up","type":"joins","status":"documented","date":"2017-01","source":"Хронология на партиите","note":"Атака влиза в Обединени патриоти (напуска през 2019)."},{"id":"r:link11","from":"p:dsb","to":"p:db","type":"joins","status":"documented","date":"2018-04","source":"Хронология на партиите","note":"ДСБ, „Да, България“ и Зелените образуват Демократична България."},{"id":"r:link12","from":"p:sds","to":"p:gerb","type":"joins","status":"documented","date":"2021-02","source":"Хронология на партиите","note":"СДС се явява в обща листа с ГЕРБ."},{"id":"r:link13","from":"p:pp","to":"p:ppdb","type":"joins","status":"documented","date":"2023-02","source":"Хронология на партиите","note":"ПП и ДБ се явяват с обща листа."},{"id":"r:link14","from":"p:db","to":"p:ppdb","type":"joins","status":"documented","date":"2023-02","source":"Хронология на партиите","note":"ПП и ДБ се явяват с обща листа."},{"id":"r:link15","from":"p:dps","to":"p:aps","type":"split","status":"documented","date":"2024-08","source":"Хронология на партиите","note":"ДПС се разцепва: крилото на Ахмед Доган образува АПС, Делян Пеевски запазва ДПС–Ново начало."},{"id":"r:kostov0","from":"pol:kostov","to":"p:sds","type":"member","status":"documented","date":"1990-01","end":"2004-05","source":"Хронология на партиите","note":"Лидер на СДС, министър-председател 1997–2001"},{"id":"r:kostov1","from":"pol:kostov","to":"p:dsb","type":"founder","status":"documented","date":"2004-05","end":"2009-03","source":"Хронология на партиите","note":"Основава ДСБ"},{"id":"r:kostov2","from":"pol:kostov","to":"p:blue","type":"member","status":"documented","date":"2009-03","end":"2013-05","source":"Хронология на партиите","note":"Депутат от Синята коалиция"},{"id":"r:parvanov0","from":"pol:parvanov","to":"p:bsp","type":"member","status":"documented","date":"1990-04","end":"2002-01","source":"Хронология на партиите","note":"Лидер на БСП 1996–2001"},{"id":"r:parvanov1","from":"pol:parvanov","to":"p:abv","type":"founder","status":"documented","date":"2014-01","end":"2017-03","source":"Хронология на партиите","note":"Основава АБВ"},{"id":"r:kuneva0","from":"pol:kuneva","to":"p:ndsv","type":"member","status":"documented","date":"2001-07","end":"2012-01","source":"Хронология на партиите","note":"Министър, после еврокомисар"},{"id":"r:kuneva1","from":"pol:kuneva","to":"p:bfc","type":"founder","status":"documented","date":"2012-01","end":"2013-12","source":"Хронология на партиите","note":"Основава „България на гражданите“"},{"id":"r:kuneva2","from":"pol:kuneva","to":"p:rb","type":"member","status":"documented","date":"2013-12","end":"2017-03","source":"Хронология на партиите","note":"Вицепремиер от Реформаторския блок"},{"id":"r:borisov0","from":"pol:borisov","to":"p:ndsv","type":"member","status":"documented","date":"2005-06","end":"2006-12","source":"Хронология на партиите","note":"Избран от листата на НДСВ, отказва мандата"},{"id":"r:borisov1","from":"pol:borisov","to":"p:gerb","type":"founder","status":"documented","date":"2006-12","end":null,"source":"Хронология на партиите","note":"Основава ГЕРБ, три пъти министър-председател"},{"id":"r:siderov0","from":"pol:siderov","to":"p:ataka","type":"founder","status":"documented","date":"2005-04","end":"2017-01","source":"Хронология на партиите","note":"Основава Атака"},{"id":"r:siderov1","from":"pol:siderov","to":"p:up","type":"member","status":"documented","date":"2017-01","end":"2019-06","source":"Хронология на партиите","note":"Съпредседател на Обединени патриоти"},{"id":"r:siderov2","from":"pol:siderov","to":"p:ataka","type":"member","status":"documented","date":"2019-06","end":"2021-04","source":"Хронология на партиите","note":"Атака напуска коалицията"},{"id":"r:mestan0","from":"pol:mestan","to":"p:dps","type":"member","status":"documented","date":"1990-01","end":"2015-12","source":"Хронология на партиите","note":"Лидер на ДПС 2013–2015"},{"id":"r:mestan1","from":"pol:mestan","to":"p:dost","type":"founder","status":"documented","date":"2016-03","end":"2017-03","source":"Хронология на партиите","note":"Основава ДОСТ след изключването си"},{"id":"r:dogan0","from":"pol:dogan","to":"p:dps","type":"founder","status":"documented","date":"1990-01","end":"2024-08","source":"Хронология на партиите","note":"Основател на ДПС"},{"id":"r:dogan1","from":"pol:dogan","to":"p:aps","type":"member","status":"documented","date":"2024-08","end":null,"source":"Хронология на партиите","note":"Оглавява отцепилия се АПС"},{"id":"r:manolova0","from":"pol:manolova","to":"p:bsp","type":"member","status":"documented","date":"2009-07","end":"2015-12","source":"Хронология на партиите","note":"Депутат от БСП, зам.-председател на НС"},{"id":"r:manolova1","from":"pol:manolova","to":"p:ismv","type":"member","status":"documented","date":"2020-06","end":"2021-11","source":"Хронология на партиите","note":"Води „Изправи се! Мутри вън!“"},{"id":"r:petkov0","from":"pol:petkov","to":"p:pp","type":"founder","status":"documented","date":"2021-09","end":"2023-02","source":"Хронология на партиите","note":"Съосновател на ПП, министър-председател 2021–2022"},{"id":"r:petkov1","from":"pol:petkov","to":"p:ppdb","type":"member","status":"documented","date":"2023-02","end":null,"source":"Хронология на партиите","note":"Обща листа ПП–ДБ"},{"id":"r:ivanov0","from":"pol:ivanov","to":"p:db","type":"member","status":"documented","date":"2018-04","end":"2023-02","source":"Хронология на партиите","note":"Лидер на „Да, България“ в ДБ"},{"id":"r:ivanov1","from":"pol:ivanov","to":"p:ppdb","type":"member","status":"documented","date":"2023-02","end":null,"source":"Хронология на партиите","note":"Обща листа ПП–ДБ"},{"id":"r:vasilev0","from":"pol:vasilev","to":"p:itn","type":"member","status":"documented","date":"2021-04","end":"2022-06","source":"Хронология на партиите","note":"Депутат от ИТН, министър на младежта и спорта"},{"id":"r:vasilev1","from":"pol:vasilev","to":"p:pp","type":"member","status":"documented","date":"2022-06","end":"2023-02","source":"Хронология на партиите","note":"Остава в кабинета, избран за депутат от ПП"},{"id":"r:vasilev2","from":"pol:vasilev","to":"p:ppdb","type":"member","status":"documented","date":"2023-02","end":"2023-05","source":"Хронология на партиите","note":"Депутат в групата на ПП–ДБ"},{"id":"r:vasilev3","from":"pol:vasilev","to":"p:mech","type":"founder","status":"documented","date":"2023-10","end":null,"source":"Хронология на партиите","note":"Основава МЕЧ"}]},"base":{"nodes":[{"id":"peevski","type":"person","label":"Делян Пеевски","party":"dps","note":"Председател на ДПС–Ново начало от 2024 г."},{"id":"bozhkov","type":"oligarch","label":"Васил Божков","note":"Бизнесмен (хазарт)."},{"id":"zhelyazkov","type":"person","label":"Илко Желязков","note":"Бивш заместник-председател на Държавната агенция за технически операции."},{"id":"goranov","type":"person","label":"Владислав Горанов","party":"gerb","note":"Министър на финансите в правителства на Бойко Борисов."},{"id":"ovcharov","type":"person","label":"Румен Овчаров","party":"bsp","note":"Министър на икономиката и енергетиката (2005–2007)."},{"id":"denkov","type":"person","label":"Николай Денков","party":"ppdb","note":"Министър-председател (2023–2024)."},{"id":"gov-denkov","type":"government","label":"Кабинет Денков","note":"Правителство с мандат на ПП–ДБ и подкрепата на ГЕРБ–СДС, юни 2023 – март 2024 г."},{"id":"ofac","type":"institution","label":"OFAC (САЩ)","note":"Службата за контрол на чуждестранните активи към Министерството на финансите на САЩ."},{"id":"uk-gov","type":"institution","label":"Правителство на Обединеното кралство"},{"id":"prosecution","type":"institution","label":"Прокуратура на Република България"}],"edges":[{"id":"m0","from":"ofac","to":"peevski","type":"sanction","status":"documented","date":"2021-06","source":"https://home.treasury.gov/news/press-releases/jy0208","note":"Санкции по Global Magnitsky за значима корупция."},{"id":"m1","from":"ofac","to":"bozhkov","type":"sanction","status":"documented","date":"2021-06","source":"https://home.treasury.gov/news/press-releases/jy0208","note":"Санкции по Global Magnitsky за значима корупция."},{"id":"m2","from":"ofac","to":"zhelyazkov","type":"sanction","status":"documented","date":"2021-06","source":"https://home.treasury.gov/news/press-releases/jy0208","note":"Санкции по Global Magnitsky за значима корупция."},{"id":"m3","from":"ofac","to":"goranov","type":"sanction","status":"documented","date":"2023-02","source":"https://home.treasury.gov/news/press-releases/jy1264","note":"Санкции по Global Magnitsky."},{"id":"m4","from":"ofac","to":"ovcharov","type":"sanction","status":"documented","date":"2023-02","source":"https://home.treasury.gov/news/press-releases/jy1264","note":"Санкции по Global Magnitsky."},{"id":"m5","from":"uk-gov","to":"peevski","type":"sanction","status":"documented","date":"2023-02","source":"https://www.gov.uk/government/news/uk-sanctions-high-profile-bulgarian-figures-involved-in-corruption","note":"Санкции по режима Global Anti-Corruption."},{"id":"m6","from":"peevski","to":"p:dps","type":"leader","status":"documented","date":"2024-08","source":"Хронология на партиите","note":"Запазва ДПС–Ново начало след разцеплението."},{"id":"m7","from":"p:ppdb","to":"gov-denkov","type":"government","status":"documented","date":"2023-06","end":"2024-03","source":"https://www.novinite.com/articles/220414/Bulgaria+Finally+has+a+Regular+Government","note":"Правителството е с мандат на ПП–ДБ."},{"id":"m8","from":"p:gerb","to":"gov-denkov","type":"government","status":"documented","date":"2023-06","end":"2024-03","source":"https://www.novinite.com/articles/220414/Bulgaria+Finally+has+a+Regular+Government","note":"ГЕРБ–СДС подкрепя кабинета; договорена ротация на премиера."},{"id":"m9","from":"denkov","to":"gov-denkov","type":"leader","status":"documented","date":"2023-06","end":"2024-03","source":"https://www.novinite.com/articles/220414/Bulgaria+Finally+has+a+Regular+Government","note":"Министър-председател."},{"id":"m10","from":"bozhkov","to":"pol:borisov","type":"funding","status":"claim","date":"2020-02","source":"https://www.mediapool.bg/vassil-bozhkov-says-he-can-prove-he-gave-60-million-to-pm-boyko-borissov-and-finance-minister-vladislav-gouranov-news308301.html","note":"Божков твърди, че е давал пари на Борисов и Горанов. Борисов отрича."},{"id":"m11","from":"bozhkov","to":"goranov","type":"funding","status":"claim","date":"2020-02","source":"https://www.mediapool.bg/vassil-bozhkov-says-he-can-prove-he-gave-60-million-to-pm-boyko-borissov-and-finance-minister-vladislav-gouranov-news308301.html","note":"Божков твърди, че е давал пари на Борисов и Горанов. Горанов отрича."},{"id":"m12","from":"prosecution","to":"pol:borisov","type":"investigation","status":"documented","source":"https://old-news.bnr.bg/en/post/101921160/prosecutor-s-office-terminates-investigation-against-boyko-borissov-for-extortion","note":"Прокуратурата прекратява разследване срещу Борисов за изнудване."},{"id":"m13","from":"peevski","to":"p:gerb","type":"influence","status":"claim","date":"2024-04","source":"https://new.bnr.bg/en/post/102072807/nikolay-denkov-a-peevski-wrapped-gerb-leaves-pp-db-in-opposition","note":"Николай Денков нарича ГЕРБ „обвит от Пеевски“. Борисов отрича натиск от Пеевски: https://old-news.bnr.bg/en/post/102131763/boyko-borissov-denies-there-is-pressure-from-peevski-on-the-ruling-party"},{"id":"m14","from":"denkov","to":"peevski","type":"conflict","status":"documented","date":"2024-04","source":"https://www.rferl.org/a/bulgaria-corruption-nikolay-denkov-delyan-peevski-elections/32912772.html","note":"Денков публично нарича Пеевски „най-голямото зло“ за България."}]},"notes":["Партиите, политиците от хронологията, членствата и отцепванията се добавят автоматично от регистъра на партиите (../vote/data/parties.json).","Тук са само ръчно добавените възли и връзки. Всяка връзка има статус: документирано (официален акт или публичен запис), твърдение (публично заявено от конкретен човек или медия) или слух.","Връзка без източник никога не се показва като документирана: страницата я показва като твърдение без източник.","При твърдение полето source сочи кой и къде го твърди, а note съдържа отговора на засегнатите, ако има такъв."],"version":"e83d62e268"};
+const S = DATA.schema;
+const KEY = "politico-relations-v1";
+const PARTY = Object.fromEntries(DATA.parties.map(p => [p.id, p]));
+const CAT_COLOR = { formal: "#8c877d", informal: "#b23a2b", acts: "#5b3f99" };
+const TYPE_COLOR = { oligarch: "#3d3a35", company: "#8a6d3b", media: "#b5651d", institution: "#5f6b73", government: "#2f6f4f", network: "#7a4b8c", person: "#9a958c" };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } },
+  set(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} },
+  clear() { try { localStorage.removeItem(KEY); } catch {} },
+};
+
+// ---------------------------------------------------------------- model
+let work;      // editable set: {version, nodes, edges}
+let nodes = [], edges = [], byId = new Map();
+let selected = null;   // {kind: "node"|"edge", id}
+
+function loadWork() {
+  const saved = store.get();
+  work = saved && saved.nodes ? saved : { version: DATA.version, nodes: structuredClone(DATA.base.nodes), edges: structuredClone(DATA.base.edges) };
+}
+function save() { store.set(work); renderDataPane(); }
+function isUnsourced(e) { return !String(e.source || "").trim(); }
+function effStatus(e) { return isUnsourced(e) && e.status === "documented" ? "claim" : e.status; }
+function nodeColor(n) {
+  if (n.type === "party") return n.color || PARTY[n.party]?.color || "#888";
+  if (n.party && PARTY[n.party]) return PARTY[n.party].color;
+  return TYPE_COLOR[n.type] || "#888";
+}
+
+function rebuild() {
+  const old = new Map(nodes.map(n => [n.id, n]));
+  const list = [...DATA.derived.nodes.map(n => ({ ...n, derived: true }))];
+  const idx = new Map(list.map((n, i) => [n.id, i]));
+  for (const n of work.nodes) {
+    if (idx.has(n.id)) list[idx.get(n.id)] = { ...list[idx.get(n.id)], ...n, derived: false, overrides: true };
+    else list.push({ ...n });
+  }
+  nodes = list.map(n => {
+    const o = old.get(n.id);
+    return Object.assign(n, o ? { x: o.x, y: o.y, vx: 0, vy: 0, fixed: o.fixed } : {});
+  });
+  byId = new Map(nodes.map(n => [n.id, n]));
+  edges = [...DATA.derived.edges.map(e => ({ ...e, derived: true })), ...work.edges.map(e => ({ ...e }))]
+    .filter(e => byId.has(e.from) && byId.has(e.to));
+  // number parallel edges so they curve apart
+  const pairs = new Map();
+  for (const e of edges) {
+    const k = [e.from, e.to].sort().join("|");
+    const arr = pairs.get(k) || []; arr.push(e); pairs.set(k, arr);
+  }
+  for (const arr of pairs.values()) arr.forEach((e, i) => { e.bend = arr.length === 1 ? 0 : (i - (arr.length - 1) / 2) * 26 * (e.from < e.to ? 1 : -1); });
+  seedPositions();
+  for (const n of nodes) n.r = radius(n);
+  fillNodeList();
+}
+
+function radius(n) {
+  if (n.type === "party") return 9 + Math.sqrt(n.seats || 0) * 1.25;
+  if (n.type === "person") return 8;
+  if (n.type === "government" || n.type === "institution") return 10;
+  return 9;
+}
+
+function seedPositions() {
+  const fresh = nodes.filter(n => n.x == null);
+  const parties = fresh.filter(n => n.type === "party");
+  parties.forEach((n, i) => { const a = i / parties.length * Math.PI * 2; n.x = Math.cos(a) * 320; n.y = Math.sin(a) * 260; n.vx = n.vy = 0; });
+  for (const n of fresh) {
+    if (n.x != null) continue;
+    const anchor = n.party && byId.get("p:" + n.party);
+    const h = hash(n.id);
+    if (anchor && anchor.x != null) { n.x = anchor.x + (h % 80) - 40; n.y = anchor.y + ((h >> 8) % 80) - 40; }
+    else { n.x = (h % 400) - 200; n.y = ((h >> 8) % 300) - 150; }
+    n.vx = n.vy = 0;
+  }
+}
+function hash(s) { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.codePointAt(0), 16777619); return h >>> 0; }
+
+// ---------------------------------------------------------------- filters
+const F = { status: new Set(Object.keys(S.statuses)), cat: new Set(Object.keys(S.categories)), ntype: new Set(Object.keys(S.nodeTypes)), member: true, iso: false, year: null, q: "" };
+let visNodes = [], visEdges = [];
+
+function yearOf(d) { return d ? parseInt(String(d).slice(0, 4), 10) : null; }
+function applyFilters() {
+  const okNode = n => F.ntype.has(n.type);
+  visEdges = edges.filter(e => {
+    const t = S.edgeTypes[e.type];
+    if (!F.status.has(effStatus(e)) || !F.cat.has(t.cat)) return false;
+    if (!F.member && (e.type === "member" || e.type === "founder")) return false;
+    if (F.year != null) {
+      const a = yearOf(e.date), b = yearOf(e.end);
+      if (a != null && a > F.year) return false;
+      if (b != null && b < F.year) return false;
+    }
+    return okNode(byId.get(e.from)) && okNode(byId.get(e.to));
+  });
+  const linked = new Set(visEdges.flatMap(e => [e.from, e.to]));
+  visNodes = nodes.filter(n => okNode(n) && (linked.has(n.id) || F.iso || (!n.derived && F.year == null) || selected?.id === n.id));
+  const shown = new Set(visNodes.map(n => n.id));
+  visEdges = visEdges.filter(e => shown.has(e.from) && shown.has(e.to));
+  render();
+  heat(0.6);
+}
+
+function matches(n) {
+  if (!F.q) return true;
+  const q = F.q.toLowerCase();
+  return [n.label, n.name, PARTY[n.party]?.short, PARTY[n.party]?.name].some(s => s && s.toLowerCase().includes(q));
+}
+
+// ---------------------------------------------------------------- layout
+let alpha = 1, raf = 0;
+function heat(a) { alpha = Math.max(alpha, a); if (!raf) raf = requestAnimationFrame(tick); }
+function tick() {
+  raf = 0;
+  const ns = visNodes, n = ns.length;
+  for (let i = 0; i < n; i++) {
+    const a = ns[i];
+    for (let j = i + 1; j < n; j++) {
+      const b = ns[j];
+      let dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
+      if (d2 < 1) { dx = Math.random() - .5; dy = Math.random() - .5; d2 = 1; }
+      if (d2 > 250000) continue;
+      const d = Math.sqrt(d2), min = a.r + b.r + 14;
+      let f = 900 / d2 + (d < min ? (min - d) * .5 / d : 0);
+      f *= alpha;
+      a.vx -= dx * f; a.vy -= dy * f; b.vx += dx * f; b.vy += dy * f;
+    }
+  }
+  for (const e of visEdges) {
+    const a = byId.get(e.from), b = byId.get(e.to);
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    const len = e.type === "member" || e.type === "founder" ? 55 : 90;
+    const k = (d - len) / d * .04 * alpha;
+    a.vx += dx * k; a.vy += dy * k; b.vx -= dx * k; b.vy -= dy * k;
+  }
+  for (const a of ns) {
+    a.vx -= a.x * .012 * alpha; a.vy -= a.y * .012 * alpha;
+    if (a.fixed || a === drag?.node) { a.vx = a.vy = 0; continue; }
+    a.vx *= .6; a.vy *= .6;
+    a.x += Math.max(-30, Math.min(30, a.vx)); a.y += Math.max(-30, Math.min(30, a.vy));
+  }
+  position();
+  alpha *= .975;
+  if (alpha > .02) raf = requestAnimationFrame(tick);
+}
+
+// ---------------------------------------------------------------- drawing
+const svg = $("#graph"), gView = $("#view"), gE = $("#edges"), gN = $("#nodes");
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}) => { const x = document.createElementNS(NS, tag); for (const k in attrs) x.setAttribute(k, attrs[k]); return x; };
+let cam = { x: 0, y: 0, k: 1 };
+
+function markers() {
+  const defs = $("#defs"); defs.innerHTML = "";
+  for (const [cat, c] of Object.entries(CAT_COLOR)) {
+    const m = el("marker", { id: "arr-" + cat, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse", markerUnits: "userSpaceOnUse" });
+    m.append(el("path", { d: "M0,1 L10,5 L0,9 z", fill: c }));
+    defs.append(m);
+  }
+}
+const DASH = { documented: "", claim: "7 4", rumor: "1.5 4" };
+
+function shape(n) {
+  const r = n.r, c = nodeColor(n);
+  switch (n.type) {
+    case "party": return el("rect", { x: -r, y: -r, width: 2 * r, height: 2 * r, rx: r * .35, fill: c, stroke: "#fff", "stroke-width": 2 });
+    case "oligarch": return el("path", { d: `M0,${-r * 1.25} L${r * 1.25},0 L0,${r * 1.25} L${-r * 1.25},0 z`, fill: c, stroke: "#fff", "stroke-width": 2 });
+    case "company": case "media": return el("rect", { x: -r * .9, y: -r * .9, width: r * 1.8, height: r * 1.8, fill: c, stroke: "#fff", "stroke-width": 2 });
+    case "institution": { const p = []; for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; p.push(`${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`); } return el("polygon", { points: p.join(" "), fill: c, stroke: "#fff", "stroke-width": 2 }); }
+    case "government": return el("path", { d: `M${-r},${r * .7} L${r},${r * .7} L${r},${-r * .2} L0,${-r} L${-r},${-r * .2} z`, fill: c, stroke: "#fff", "stroke-width": 2 });
+    case "network": return el("circle", { r, fill: "#efe6f3", stroke: c, "stroke-width": 2, "stroke-dasharray": "3 2" });
+    default: return el("circle", { r, fill: c, stroke: "#fff", "stroke-width": 2 });
+  }
+}
+
+function render() {
+  gE.innerHTML = ""; gN.innerHTML = "";
+  for (const e of visEdges) {
+    const t = S.edgeTypes[e.type], st = effStatus(e), col = CAT_COLOR[t.cat];
+    const g = el("g", { "data-id": e.id });
+    const p = el("path", { class: "edge", stroke: col, "stroke-width": st === "documented" ? 1.8 : 1.6, "stroke-dasharray": DASH[st], opacity: st === "rumor" ? .6 : .85 });
+    if (t.directed) p.setAttribute("marker-end", `url(#arr-${t.cat})`);
+    const hit = el("path", { class: "edge-hit" });
+    g.append(p, hit);
+    g.addEventListener("pointerenter", ev => tip(ev, `<b>${esc(t.label)}</b> · ${esc(S.statuses[st])}${isUnsourced(e) ? " · без източник" : ""}<br>${esc(byId.get(e.from).label)} → ${esc(byId.get(e.to).label)}`));
+    g.addEventListener("pointerleave", () => tip());
+    e.$ = { g, p, hit };
+    gE.append(g);
+  }
+  for (const n of visNodes) {
+    const g = el("g", { class: "node " + n.type, "data-id": n.id });
+    g.append(el("circle", { r: n.r + 7, fill: "transparent" }), shape(n));
+    const txt = el("text", { y: n.r + 12, "text-anchor": "middle" });
+    txt.textContent = n.label;
+    g.append(txt);
+    g.addEventListener("pointerdown", ev => startDrag(ev, n));
+    g.addEventListener("pointerenter", ev => tip(ev, `<b>${esc(n.name || n.label)}</b><br>${esc(S.nodeTypes[n.type])}${n.party && n.type !== "party" ? " · " + esc(PARTY[n.party]?.short) : ""}`));
+    g.addEventListener("pointerleave", () => tip());
+    g.addEventListener("dblclick", ev => { ev.stopPropagation(); n.fixed = false; heat(.3); });
+    n.$ = g;
+    gN.append(g);
+  }
+  highlight();
+  position();
+}
+
+function position() {
+  for (const n of visNodes) n.$.setAttribute("transform", `translate(${n.x.toFixed(1)},${n.y.toFixed(1)})`);
+  for (const e of visEdges) {
+    const a = byId.get(e.from), b = byId.get(e.to);
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    const mx = (a.x + b.x) / 2 - dy / d * e.bend, my = (a.y + b.y) / 2 + dx / d * e.bend;
+    // trim the end at the target's edge so the arrow is visible
+    const tx = b.x - mx, ty = b.y - my, td = Math.hypot(tx, ty) || 1, cut = b.r + 3;
+    const ex = b.x - tx / td * cut, ey = b.y - ty / td * cut;
+    const dAttr = `M${a.x.toFixed(1)},${a.y.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`;
+    e.$.p.setAttribute("d", dAttr); e.$.hit.setAttribute("d", dAttr);
+  }
+}
+
+function highlight() {
+  let keep = null;
+  if (selected?.kind === "node") {
+    keep = new Set([selected.id]);
+    for (const e of visEdges) if (e.from === selected.id || e.to === selected.id) { keep.add(e.from); keep.add(e.to); }
+  } else if (selected?.kind === "edge") {
+    const e = edges.find(x => x.id === selected.id);
+    if (e) keep = new Set([e.from, e.to]);
+  }
+  const qOn = !!F.q;
+  for (const n of visNodes) {
+    const dim = (keep && !keep.has(n.id)) || (qOn && !matches(n) && !(keep && keep.has(n.id)));
+    n.$.classList.toggle("dim", dim);
+    n.$.querySelector(".sel-ring")?.remove();
+    if (selected?.kind === "node" && selected.id === n.id) n.$.prepend(el("circle", { class: "sel-ring", r: n.r * 1.35 + 4 }));
+  }
+  for (const e of visEdges) {
+    let dim;
+    if (selected?.kind === "edge") dim = e.id !== selected.id;
+    else if (keep) dim = !(e.from === selected.id || e.to === selected.id);
+    else dim = qOn && !(matches(byId.get(e.from)) || matches(byId.get(e.to)));
+    e.$.g.classList.toggle("dim", dim);
+    e.$.p.setAttribute("stroke-width", selected?.kind === "edge" && e.id === selected.id ? 3.2 : (effStatus(e) === "documented" ? 1.8 : 1.6));
+  }
+}
+
+function applyCam() { gView.setAttribute("transform", `translate(${cam.x},${cam.y}) scale(${cam.k})`); svg.style.setProperty("--k", Math.min(1, Math.max(.6, cam.k))); }
+function fit() {
+  if (!visNodes.length) return;
+  const w = svg.clientWidth, h = svg.clientHeight;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const n of visNodes) { x0 = Math.min(x0, n.x - n.r); y0 = Math.min(y0, n.y - n.r); x1 = Math.max(x1, n.x + n.r); y1 = Math.max(y1, n.y + n.r + 14); }
+  const k = Math.min(2.5, .92 * Math.min(w / (x1 - x0 || 1), h / (y1 - y0 || 1)));
+  cam = { k, x: w / 2 - k * (x0 + x1) / 2, y: h / 2 - k * (y0 + y1) / 2 };
+  applyCam();
+}
+function zoomAt(f, px, py) {
+  const k = Math.max(.2, Math.min(5, cam.k * f));
+  cam.x = px - (px - cam.x) * k / cam.k; cam.y = py - (py - cam.y) * k / cam.k; cam.k = k; applyCam();
+}
+
+function tip(ev, html) {
+  const t = $("#tip");
+  if (!html) { t.style.display = "none"; return; }
+  const r = $("#stage").getBoundingClientRect();
+  t.innerHTML = html; t.style.display = "block";
+  t.style.left = Math.min(ev.clientX - r.left + 12, r.width - 290) + "px";
+  t.style.top = (ev.clientY - r.top + 12) + "px";
+}
+
+// ---------------------------------------------------------------- interaction
+let drag = null, pan = null;
+function toWorld(ev) { const r = svg.getBoundingClientRect(); return { x: (ev.clientX - r.left - cam.x) / cam.k, y: (ev.clientY - r.top - cam.y) / cam.k }; }
+function startDrag(ev, n) {
+  ev.stopPropagation();
+  drag = { node: n, moved: false, sx: ev.clientX, sy: ev.clientY };
+  svg.setPointerCapture(ev.pointerId);
+}
+svg.addEventListener("pointerdown", ev => { pan = { x: ev.clientX - cam.x, y: ev.clientY - cam.y, moved: false, edge: ev.target.closest("#edges [data-id]")?.dataset.id }; svg.classList.add("panning"); svg.setPointerCapture(ev.pointerId); });
+svg.addEventListener("pointermove", ev => {
+  if (drag) {
+    if (Math.hypot(ev.clientX - drag.sx, ev.clientY - drag.sy) > 3) drag.moved = true;
+    if (drag.moved) { const p = toWorld(ev); drag.node.x = p.x; drag.node.y = p.y; drag.node.fixed = true; tip(); heat(.15); position(); }
+  } else if (pan) {
+    if (Math.hypot(ev.clientX - pan.x - cam.x, ev.clientY - pan.y - cam.y) > 3) pan.moved = true;
+    cam.x = ev.clientX - pan.x; cam.y = ev.clientY - pan.y; applyCam();
+  }
+});
+svg.addEventListener("pointerup", () => {
+  if (drag && !drag.moved) select("node", drag.node.id);
+  else if (pan && !pan.moved) pan.edge ? select("edge", pan.edge) : select(null);
+  drag = null; pan = null; svg.classList.remove("panning");
+});
+svg.addEventListener("wheel", ev => { ev.preventDefault(); const r = svg.getBoundingClientRect(); zoomAt(Math.exp(-ev.deltaY * .0015), ev.clientX - r.left, ev.clientY - r.top); }, { passive: false });
+$("#zin").onclick = () => zoomAt(1.25, svg.clientWidth / 2, svg.clientHeight / 2);
+$("#zout").onclick = () => zoomAt(.8, svg.clientWidth / 2, svg.clientHeight / 2);
+$("#zfit").onclick = fit;
+$("#zshake").onclick = () => { for (const n of visNodes) n.fixed = false; alpha = 1; heat(1); setTimeout(fit, 1200); };
+
+function select(kind, id) {
+  selected = kind ? { kind, id } : null;
+  if (kind) showTab("info");
+  highlight();
+  renderInfo();
+}
+
+// ---------------------------------------------------------------- panels
+function showTab(name) {
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
+  document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + name));
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+function badge(e) {
+  const st = effStatus(e);
+  return `<span class="badge st-${st}">${esc(S.statuses[st])}${isUnsourced(e) ? ", без източник" : ""}</span>`;
+}
+function srcHtml(e) {
+  const s = String(e.source || "").trim();
+  if (!s) return `<span class="warn">Няма източник: не е потвърдено.</span>`;
+  return /^https?:\/\//.test(s) ? `Източник: <a class="src" href="${esc(s)}" target="_blank" rel="noopener">${esc(s.replace(/^https?:\/\/(www\.)?/, "").slice(0, 70))}</a>` : `Източник: ${esc(s)}`;
+}
+function linkify(s) { return esc(s).replace(/https?:\/\/[^\s]+/g, u => `<a class="src" href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 60)}…</a>`); }
+function period(e) { return e.date || e.end ? `${esc(e.date || "?")}${e.end ? " – " + esc(e.end) : e.date && S.edgeTypes[e.type].cat === "formal" && e.type !== "split" && e.type !== "joins" ? " –" : ""}` : ""; }
+
+function renderInfo() {
+  const p = $("#pane-info");
+  if (!selected) {
+    const counts = Object.keys(S.statuses).map(k => `${S.statuses[k]}: ${edges.filter(e => effStatus(e) === k).length}`).join(" · ");
+    p.innerHTML = `<h2>Как се ползва</h2>
+      <p>Щракнете възел или линия за подробности и източници. Влачете възлите, колелото мащабира, двоен клик освобождава закачен възел.</p>
+      <p>В „Добави“ създавате нови хора, фирми, медии или кръгове и връзки между тях. Всяка връзка има статус; без източник тя никога не се показва като факт.</p>
+      <p class="muted small">${nodes.length} възела, ${edges.length} връзки. ${counts}.</p>`;
+    return;
+  }
+  if (selected.kind === "node") {
+    const n = byId.get(selected.id);
+    if (!n) { selected = null; return renderInfo(); }
+    const own = edges.filter(e => e.from === n.id || e.to === n.id)
+      .sort((a, b) => (S.edgeTypes[a.type].cat > S.edgeTypes[b.type].cat ? -1 : 1) || String(b.date || "").localeCompare(String(a.date || "")));
+    const groups = {};
+    for (const e of own) (groups[S.edgeTypes[e.type].cat] ||= []).push(e);
+    let html = `<h2>${esc(n.name || n.label)}</h2><div class="muted">${esc(S.nodeTypes[n.type])}${n.party && n.type !== "party" ? " · " + esc(PARTY[n.party]?.name) : ""}${n.type === "party" && n.seats ? " · до " + n.seats + " мандата" : ""}</div>`;
+    if (n.note) html += `<p>${linkify(n.note)}</p>`;
+    for (const cat of ["informal", "acts", "formal"]) {
+      if (!groups[cat]) continue;
+      html += `<h3>${esc(S.categories[cat])} (${groups[cat].length})</h3>`;
+      for (const e of groups[cat]) {
+        const other = byId.get(e.from === n.id ? e.to : e.from), out = e.from === n.id;
+        html += `<div class="conn"><div>${out ? "" : "← "}${esc(S.edgeTypes[e.type].label)}${out ? " →" : ""} <span class="who" data-node="${esc(other.id)}">${esc(other.label)}</span> ${badge(e)}</div>
+          <div class="small muted">${period(e)}${e.note ? " " + linkify(e.note) : ""}</div><div class="small">${srcHtml(e)} · <a href="#" data-edge="${esc(e.id)}">детайли</a></div></div>`;
+      }
+    }
+    html += `<div class="actions"><button class="primary" id="i-link">Нова връзка оттук</button>${n.derived ? "" : `<button id="i-edit">Редактирай</button><button class="danger" id="i-del">Изтрий</button>`}</div>`;
+    if (n.derived) html += `<p class="small muted">Възелът идва от хронологията на партиите и се редактира там.</p>`;
+    p.innerHTML = html;
+    $("#i-link").onclick = () => { clearEdgeForm(); edgeForm.from.value = labelFor(n.id); showTab("add"); edgeForm.to.focus(); };
+    if (!n.derived) {
+      $("#i-edit").onclick = () => editNode(n);
+      $("#i-del").onclick = () => deleteNode(n);
+    }
+  } else {
+    const e = edges.find(x => x.id === selected.id);
+    if (!e) { selected = null; return renderInfo(); }
+    const t = S.edgeTypes[e.type], a = byId.get(e.from), b = byId.get(e.to);
+    let html = `<h2>${esc(t.label)}</h2><div class="muted">${esc(S.categories[t.cat])}</div>
+      <p><span class="who" data-node="${esc(a.id)}"><b>${esc(a.label)}</b></span> ${t.directed ? "→" : "—"} <span class="who" data-node="${esc(b.id)}"><b>${esc(b.label)}</b></span></p>
+      <p>${badge(e)} ${period(e) ? `<span class="muted">${period(e)}</span>` : ""}</p>`;
+    if (effStatus(e) !== "documented") html += `<p class="warn">${effStatus(e) === "claim" ? "Твърдение, а не установен факт." : "Слух: непотвърдена информация."}</p>`;
+    if (e.note) html += `<p>${linkify(e.note)}</p>`;
+    html += `<p class="small">${srcHtml(e)}</p>`;
+    html += e.derived ? `<p class="small muted">Връзката идва от хронологията на партиите.</p>` : `<div class="actions"><button id="i-edit">Редактирай</button><button class="danger" id="i-del">Изтрий</button></div>`;
+    p.innerHTML = html;
+    if (!e.derived) { $("#i-edit").onclick = () => editEdge(e); $("#i-del").onclick = () => deleteEdge(e); }
+  }
+  p.querySelectorAll("[data-node]").forEach(x => x.onclick = () => select("node", x.dataset.node));
+  p.querySelectorAll("[data-edge]").forEach(x => x.onclick = ev => { ev.preventDefault(); select("edge", x.dataset.edge); });
+}
+
+// ---------------------------------------------------------------- forms
+const edgeForm = $("#edge-form"), nodeForm = $("#node-form");
+const opt = (v, t) => `<option value="${esc(v)}">${esc(t)}</option>`;
+edgeForm.type.innerHTML = Object.entries(S.categories).map(([c, cl]) => `<optgroup label="${esc(cl)}">${Object.entries(S.edgeTypes).filter(([, t]) => t.cat === c).map(([k, t]) => opt(k, t.label)).join("")}</optgroup>`).join("");
+edgeForm.type.value = "influence";
+edgeForm.status.innerHTML = Object.entries(S.statuses).map(([k, v]) => opt(k, v)).join("");
+edgeForm.status.value = "claim";
+nodeForm.type.innerHTML = Object.entries(S.nodeTypes).filter(([k]) => k !== "party").map(([k, v]) => opt(k, v)).join("");
+nodeForm.type.value = "oligarch";
+nodeForm.party.innerHTML += DATA.parties.map(p => opt(p.id, `${p.short}: ${p.name}`)).join("");
+
+function labelFor(id) { const n = byId.get(id); return n ? `${n.label} [${id}]` : id; }
+function idFromLabel(s) {
+  s = s.trim();
+  const m = s.match(/\[([^\]]+)\]\s*$/);
+  if (m && byId.has(m[1])) return m[1];
+  const hits = nodes.filter(n => n.label.toLowerCase() === s.toLowerCase() || (n.name || "").toLowerCase() === s.toLowerCase());
+  return hits.length === 1 ? hits[0].id : byId.has(s) ? s : null;
+}
+function fillNodeList() {
+  $("#node-list").innerHTML = nodes.map(n => `<option value="${esc(labelFor(n.id))}">${esc(S.nodeTypes[n.type])}</option>`).join("");
+}
+function syncSrcWarn() { $("#src-warn").hidden = !(edgeForm.status.value === "documented" && !edgeForm.source.value.trim()); }
+edgeForm.status.onchange = syncSrcWarn; edgeForm.source.oninput = syncSrcWarn;
+
+function clearEdgeForm() { edgeForm.reset(); edgeForm.id.value = ""; edgeForm.type.value = "influence"; edgeForm.status.value = "claim"; $("#edge-h").textContent = "Нова връзка"; syncSrcWarn(); }
+function clearNodeForm() { nodeForm.reset(); nodeForm.id.value = ""; nodeForm.type.value = "oligarch"; $("#node-h").textContent = "Нов възел"; }
+$("#edge-clear").onclick = clearEdgeForm; $("#node-clear").onclick = clearNodeForm;
+
+edgeForm.onsubmit = ev => {
+  ev.preventDefault();
+  const f = edgeForm, from = idFromLabel(f.from.value), to = idFromLabel(f.to.value);
+  const msg = t => { $("#edge-msg").textContent = t; $("#edge-msg").hidden = !t; };
+  if (!from) return msg("Не намирам възела в „От“. Изберете от списъка или първо създайте възела по-долу.");
+  if (!to) return msg("Не намирам възела в „Към“. Изберете от списъка или първо създайте възела по-долу.");
+  if (from === to) return msg("Връзката трябва да е между два различни възела.");
+  msg("");
+  const e = { id: f.id.value || "u" + Date.now().toString(36), from, to, type: f.type.value, status: f.status.value };
+  for (const k of ["date", "end", "source", "note"]) if (f[k].value.trim()) e[k] = f[k].value.trim();
+  const i = work.edges.findIndex(x => x.id === e.id);
+  if (i >= 0) work.edges[i] = e; else work.edges.push(e);
+  save(); rebuild(); applyFilters(); clearEdgeForm(); select("edge", e.id);
+};
+nodeForm.onsubmit = ev => {
+  ev.preventDefault();
+  const f = nodeForm, label = f.label.value.trim();
+  let id = f.id.value;
+  if (!id) {
+    const base = "n-" + (label.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "x");
+    id = base; let k = 2; while (byId.has(id)) id = base + "-" + k++;
+  }
+  const n = { id, type: f.type.value, label };
+  if (f.party.value) n.party = f.party.value;
+  if (f.note.value.trim()) n.note = f.note.value.trim();
+  const i = work.nodes.findIndex(x => x.id === id);
+  if (i >= 0) work.nodes[i] = n; else work.nodes.push(n);
+  save(); rebuild(); applyFilters(); clearNodeForm(); select("node", id);
+  const placed = byId.get(id); if (placed && !f.id.value) { placed.x = -cam.x / cam.k + svg.clientWidth / 2 / cam.k; placed.y = -cam.y / cam.k + svg.clientHeight / 2 / cam.k; position(); }
+};
+function editNode(n) {
+  const w = work.nodes.find(x => x.id === n.id); if (!w) return;
+  clearNodeForm(); nodeForm.id.value = w.id; nodeForm.type.value = w.type; nodeForm.party.value = w.party || ""; nodeForm.label.value = w.label; nodeForm.note.value = w.note || "";
+  $("#node-h").textContent = "Редакция: " + w.label; showTab("add"); nodeForm.label.focus();
+}
+function editEdge(e) {
+  const w = work.edges.find(x => x.id === e.id); if (!w) return;
+  clearEdgeForm(); const f = edgeForm;
+  f.id.value = w.id; f.from.value = labelFor(w.from); f.to.value = labelFor(w.to); f.type.value = w.type; f.status.value = w.status;
+  for (const k of ["date", "end", "source", "note"]) f[k].value = w[k] || "";
+  $("#edge-h").textContent = "Редакция на връзка"; syncSrcWarn(); showTab("add");
+}
+// two-step confirmation: first click arms the button, second click within 4 s acts
+function armed(btn, text) {
+  if (btn.dataset.armed) return true;
+  const old = btn.textContent; btn.dataset.armed = "1"; btn.textContent = text;
+  setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = old; } }, 4000);
+  return false;
+}
+function deleteNode(n) {
+  const k = work.edges.filter(e => e.from === n.id || e.to === n.id).length;
+  if (!armed($("#i-del"), k ? `Изтрий и ${k} връзки` : "Потвърди изтриването")) return;
+  work.nodes = work.nodes.filter(x => x.id !== n.id);
+  work.edges = work.edges.filter(e => e.from !== n.id && e.to !== n.id);
+  save(); selected = null; rebuild(); applyFilters(); renderInfo();
+}
+function deleteEdge(e) {
+  if (!armed($("#i-del"), "Потвърди изтриването")) return;
+  work.edges = work.edges.filter(x => x.id !== e.id);
+  save(); selected = null; rebuild(); applyFilters(); renderInfo();
+}
+
+// ---------------------------------------------------------------- filters UI
+function checks(box, entries, set) {
+  box.innerHTML = entries.map(([k, v]) => `<label><input type="checkbox" value="${esc(k)}" ${set.has(k) ? "checked" : ""}> ${esc(v)}</label>`).join("");
+  box.onchange = ev => { ev.target.checked ? set.add(ev.target.value) : set.delete(ev.target.value); applyFilters(); };
+}
+checks($("#f-status"), Object.entries(S.statuses), F.status);
+checks($("#f-cat"), Object.entries(S.categories), F.cat);
+checks($("#f-ntype"), Object.entries(S.nodeTypes), F.ntype);
+$("#f-member").onchange = ev => { F.member = ev.target.checked; applyFilters(); };
+$("#f-iso").onchange = ev => { F.iso = ev.target.checked; applyFilters(); };
+$("#q").oninput = ev => { F.q = ev.target.value.trim(); highlight(); };
+$("#q").onkeydown = ev => { if (ev.key === "Enter") { const n = visNodes.find(matches); if (n) select("node", n.id); } };
+$("#year").oninput = ev => {
+  const y = +ev.target.value, all = y >= +ev.target.max;
+  F.year = all ? null : y; $("#year-lbl").textContent = all ? "всички" : y; applyFilters();
+};
+
+function legend() {
+  const line = (st, cat, arrow) => `<svg width="46" height="12"><line x1="2" y1="6" x2="${arrow ? 38 : 44}" y2="6" stroke="${CAT_COLOR[cat]}" stroke-width="2" stroke-dasharray="${DASH[st]}"/>${arrow ? `<path d="M37,2 L45,6 L37,10z" fill="${CAT_COLOR[cat]}"/>` : ""}</svg>`;
+  const sh = t => { const s = el("svg", { width: 24, height: 24, viewBox: "-12 -12 24 24" }); s.append(shape({ type: t, r: 8, party: null, color: "#0054a6" })); return s.outerHTML; };
+  $("#legend").innerHTML =
+    Object.entries(S.statuses).map(([k, v]) => `<div>${line(k, "informal")} ${esc(v)}</div>`).join("") +
+    Object.entries(S.categories).map(([k, v]) => `<div>${line("documented", k, true)} ${esc(v)}</div>`).join("") +
+    Object.entries(S.nodeTypes).map(([k, v]) => `<div>${sh(k)} ${esc(v)}${k === "party" || k === "person" ? " (в партиен цвят)" : ""}</div>`).join("");
+}
+
+// ---------------------------------------------------------------- data pane
+function exportJson() {
+  return { notes: DATA.notes, nodes: work.nodes, edges: work.edges.map(e => ({ ...e })) };
+}
+function renderDataPane() {
+  const changed = JSON.stringify({ n: work.nodes, e: work.edges }) !== JSON.stringify({ n: DATA.base.nodes, e: DATA.base.edges });
+  $("#data-count").textContent = `Ръчни данни: ${work.nodes.length} възела, ${work.edges.length} връзки. ${changed ? "Има непренесени промени спрямо файла." : "Няма промени спрямо файла."}`;
+  $("#data-banner").innerHTML = work.version !== DATA.version && changed
+    ? `<div class="banner">Файлът с данни е обновен след последните ви промени в браузъра. Показвате локалното си копие; „Отмени промените“ зарежда новия файл.</div>` : "";
+  $("#notes").innerHTML = DATA.notes.map(s => `<li>${esc(s)}</li>`).join("");
+  if (document.activeElement !== $("#json")) $("#json").value = JSON.stringify(exportJson(), null, 1);
+}
+$("#dl").onclick = () => {
+  const blob = new Blob([JSON.stringify(exportJson(), null, 1) + "\n"], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "relations.json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$("#ul").onclick = () => $("#file").click();
+// a framed viewer (hosted page) blocks downloads; copying still works there
+try { if (window.top !== window) $("#dl").hidden = true; } catch { $("#dl").hidden = true; }
+function dataMsg(t) { $("#data-msg").textContent = t; $("#data-msg").hidden = !t; }
+$("#copy").onclick = async () => {
+  const t = $("#json"); t.value = JSON.stringify(exportJson(), null, 1);
+  try { await navigator.clipboard.writeText(t.value); dataMsg("Копирано."); } catch { t.focus(); t.select(); dataMsg("Текстът е маркиран: копирайте с Ctrl+C."); }
+};
+$("#paste-load").onclick = () => loadText($("#json").value);
+$("#file").onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  await loadText(await f.text());
+  ev.target.value = "";
+};
+async function loadText(text) {
+  try {
+    const d = JSON.parse(text);
+    if (!Array.isArray(d.nodes) || !Array.isArray(d.edges)) throw new Error("липсват nodes или edges");
+    d.edges.forEach((e, i) => { e.id ||= "f" + i; });
+    work = { version: DATA.version, nodes: d.nodes, edges: d.edges };
+    save(); selected = null; rebuild(); applyFilters(); renderInfo(); setTimeout(fit, 900); dataMsg("Заредено.");
+  } catch (err) { dataMsg("Данните не могат да се заредят: " + err.message); }
+}
+$("#reset").onclick = () => {
+  if (!armed($("#reset"), "Потвърди: изтрий локалните промени")) return;
+  store.clear(); loadWork(); selected = null; rebuild(); applyFilters(); renderInfo(); renderDataPane();
+};
+
+// ---------------------------------------------------------------- start
+loadWork();
+markers();
+legend();
+rebuild();
+applyFilters();
+renderInfo();
+renderDataPane();
+alpha = 1;
+setTimeout(fit, 50);
+setTimeout(fit, 1500);
+window.addEventListener("resize", () => fit());
+</script>
+</body>
+</html>
