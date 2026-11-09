@@ -1225,10 +1225,12 @@ function fuzzyScore(q, text) {
   }
   return 60 * total / nq.split(' ').length;
 }
+// initials of a unit's name: "Национална агенция за приходите" → НАП, "Агенция по вписванията" → АВ
+const unitAbbr = name => { const w = name.replace(/[„“"()]/g, ' ').split(/\s+/).filter(x => x.length > 2 && !/^(към|при|със)$/i.test(x)); return w.length > 1 ? w.map(x => x[0].toUpperCase()).join('') : null; };
 const SEARCH = [];
 for (const n of NODES) {
   SEARCH.push({ kind: 'Институция', label: n.label + (n.abbr && n.abbr !== n.label ? ` (${n.abbr})` : ''), abbr: n.abbr, text: [n.label, n.short, n.sub, n.abbr].join(' '), extra: n.comp, go: () => select({ kind: 'node', id: n.id }), icon: n });
-  for (const u of n.units || []) SEARCH.push({ kind: 'Структура · ' + (n.short || n.label).replace('|', ' '), label: u.name, text: u.name + ' ' + (u.area || ''), go: () => { select({ kind: 'node', id: n.id }); state.unitHi = u.name; renderInfo(); { const u = document.querySelector('.unit.hi'), pane = $('#p-info'); if (u) pane.scrollTop = u.offsetTop - pane.clientHeight / 2; } state.unitHi = null; }, icon: n });
+  for (const u of n.units || []) SEARCH.push({ kind: 'Структура · ' + (n.short || n.label).replace('|', ' '), label: u.name, abbr: unitAbbr(u.name), text: u.name + ' ' + (u.area || ''), go: () => { select({ kind: 'node', id: n.id }); state.unitHi = u.name; renderInfo(); { const u = document.querySelector('.unit.hi'), pane = $('#p-info'); if (u) pane.scrollTop = u.offsetTop - pane.clientHeight / 2; } state.unitHi = null; }, icon: n });
   for (const pw of n.powers || []) SEARCH.push({ kind: 'Правомощие · ' + n.label, label: pw.t, text: pw.t, go: () => select({ kind: 'node', id: n.id }), weak: true });
 }
 for (const e of EDGES) SEARCH.push({ kind: 'Връзка · ' + byId[e.from].label + ' → ' + byId[e.to].label, label: e.label, text: e.label, go: () => select({ kind: 'edge', id: e.id }), weak: true });
