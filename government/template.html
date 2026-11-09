@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Политико: държавно устройство</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f1ea;
+  --panel: #fffdf8;
+  --ink: #1d1d1f;
+  --muted: #6b6760;
+  --line: #d9d3c7;
+  --accent: #0b4f8a;
+  --hi: #fff4d6;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "IBM Plex Sans", system-ui, sans-serif; }
+header { padding: 12px 16px 10px; border-bottom: 1px solid var(--line); background: var(--panel); display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
+h1 { margin: 0; font-size: 20px; }
+header p { margin: 0; color: var(--muted); flex: 1 1 320px; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; height: calc(100vh - 52px); }
+#left { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--panel); align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; user-select: none; }
+.chip.off { opacity: .4; text-decoration: line-through; }
+.chip svg { flex: none; }
+.bar .sp { flex: 1; }
+#stage { position: relative; flex: 1; min-height: 0; overflow: auto; }
+#graph { width: 100%; height: 100%; min-width: 860px; min-height: 560px; display: block; }
+#tip { position: fixed; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 12px; max-width: 300px; box-shadow: 0 2px 8px rgba(0,0,0,.1); display: none; z-index: 5; }
+aside { border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+.tabs button { border: 0; border-radius: 0; background: none; padding: 8px 4px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; font-size: 13px; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.pane { padding: 14px 16px 28px; overflow: auto; flex: 1; display: none; }
+.pane.on { display: block; }
+h2 { font-size: 17px; margin: 0 0 4px; }
+h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 6px; }
+button, input, select { font: inherit; color: var(--ink); }
+button { padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button:disabled { opacity: .4; cursor: default; }
+input[type=search], select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+input[type=search] { width: 100%; }
+.muted { color: var(--muted); } .small { font-size: 12px; }
+.badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid currentColor; white-space: nowrap; vertical-align: 1px; }
+dl { margin: 8px 0 0; display: grid; grid-template-columns: 112px 1fr; gap: 4px 10px; }
+dt { color: var(--muted); font-size: 12px; padding-top: 1px; }
+dd { margin: 0; }
+ul.pw { margin: 0; padding: 0; list-style: none; }
+ul.pw li { padding: 6px 0; border-top: 1px solid var(--line); }
+.refs { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 2px; }
+a.art { font-size: 11.5px; padding: 0 6px; border-radius: 4px; background: #ece6f6; color: #3d2a6e; text-decoration: none; white-space: nowrap; cursor: pointer; }
+a.art:hover { background: #ddd2f0; }
+a.ext { font-size: 11.5px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+a.ext:hover { text-decoration: underline; }
+.law { font-size: 11.5px; padding: 0 6px; border-radius: 4px; background: #eee9df; color: #5a554c; white-space: nowrap; }
+.conn { padding: 5px 0; border-top: 1px solid var(--line); display: flex; gap: 8px; align-items: flex-start; }
+.conn svg { flex: none; margin-top: 6px; }
+.who { font-weight: 600; cursor: pointer; } .who:hover { text-decoration: underline; }
+.legend div { display: flex; align-items: center; gap: 8px; margin: 3px 0; cursor: pointer; }
+.sw { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; flex: none; }
+.node { cursor: pointer; }
+.node rect.box { stroke-width: 1.6; }
+.node .t { font-size: 12.5px; font-weight: 700; fill: var(--ink); pointer-events: none; }
+.node .s { font-size: 10px; fill: var(--muted); pointer-events: none; }
+.node.sel rect.box { stroke-width: 3.2; }
+.edge { fill: none; opacity: .55; }
+.edge.on { opacity: 1; }
+.edge-hit { fill: none; stroke: transparent; stroke-width: 12px; cursor: pointer; }
+.dim { opacity: .1; }
+.flow { animation: flow 1.1s linear infinite; stroke-dasharray: 9 5 !important; }
+@keyframes flow { to { stroke-dashoffset: -28; } }
+@media (prefers-reduced-motion: reduce) { .flow { animation: none; } }
+.scn button.pick { display: block; width: 100%; text-align: left; margin: 0 0 6px; }
+.scn button.pick.on { border-color: var(--accent); background: #eef4fb; }
+.step { background: var(--hi); border: 1px solid #e6c873; border-radius: 6px; padding: 10px; margin: 8px 0; }
+.stepnav { display: flex; gap: 6px; align-items: center; }
+.stepnav .muted { flex: 1; text-align: center; }
+.term { display: grid; grid-template-columns: 150px 1fr; gap: 2px 8px; align-items: center; margin: 3px 0; font-size: 12.5px; }
+.term .nm { cursor: pointer; text-align: right; } .term .nm:hover { text-decoration: underline; }
+.term .tr { position: relative; height: 18px; background: #f0ece3; border-radius: 3px; }
+.term .tb { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; }
+.term .tl { position: absolute; left: 6px; top: 0; font-size: 11px; line-height: 18px; color: #fff; white-space: nowrap; font-weight: 600; }
+.pubrow { padding: 7px 0; border-top: 1px solid var(--line); }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.maj { padding: 6px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 56px 1fr; gap: 8px; }
+.maj b { font-size: 18px; }
+.article { border-top: 1px solid var(--line); padding: 8px 0; }
+.article.hi { background: var(--hi); margin: 0 -16px; padding: 8px 16px; }
+.article .hd { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.article .hd b { cursor: pointer; } .article .hd b:hover { text-decoration: underline; }
+.article .tx { white-space: pre-wrap; font-size: 12.5px; margin: 4px 0; }
+.article .cited { font-size: 12px; color: var(--muted); }
+.chap { font-weight: 700; margin: 14px 0 4px; font-size: 13px; color: #3d2a6e; }
+.note { font-size: 12px; color: #7a4a00; }
+.src { font-size: 12px; background: #f5f1e8; border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; height: auto; }
+  #stage { height: 64vh; flex: none; }
+  aside { border-left: 0; border-top: 1px solid var(--line); }
+  .pane { max-height: none; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Държавно устройство на България</h1>
+  <p>Кой кого избира, кой може да спре, свали или провери другия. Всяко правомощие е с линк към члена от Конституцията.</p>
+</header>
+<main>
+  <div id="left">
+    <div class="bar" id="filters"></div>
+    <div id="stage"><svg id="graph" viewBox="0 0 1300 860" role="img" aria-label="Схема на институциите и връзките между тях"></svg></div>
+  </div>
+  <aside>
+    <div class="tabs" role="tablist">
+      <button data-tab="info" aria-selected="true">Институция</button>
+      <button data-tab="scn">Сценарии</button>
+      <button data-tab="terms">Мандати</button>
+      <button data-tab="pub">Публичност</button>
+      <button data-tab="maj">Мнозинства</button>
+      <button data-tab="const">Конституция</button>
+    </div>
+    <div class="pane on" id="p-info"></div>
+    <div class="pane scn" id="p-scn"></div>
+    <div class="pane" id="p-terms"></div>
+    <div class="pane" id="p-pub"></div>
+    <div class="pane" id="p-maj"></div>
+    <div class="pane" id="p-const"></div>
+  </aside>
+</main>
+<div id="tip"></div>
+<script>
+const DATA = /*__DATA__*/null;
+const G = DATA.gov, C = DATA.const;
+const NODES = G.nodes, EDGES = G.edges, ET = G.edgeTypes, BR = G.branches, PL = G.publicityLevels;
+const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+const edgeById = Object.fromEntries(EDGES.map(e => [e.id, e]));
+const ART_RE = /чл\.\s*(\d+[а-я]?)/g;
+const SVGNS = 'http://www.w3.org/2000/svg';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const arts = ref => [...String(ref || '').matchAll(ART_RE)].map(m => m[1]);
+
+const state = { sel: null, hover: null, scn: null, art: null, hidden: new Set(), color: 'branch', tab: 'info' };
+
+// ---------- links to the Constitution ----------
+function officialUrl(key) {
+  return C.source.official + '#:~:text=' + encodeURIComponent('Чл. ' + key + '.');
+}
+function refHtml(ref, law) {
+  let h = '';
+  if (ref) h += String(ref).split(';').map(p => p.trim()).filter(Boolean).map(p => {
+    const k = arts(p)[0];
+    return k ? `<a class="art" data-art="${esc(k)}" title="Покажи текста на чл. ${esc(k)}">${esc(p)}</a>` : `<span class="law">${esc(p)}</span>`;
+  }).join('');
+  if (law) h += `<span class="law" title="Уредено в закон, не в Конституцията">${esc(law)}</span>`;
+  return h ? `<span class="refs">${h}</span>` : '';
+}
+
+// ---------- citation index ----------
+const CITED = {};
+function cite(ref, item) { for (const k of arts(ref)) (CITED[k] ||= []).push(item); }
+for (const n of NODES) {
+  const it = { kind: 'node', id: n.id, label: n.label };
+  cite(n.refs, it); cite(n.pub?.ref, it);
+  for (const p of n.powers || []) cite(p.ref, it);
+}
+for (const e of EDGES) cite(e.ref, { kind: 'edge', id: e.id, label: `${byId[e.from].label} → ${byId[e.to].label}` });
+for (const s of G.scenarios) for (const st of s.steps) cite(st.ref, { kind: 'scn', id: s.id, label: 'Сценарий: ' + s.title });
+for (const m of G.majorities) cite(m.ref, { kind: 'maj', id: m.n, label: 'Мнозинство ' + m.label });
+
+// ---------- geometry ----------
+const W = n => Math.max(128, n.label.length * 7 + 24), H = 46;
+for (const n of NODES) { n.w = W(n); n.h = H; }
+function boxPoint(n, tx, ty) {
+  const dx = tx - n.x, dy = ty - n.y;
+  if (!dx && !dy) return [n.x, n.y];
+  const sx = (n.w / 2 + 4) / Math.abs(dx || 1e-9), sy = (n.h / 2 + 4) / Math.abs(dy || 1e-9);
+  const s = Math.min(sx, sy);
+  return [n.x + dx * s, n.y + dy * s];
+}
+// spread parallel edges of one pair of nodes
+const pairs = {};
+for (const e of EDGES) { const k = [e.from, e.to].sort().join('|'); (pairs[k] ||= []).push(e); }
+for (const list of Object.values(pairs)) list.forEach((e, i) => {
+  const canon = e.from < e.to ? 1 : -1;
+  e.bend = (i - (list.length - 1) / 2) * 34 * canon + (list.length === 1 ? 0 : 0);
+});
+function edgePath(e) {
+  const a = byId[e.from], b = byId[e.to];
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+  const bend = e.bend + (pairs[[e.from, e.to].sort().join('|')].length === 1 ? 14 : 0);
+  const cx = mx - dy / len * bend, cy = my + dx / len * bend;
+  const [x1, y1] = boxPoint(a, cx, cy), [x2, y2] = boxPoint(b, cx, cy);
+  return `M${x1.toFixed(1)},${y1.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+}
+
+// ---------- drawing ----------
+const svg = $('#graph');
+function el(tag, attrs, parent) {
+  const x = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) x.setAttribute(k, v);
+  if (parent) parent.appendChild(x);
+  return x;
+}
+const defs = el('defs', {}, svg);
+for (const [k, t] of Object.entries(ET)) {
+  const m = el('marker', { id: 'ar-' + k, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto-start-reverse' }, defs);
+  el('path', { d: 'M0,1 L10,5 L0,9 z', fill: t.color }, m);
+}
+const gEdges = el('g', {}, svg), gHits = el('g', {}, svg), gNodes = el('g', {}, svg);
+const edgeEls = {}, nodeEls = {};
+for (const n of NODES) {
+  const g = el('g', { class: 'node', tabindex: 0, role: 'button', 'aria-label': n.label }, gNodes);
+  const r = el('rect', { class: 'box', width: n.w, height: n.h, rx: 8 }, g);
+  el('rect', { class: 'stripe', width: 6, height: n.h - 12, x: 6, y: 6, rx: 2 }, g);
+  const t = el('text', { class: 't', x: n.w / 2 + 3, y: 20, 'text-anchor': 'middle' }, g); t.textContent = n.label;
+  const s = el('text', { class: 's', x: n.w / 2 + 3, y: 35, 'text-anchor': 'middle' }, g); s.textContent = n.sub || '';
+  g.addEventListener('mouseenter', () => { state.hover = n.id; paint(); });
+  g.addEventListener('mouseleave', () => { state.hover = null; paint(); });
+  g.addEventListener('click', ev => { ev.stopPropagation(); select({ kind: 'node', id: n.id }); });
+  g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select({ kind: 'node', id: n.id }); } });
+  nodeEls[n.id] = { g, r, t, s, stripe: g.querySelector('.stripe') };
+}
+function layoutNodes() {
+  for (const n of NODES) {
+    const { g, r, t, s } = nodeEls[n.id];
+    n.w = Math.ceil(Math.max(t.getComputedTextLength(), s.getComputedTextLength())) + 34;
+    r.setAttribute('width', n.w);
+    t.setAttribute('x', n.w / 2 + 4); s.setAttribute('x', n.w / 2 + 4);
+    g.setAttribute('transform', `translate(${n.x - n.w / 2},${n.y - n.h / 2})`);
+  }
+}
+layoutNodes();
+for (const e of EDGES) {
+  const t = ET[e.type], d = edgePath(e);
+  const p = el('path', { class: 'edge', d, stroke: t.color, 'stroke-width': t.width || 1.7, 'stroke-dasharray': t.dash || '', 'stroke-linecap': t.cap || 'butt', 'marker-end': `url(#ar-${e.type})` }, gEdges);
+  const h = el('path', { class: 'edge-hit', d }, gHits);
+  h.addEventListener('mousemove', ev => showTip(ev, `<b>${esc(t.label)}</b><br>${esc(byId[e.from].label)} → ${esc(byId[e.to].label)}<br>${esc(e.label)}<br><span class="muted">${esc(e.ref || e.law)}</span>`));
+  h.addEventListener('mouseleave', hideTip);
+  h.addEventListener('click', ev => { ev.stopPropagation(); select({ kind: 'edge', id: e.id }); });
+  edgeEls[e.id] = { p, h };
+}
+function relayout() { layoutNodes(); for (const e of EDGES) { const d = edgePath(e); edgeEls[e.id].p.setAttribute('d', d); edgeEls[e.id].h.setAttribute('d', d); } }
+document.fonts?.ready.then(relayout);
+svg.addEventListener('click', () => { if (!state.scn) select(null); });
+
+function nodeColor(n) { return state.color === 'pub' ? PL[n.pub.level].color : BR[n.branch].color; }
+function colorNodes() {
+  for (const n of NODES) {
+    const c = nodeColor(n), { r, stripe } = nodeEls[n.id];
+    r.setAttribute('fill', '#fff'); r.setAttribute('stroke', c); stripe.setAttribute('fill', c);
+  }
+}
+
+function focusSets() {
+  const visible = e => !state.hidden.has(e.type);
+  if (state.scn) {
+    const st = G.scenarios.find(s => s.id === state.scn.id).steps[state.scn.i];
+    return { nodes: new Set(st.nodes), edges: new Set(st.edges), flow: true };
+  }
+  if (state.art) {
+    const items = CITED[state.art] || [];
+    const nodes = new Set(), edges = new Set();
+    for (const it of items) {
+      if (it.kind === 'node') nodes.add(it.id);
+      if (it.kind === 'edge') { const e = edgeById[it.id]; edges.add(e.id); nodes.add(e.from); nodes.add(e.to); }
+    }
+    return { nodes, edges };
+  }
+  const nid = state.hover || (state.sel?.kind === 'node' ? state.sel.id : null);
+  if (nid) {
+    const nodes = new Set([nid]), edges = new Set();
+    for (const e of EDGES) if (visible(e) && (e.from === nid || e.to === nid)) { edges.add(e.id); nodes.add(e.from); nodes.add(e.to); }
+    return { nodes, edges };
+  }
+  if (state.sel?.kind === 'edge') { const e = edgeById[state.sel.id]; return { nodes: new Set([e.from, e.to]), edges: new Set([e.id]) }; }
+  return null;
+}
+function paint() {
+  const f = focusSets();
+  for (const e of EDGES) {
+    const { p, h } = edgeEls[e.id];
+    const hidden = state.hidden.has(e.type) && !(f?.flow && f.edges.has(e.id));
+    p.style.display = h.style.display = hidden ? 'none' : '';
+    p.classList.toggle('dim', !!f && !f.edges.has(e.id));
+    p.classList.toggle('flow', !!f?.flow && f.edges.has(e.id));
+    p.classList.toggle('on', !!f && f.edges.has(e.id));
+  }
+  for (const n of NODES) {
+    const { g } = nodeEls[n.id];
+    g.classList.toggle('dim', !!f && !f.nodes.has(n.id));
+    g.classList.toggle('sel', state.sel?.kind === 'node' && state.sel.id === n.id);
+  }
+}
+
+// ---------- tooltip ----------
+const tip = $('#tip');
+function showTip(ev, html) { tip.innerHTML = html; tip.style.display = 'block'; tip.style.left = Math.min(ev.clientX + 14, innerWidth - 310) + 'px'; tip.style.top = (ev.clientY + 14) + 'px'; }
+function hideTip() { tip.style.display = 'none'; }
+
+// ---------- filters ----------
+function lineSwatch(t, w = 30) {
+  return `<svg width="${w}" height="10"><line x1="1" y1="5" x2="${w - 1}" y2="5" stroke="${t.color}" stroke-width="${t.width || 2}" stroke-dasharray="${t.dash || ''}" stroke-linecap="${t.cap || 'butt'}"/></svg>`;
+}
+function renderFilters() {
+  const bar = $('#filters');
+  bar.innerHTML = Object.entries(ET).map(([k, t]) => `<span class="chip${state.hidden.has(k) ? ' off' : ''}" data-et="${k}" role="switch" aria-checked="${!state.hidden.has(k)}" title="Покажи / скрий">${lineSwatch(t, 22)}${esc(t.label)}</span>`).join('')
+    + `<span class="sp"></span><label class="small">Цвят: <select id="colormode"><option value="branch">по власт</option><option value="pub">по публичност</option></select></label>`;
+  bar.querySelectorAll('[data-et]').forEach(c => c.addEventListener('click', () => {
+    const k = c.dataset.et; state.hidden.has(k) ? state.hidden.delete(k) : state.hidden.add(k);
+    renderFilters(); paint(); if (state.tab === 'info') renderInfo();
+  }));
+  const cm = $('#colormode'); cm.value = state.color;
+  cm.addEventListener('change', () => { state.color = cm.value; colorNodes(); });
+}
+
+// ---------- tabs ----------
+document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+function setTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + tab));
+  if (tab !== 'scn') state.scn = null;
+  if (tab !== 'const') state.art = null;
+  ({ info: renderInfo, scn: renderScn, terms: renderTerms, pub: renderPub, maj: renderMaj, const: renderConst })[tab]();
+  paint();
+}
+
+// ---------- selection & info pane ----------
+function select(s) { state.sel = s; state.art = null; state.scn = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
+function who(id) { const n = byId[id]; return `<span class="who" data-node="${id}">${esc(n.label)}</span>`; }
+function connRow(e, other) {
+  return `<div class="conn">${lineSwatch(ET[e.type], 22)}<div>${who(other)} <span class="muted small">· ${esc(ET[e.type].label)}</span><br>${esc(e.label)} ${refHtml(e.ref, e.law)}</div></div>`;
+}
+function renderInfo() {
+  const p = $('#p-info');
+  if (!state.sel) {
+    p.innerHTML = `<h2>Как се чете схемата</h2>
+      <p class="small">Всяка кутия е институция, всяка стрелка е правомощие: кой кого избира, контролира, проверява или може да свали. Посочете институция, за да видите връзките ѝ, или я изберете за пълна справка. Лилавите етикети като <a class="art" data-art="99">чл. 99, ал. 5</a> показват текста на члена; <span class="law">сивите</span> са уредени в закон, не в Конституцията.</p>
+      <h3>Власти</h3><div class="legend">${Object.entries(BR).map(([k, b]) => `<div data-branch="${k}"><span class="sw" style="border-color:${b.color};background:#fff"></span>${esc(b.label)} <span class="muted small">(${NODES.filter(n => n.branch === k).length})</span></div>`).join('')}</div>
+      <h3>Видове връзки</h3><div class="legend">${Object.entries(ET).map(([k, t]) => `<div>${lineSwatch(t)}${esc(t.label)} <span class="muted small">(${EDGES.filter(e => e.type === k).length})</span></div>`).join('')}</div>
+      <h3>Институции</h3><div>${NODES.map(n => who(n.id)).join(' · ')}</div>
+      <h3>Източник</h3><div class="src">${esc(C.source.title)}, ${esc(C.source.version)}.<br><a class="ext" href="${C.source.official}" target="_blank" rel="noopener">Официален текст (parliament.bg) ↗</a> · <a class="ext" href="${C.source.consolidated}" target="_blank" rel="noopener">консолидиран PDF ↗</a> · <a class="ext" href="${C.source.english}" target="_blank" rel="noopener">English ↗</a><br><span class="muted">Титулярите не са включени: схемата описва правилата, не кой заема постовете.</span></div>`;
+    p.querySelectorAll('[data-branch]').forEach(d => {
+      d.addEventListener('mouseenter', () => { for (const n of NODES) nodeEls[n.id].g.classList.toggle('dim', n.branch !== d.dataset.branch); });
+      d.addEventListener('mouseleave', paint);
+    });
+    return;
+  }
+  if (state.sel.kind === 'edge') {
+    const e = edgeById[state.sel.id], t = ET[e.type];
+    p.innerHTML = `<p class="small muted"><a href="#" class="back">← назад</a></p>
+      <h2>${esc(byId[e.from].label)} → ${esc(byId[e.to].label)}</h2>
+      <p>${lineSwatch(t)} <b>${esc(t.label)}</b></p><p>${esc(e.label)}</p><p>${refHtml(e.ref, e.law)}</p>
+      ${articleBlocks(e.ref)}
+      <h3>Страни</h3><div>${who(e.from)} → ${who(e.to)}</div>`;
+    return;
+  }
+  const n = byId[state.sel.id], b = BR[n.branch], pl = PL[n.pub.level];
+  const vis = e => !state.hidden.has(e.type);
+  const out = EDGES.filter(e => e.from === n.id && vis(e)), inc = EDGES.filter(e => e.to === n.id && vis(e));
+  p.innerHTML = `<p class="small muted"><a href="#" class="back">← всички институции</a></p>
+    <h2>${esc(n.label)}</h2>
+    <p><span class="badge" style="color:${b.color}">${esc(b.label)}</span> <span class="badge" style="color:${pl.color}">Публичност: ${esc(pl.label)}</span></p>
+    <dl>
+      <dt>Състав</dt><dd>${esc(n.comp)}</dd>
+      <dt>Мандат</dt><dd>${esc(n.term)}${n.termLaw ? ' <span class="law">по закон</span>' : ''}</dd>
+      <dt>Как се избира</dt><dd>${esc(n.chosen)}</dd>
+      <dt>Как се прекратява</dt><dd>${esc(n.removed)}</dd>
+      <dt>Основание</dt><dd>${refHtml(n.refs, n.law) || '<span class="muted">—</span>'}</dd>
+    </dl>
+    <h3>Правомощия</h3><ul class="pw">${(n.powers || []).map(pw => `<li>${esc(pw.t)} ${refHtml(pw.ref, pw.law)}</li>`).join('')}</ul>
+    <h3>Публичност</h3><p><span class="dot" style="background:${pl.color}"></span>${esc(n.pub.text)} ${refHtml(n.pub.ref, n.pub.law)}</p>
+    <h3>Действа спрямо (${out.length})</h3>${out.map(e => connRow(e, e.to)).join('') || '<p class="muted small">—</p>'}
+    <h3>Зависи от (${inc.length})</h3>${inc.map(e => connRow(e, e.from)).join('') || '<p class="muted small">—</p>'}`;
+}
+function articleBlocks(ref) {
+  return [...new Set(arts(ref))].map(k => {
+    const a = C.articles[k];
+    return `<div class="article"><div class="hd"><b data-art="${k}">Чл. ${esc(k)}</b><span class="badge muted">${a.verbatim ? 'Текст' : 'Резюме'}</span><a class="ext" href="${officialUrl(k)}" target="_blank" rel="noopener">официален текст ↗</a></div><div class="tx">${esc(a.text)}</div>${a.note ? `<div class="note">${esc(a.note)}</div>` : ''}</div>`;
+  }).join('');
+}
+
+// ---------- scenarios ----------
+function renderScn() {
+  const p = $('#p-scn');
+  const cur = state.scn && G.scenarios.find(s => s.id === state.scn.id);
+  let h = `<p class="small muted">Изберете процедура и минете стъпка по стъпка. Участниците светят на схемата.</p>`;
+  h += G.scenarios.map(s => `<button class="pick${cur?.id === s.id ? ' on' : ''}" data-scn="${s.id}">${esc(s.title)} <span class="muted small">· ${s.steps.length} стъпки</span></button>`).join('');
+  if (cur) {
+    const i = state.scn.i, st = cur.steps[i];
+    h += `<div class="step"><div class="stepnav"><button id="prev" ${i === 0 ? 'disabled' : ''}>←</button><span class="muted small">Стъпка ${i + 1} от ${cur.steps.length}</span><button id="next" ${i === cur.steps.length - 1 ? 'disabled' : ''}>→</button></div>
+      <p>${esc(st.text)}</p><p>${refHtml(st.ref)}</p><p class="small">${st.nodes.map(who).join(' · ')}</p></div>${articleBlocks(st.ref)}`;
+  }
+  p.innerHTML = h;
+  p.querySelectorAll('[data-scn]').forEach(b => b.addEventListener('click', () => { state.scn = { id: b.dataset.scn, i: 0 }; state.sel = null; renderScn(); paint(); }));
+  $('#prev')?.addEventListener('click', () => { state.scn.i--; renderScn(); paint(); });
+  $('#next')?.addEventListener('click', () => { state.scn.i++; renderScn(); paint(); });
+}
+document.addEventListener('keydown', ev => {
+  if (state.tab !== 'scn' || !state.scn || ev.target.closest('input,select')) return;
+  if (ev.key === 'ArrowRight') $('#next')?.click();
+  if (ev.key === 'ArrowLeft') $('#prev')?.click();
+});
+
+// ---------- terms ----------
+function renderTerms() {
+  const list = NODES.filter(n => n.termYears).sort((a, b) => b.termYears - a.termYears);
+  const max = 10;
+  $('#p-terms').innerHTML = `<p class="small muted">Дълъг мандат значи по-малко зависимост от текущото мнозинство. Мандатите, разминаващи се с 4-годишния мандат на НС, позволяват едно мнозинство да „наследи“ органи, избрани от предишно.</p>
+    <div class="term"><span></span><span class="small muted" style="display:flex;justify-content:space-between">${[0, 2, 4, 6, 8, 10].map(x => `<span>${x}</span>`).join('')}</span></div>
+    ${list.map(n => `<div class="term"><span class="nm who" data-node="${n.id}">${esc(n.label)}</span><span class="tr"><span class="tb" style="width:${n.termYears / max * 100}%;background:${BR[n.branch].color}"></span><span class="tl">${n.termYears} г.</span></span></div>`).join('')}
+    <h3>Подробно</h3>
+    ${list.concat(NODES.filter(n => !n.termYears && n.term !== '—')).map(n => `<div class="pubrow">${who(n.id)}: ${esc(n.term)}${n.termLaw ? ' <span class="law">по закон</span>' : ''} ${refHtml(n.refs)}</div>`).join('')}`;
+}
+
+// ---------- publicity ----------
+function renderPub() {
+  let h = `<p class="small muted">Колко открито работи всяка институция: дали заседанията са публични и къде се обнародват актовете. „Цвят: по публичност“ оцветява схемата по същия признак.</p>`;
+  for (const [lv, l] of Object.entries(PL)) {
+    const list = NODES.filter(n => n.pub.level === lv);
+    h += `<h3><span class="dot" style="background:${l.color}"></span>${esc(l.label)} (${list.length})</h3>`;
+    h += list.map(n => `<div class="pubrow">${who(n.id)}<br><span class="small">${esc(n.pub.text)}</span> ${refHtml(n.pub.ref, n.pub.law)}</div>`).join('');
+  }
+  $('#p-pub').innerHTML = h;
+}
+
+// ---------- majorities ----------
+function renderMaj() {
+  const w = 380, x = n => 8 + n / 240 * (w - 16);
+  let bar = `<svg viewBox="0 0 ${w} 74" width="100%" role="img" aria-label="Мнозинства в 240-местното Народно събрание"><rect x="8" y="30" width="${w - 16}" height="16" rx="3" fill="#e5eef7" stroke="#b9cde2"/>`;
+  G.majorities.forEach((m, i) => {
+    const up = i % 2 === 0;
+    bar += `<line x1="${x(m.n)}" y1="${up ? 22 : 30}" x2="${x(m.n)}" y2="${up ? 46 : 54}" stroke="#0b4f8a" stroke-width="1.5"/><text x="${x(m.n)}" y="${up ? 16 : 68}" text-anchor="middle" font-size="11" font-weight="700" fill="#0b4f8a">${m.n}</text>`;
+  });
+  bar += `<text x="8" y="68" font-size="10" fill="#6b6760">0</text><text x="${w - 8}" y="68" font-size="10" fill="#6b6760" text-anchor="end">240</text></svg>`;
+  $('#p-maj').innerHTML = `<p class="small muted">Праговете в Народното събрание (240 места). „От всички“ значи от 240, независимо колко са в залата.</p>${bar}
+    ${G.majorities.map(m => `<div class="maj"><div><b>${m.n}</b><br><span class="small muted">${esc(m.label)}</span></div><div>${esc(m.what)}<br>${refHtml(m.ref)}</div></div>`).join('')}
+    <p class="small muted">Обикновените закони се приемат с мнозинство от присъстващите при кворум над половината ${refHtml('чл. 81')}.</p>`;
+}
+
+// ---------- constitution ----------
+let constQuery = '';
+function renderConst(scrollTo) {
+  const p = $('#p-const');
+  const keys = Object.keys(C.articles).sort((a, b) => parseInt(a) - parseInt(b) || a.localeCompare(b, 'bg'));
+  const q = constQuery.trim().toLowerCase();
+  let h = `<div class="src">${esc(C.source.title)}, ${esc(C.source.version)}.<br><a class="ext" href="${C.source.official}" target="_blank" rel="noopener">Официален текст (parliament.bg) ↗</a> · <a class="ext" href="${C.source.consolidated}" target="_blank" rel="noopener">консолидиран PDF ↗</a> · <a class="ext" href="${C.source.english}" target="_blank" rel="noopener">English ↗</a><br><span class="muted">${esc(C.source.note)}</span></div>
+    <p><input type="search" id="cq" placeholder="Търси в членовете: напр. недоверие, 99, прокурор" value="${esc(constQuery)}"></p>
+    <p class="small muted">Изберете член, за да светнат институциите и връзките, които се позовават на него.</p>`;
+  let lastCh = null, shown = 0;
+  for (const k of keys) {
+    const a = C.articles[k];
+    if (q && !(('чл. ' + k).includes(q) || k === q || a.text.toLowerCase().includes(q))) continue;
+    if (a.ch !== lastCh) { h += `<div class="chap">${esc(C.chapters[a.ch])}</div>`; lastCh = a.ch; }
+    const cited = CITED[k] || [];
+    const uniq = [...new Map(cited.map(c => [c.kind + c.id, c])).values()];
+    h += `<div class="article${state.art === k ? ' hi' : ''}" id="art-${k}"><div class="hd"><b data-pick="${k}">Чл. ${esc(k)}</b><span class="badge muted">${a.verbatim ? 'Текст' : 'Резюме'}</span><a class="ext" href="${officialUrl(k)}" target="_blank" rel="noopener">официален текст ↗</a></div>
+      <div class="tx">${esc(a.text)}</div>${a.note ? `<div class="note">${esc(a.note)}</div>` : ''}
+      ${uniq.length ? `<div class="cited">Цитиран в: ${uniq.map(c => c.kind === 'node' ? who(c.id) : c.kind === 'edge' ? `<span class="who" data-edge="${c.id}">${esc(c.label)}</span>` : esc(c.label)).join(' · ')}</div>` : ''}</div>`;
+    shown++;
+  }
+  if (!shown) h += '<p class="muted">Няма съвпадения.</p>';
+  p.innerHTML = h;
+  const cq = $('#cq');
+  cq.addEventListener('input', () => { constQuery = cq.value; renderConst(); const c = $('#cq'); c.focus(); c.setSelectionRange(c.value.length, c.value.length); });
+  p.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => { state.art = state.art === b.dataset.pick ? null : b.dataset.pick; renderConst(); paint(); }));
+  if (scrollTo) document.getElementById('art-' + scrollTo)?.scrollIntoView({ block: 'start' });
+}
+function openArticle(k) {
+  constQuery = '';
+  setTab('const');
+  state.art = k; renderConst(k); paint();
+}
+
+// ---------- delegated clicks ----------
+document.addEventListener('click', ev => {
+  const a = ev.target.closest('a.art, .article .hd b[data-art]');
+  if (a) { ev.preventDefault(); openArticle(a.dataset.art); return; }
+  const w = ev.target.closest('[data-node]');
+  if (w) { ev.preventDefault(); select({ kind: 'node', id: w.dataset.node }); return; }
+  const ed = ev.target.closest('[data-edge]');
+  if (ed) { ev.preventDefault(); select({ kind: 'edge', id: ed.dataset.edge }); return; }
+  if (ev.target.closest('a.back')) { ev.preventDefault(); select(null); }
+});
+
+renderFilters(); colorNodes(); renderInfo(); paint();
+</script>
+</body>
+</html>
