@@ -18,6 +18,7 @@
   color-scheme: light;
 }
 * { box-sizing: border-box; }
+body { display: flex; flex-direction: column; height: 100vh; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 "IBM Plex Sans", system-ui, sans-serif; }
 header { padding: 12px 16px 10px; border-bottom: 1px solid var(--line); background: var(--panel); display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
 h1 { margin: 0; font-size: 20px; }
@@ -31,14 +32,14 @@ header p { margin: 0; color: var(--muted); flex: 1 1 320px; }
 #results .r.act, #results .r:hover { background: #eef4fb; }
 #results .r .k { font-size: 11px; color: var(--muted); }
 #results mark { background: #ffe9a8; padding: 0; }
-main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; height: calc(100vh - 52px); }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; flex: 1; min-height: 0; }
 #left { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .bar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--panel); align-items: center; }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; user-select: none; }
 .chip.off { opacity: .4; text-decoration: line-through; }
 .chip svg { flex: none; }
 .bar .sp { flex: 1; }
-.clegend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; width: 100%; justify-content: flex-end; }
+.clegend { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 11.5px; flex: 1 1 300px; justify-content: flex-end; }
 .clegend span { display: inline-flex; align-items: center; gap: 5px; }
 .clegend i { width: 12px; height: 12px; border: 2.5px solid; border-radius: 3px; background: #fff; }
 .fchart { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 118px; column-gap: 30px; row-gap: 24px; align-items: start; padding: 6px 0 6px 46px; margin: 10px 0; }
@@ -58,11 +59,58 @@ a.law.lnk { white-space: normal; }
 a.law.reg:hover, a.law.lnk:hover { text-decoration: underline; }
 a.site { font-size: 11.5px; color: var(--accent); text-decoration: none; white-space: nowrap; }
 a.site:hover { text-decoration: underline; }
-#stage { position: relative; flex: 1; min-height: 0; overflow: auto; }
-#graph { width: 100%; height: 100%; min-width: 860px; min-height: 560px; display: block; }
+#stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+#graph { width: 100%; height: 100%; min-height: 420px; display: block; touch-action: none; cursor: grab; user-select: none; }
+#graph.panning { cursor: grabbing; }
+.ctl { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 4px; z-index: 3; }
+.ctl button { width: 34px; height: 34px; padding: 0; font-size: 17px; line-height: 1; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.ctl button.on, .seg button.on { background: #0b4f8a; color: #fff; border-color: #0b4f8a; }
+.ctl .sepr { height: 6px; }
+.hint { transition: opacity .6s; position: absolute; left: 12px; bottom: 10px; font-size: 11.5px; color: var(--muted); background: rgba(255,253,248,.85); padding: 2px 8px; border-radius: 10px; pointer-events: none; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; font-size: 12px; padding: 4px 9px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.fwrap { position: relative; }
+.fpop { position: absolute; left: 0; top: calc(100% + 6px); z-index: 12; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 22px rgba(0,0,0,.14); padding: 10px 12px; width: min(560px, 86vw); display: none; }
+.fpop.on { display: block; }
+.fpop h4 { margin: 8px 0 5px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.fpop h4:first-child { margin-top: 0; }
+.fpop .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.fpop .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.navrow { display: flex; gap: 6px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+.navrow button { font-size: 12px; padding: 3px 9px; }
+.navrow .sp { flex: 1; }
+.navrow input { font-size: 11.5px; flex: 1; min-width: 0; padding: 3px 6px; border: 1px solid var(--line); border-radius: 5px; }
+.subtabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.proxy { cursor: pointer; }
+.proxy rect { fill: #fff; stroke-dasharray: 5 3; stroke-width: 1.6; }
+.proxy.sel rect { stroke-width: 3.2; stroke: var(--ink); }
+.proxy .t { font-size: 12.5px; font-weight: 700; fill: var(--ink); }
+.proxy .s { font-size: 10px; fill: var(--muted); }
+.gtog { font-size: 12px; fill: var(--muted); cursor: pointer; font-weight: 700; }
+.gtog:hover { fill: var(--ink); }
+.node.gone, .proxy.gone { opacity: .05; pointer-events: none; }
+#gZones.faded { opacity: .25; transition: opacity .3s; }
+.node.pulse rect.box { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { stroke-width: 4.5; } }
+@media (prefers-reduced-motion: reduce) { .node.pulse rect.box { animation: none; } }
+.fbox.done { background: #f2f0ea; }
+.scnbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+.scnbar .sp { flex: 1; }
+aside.full { position: fixed; inset: 0; z-index: 30; border: 0; }
+aside.full .tabs, aside.full .navrow { display: none; }
+aside.full #p-scn { padding: 16px 28px 40px; }
+aside.full .scnbody { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); gap: 28px; align-items: start; }
+aside.full .scndet { position: sticky; top: 0; }
+aside.full .fchart { grid-template-columns: minmax(0, 1fr) 220px; column-gap: 90px; row-gap: 30px; }
+aside.full .fbox { font-size: 14px; padding: 9px 12px; }
+.wq { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+.wq select { max-width: 100%; }
+.wres h4 { margin: 12px 0 4px; font-size: 13px; }
+.ans { font-size: 13px; background: #eef4fb; border: 1px solid #c9dbee; border-radius: 6px; padding: 6px 9px; margin: 8px 0; }
 #tip { position: fixed; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 12px; max-width: 300px; box-shadow: 0 2px 8px rgba(0,0,0,.1); display: none; z-index: 5; }
 aside { border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
-.tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); }
 .tabs button { border: 0; border-radius: 0; background: none; padding: 8px 4px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; font-size: 13px; }
 .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 .pane { position: relative; padding: 14px 16px 28px; overflow: auto; flex: 1; display: none; }
@@ -145,8 +193,12 @@ mark.cit { background: #ffe58a; color: inherit; border-radius: 3px; padding: 1px
 .note { font-size: 12px; color: #7a4a00; }
 .src { font-size: 12px; background: #f5f1e8; border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
 @media (max-width: 900px) {
-  main { grid-template-columns: 1fr; height: auto; }
-  #stage { height: 64vh; flex: none; }
+  body { height: auto; display: block; }
+  main { grid-template-columns: minmax(0, 1fr); height: auto; }
+  .clegend { justify-content: flex-start; }
+  .hint { display: none; }
+  #stage { height: 70vh; flex: none; }
+  aside.full .scnbody { grid-template-columns: 1fr; }
   aside { border-left: 0; border-top: 1px solid var(--line); }
   .pane { max-height: none; }
 }
@@ -161,22 +213,33 @@ mark.cit { background: #ffe58a; color: inherit; border-radius: 3px; padding: 1px
 <main>
   <div id="left">
     <div class="bar" id="filters"></div>
-    <div id="stage"><svg id="graph" viewBox="0 0 1300 1090" role="img" aria-label="Схема на институциите и връзките между тях"></svg></div>
+    <div id="stage"><svg id="graph" viewBox="0 0 1300 1090" role="img" aria-label="Схема на институциите и връзките между тях"></svg>
+      <div class="ctl">
+        <button id="zin" title="Приближи (+)" aria-label="Приближи">+</button>
+        <button id="zout" title="Отдалечи (−)" aria-label="Отдалечи">−</button>
+        <button id="zfit" title="Побери цялата схема (0)" aria-label="Побери">⤢</button>
+        <span class="sepr"></span>
+        <button id="star" title="Фокус: подреди връзките на избрания орган около него (F)" aria-pressed="false" aria-label="Фокус">✶</button>
+      </div>
+      <div class="hint" id="hint">Колелце: мащаб · влачене: местене · F: фокус</div>
+    </div>
   </div>
   <aside>
+    <div class="navrow">
+      <button id="hback" title="Назад (Alt+←)">← Назад</button>
+      <button id="hfwd" title="Напред (Alt+→)">Напред →</button>
+      <span class="sp"></span>
+      <button id="share" title="Копирай линк към текущия изглед">🔗 Линк</button>
+    </div>
     <div class="tabs" role="tablist">
       <button data-tab="info" aria-selected="true">Институция</button>
       <button data-tab="scn">Сценарии</button>
-      <button data-tab="terms">Мандати</button>
-      <button data-tab="pub">Публичност</button>
-      <button data-tab="maj">Мнозинства</button>
+      <button data-tab="ref">Справки</button>
       <button data-tab="const">Конституция</button>
     </div>
     <div class="pane on" id="p-info"></div>
     <div class="pane scn" id="p-scn"></div>
-    <div class="pane" id="p-terms"></div>
-    <div class="pane" id="p-pub"></div>
-    <div class="pane" id="p-maj"></div>
+    <div class="pane" id="p-ref"></div>
     <div class="pane" id="p-const"></div>
   </aside>
 </main>
@@ -193,7 +256,12 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const arts = ref => [...String(ref || '').matchAll(ART_RE)].map(m => m[1]);
 
-const state = { unitHi: null, icons: true, group: null, sel: null, hover: null, scn: null, art: null, hidden: new Set(), color: 'branch', tab: 'info' };
+const state = { unitHi: null, icons: true, group: null, sel: null, hover: null, scn: null, art: null, hidden: new Set(), color: 'branch', tab: 'info',
+  lines: 'focus',        // 'focus': lines only for the hovered / selected item; 'all': every line
+  star: false,           // focus mode: arrange the selected institution's links around it
+  collapsed: new Set(),  // collapsed group ids
+  ref: 'who', whoQ: '',  // reference tab section and "who can" query
+  play: null, scnFull: false };
 
 // ---------- links to the Constitution ----------
 function officialUrl(key) {
@@ -279,9 +347,17 @@ const ICONS = {
 const iconSvg = (n, size = 16) => n.icon && state.icons ? `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${BR[n.branch].color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICONS[n.icon]}"/></svg>` : '';
 
 // ---------- geometry ----------
+const VB0 = { x: 0, y: 0, w: 1300, h: 1090 };
 const unitCount = n => (n.units || []).reduce((a, u) => a + (u.n || 1), 0);
 const isMin = n => n.kind === 'ministry';
-for (const n of NODES) { n.w = isMin(n) ? 144 : 140; n.h = isMin(n) ? 30 : 46; }
+for (const n of NODES) { n.w = isMin(n) ? 144 : 140; n.h = isMin(n) ? 30 : 46; n.x0 = n.x; n.y0 = n.y; }
+const groupOf = {};
+for (const gr of G.groups || []) for (const id of gr.members) groupOf[id] = gr;
+// a collapsed group stands in for its members (not in focus mode, where real positions matter)
+const PROXY = {};
+for (const gr of G.groups || []) PROXY[gr.id] = { id: 'grp:' + gr.id, gr, x: gr.x + gr.w / 2, y: gr.y + Math.min(gr.h / 2, 40) + 6, w: 150, h: 46 };
+const isCollapsed = id => !state.star && groupOf[id] && state.collapsed.has(groupOf[id].id);
+const endOf = id => isCollapsed(id) ? PROXY[groupOf[id].id] : byId[id];
 function boxPoint(n, tx, ty) {
   const dx = tx - n.x, dy = ty - n.y;
   if (!dx && !dy) return [n.x, n.y];
@@ -294,10 +370,11 @@ const pairs = {};
 for (const e of EDGES) { const k = [e.from, e.to].sort().join('|'); (pairs[k] ||= []).push(e); }
 for (const list of Object.values(pairs)) list.forEach((e, i) => {
   const canon = e.from < e.to ? 1 : -1;
-  e.bend = (i - (list.length - 1) / 2) * 34 * canon + (list.length === 1 ? 0 : 0);
+  e.bend = (i - (list.length - 1) / 2) * 34 * canon;
 });
 function edgePath(e) {
-  const a = byId[e.from], b = byId[e.to];
+  const a = endOf(e.from), b = endOf(e.to);
+  if (a === b) return '';
   const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
   const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
   const bend = e.bend + (pairs[[e.from, e.to].sort().join('|')].length === 1 ? 14 : 0);
@@ -321,8 +398,8 @@ for (const [k, t] of Object.entries(ET)) {
 }
 { const pt = el('pattern', { id: 'hatch', width: 10, height: 10, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' }, defs);
   el('rect', { width: 10, height: 10, fill: '#f2f5fb' }, pt); el('line', { x1: 0, y1: 0, x2: 0, y2: 10, stroke: '#1f4e9c', 'stroke-opacity': .09, 'stroke-width': 4 }, pt); }
-const gZones = el('g', {}, svg), gEdges = el('g', {}, svg), gHits = el('g', {}, svg), gLabels = el('g', {}, svg), gNodes = el('g', {}, svg);
-const edgeEls = {}, nodeEls = {}, groupEls = {};
+const gZones = el('g', { id: 'gZones' }, svg), gEdges = el('g', {}, svg), gHits = el('g', {}, svg), gLabels = el('g', {}, svg), gNodes = el('g', {}, svg);
+const edgeEls = {}, nodeEls = {}, groupEls = {}, proxyEls = {};
 for (const z of G.zones || []) {
   el('rect', { x: z.x, y: z.y, width: z.w, height: z.h, rx: 12, fill: z.external ? 'url(#hatch)' : z.color, 'fill-opacity': z.external ? 1 : .045, stroke: z.color, 'stroke-opacity': z.external ? .8 : .35, 'stroke-width': z.external ? 2 : 1, 'stroke-dasharray': z.external ? '10 5' : '' }, gZones);
   if (z.external) el('line', { x1: 10, x2: 1290, y1: z.y - 5, y2: z.y - 5, stroke: z.color, 'stroke-width': 1.5, 'stroke-dasharray': '2 4' }, gZones);
@@ -330,10 +407,30 @@ for (const z of G.zones || []) {
 }
 for (const gr of G.groups || []) {
   const g = el('g', { class: 'group' }, gZones);
-  el('rect', { x: gr.x, y: gr.y, width: gr.w, height: gr.h, rx: 8, fill: '#fff', 'fill-opacity': .6, stroke: '#cfc7b8', 'stroke-dasharray': '4 3' }, g);
-  const t = el('text', { x: gr.x + 10, y: gr.y + 14, class: 'glabel' }, gLabels); t.textContent = gr.label;
-  t.addEventListener('click', ev => { ev.stopPropagation(); selectGroup(gr.id); });
-  groupEls[gr.id] = g;
+  const rect = el('rect', { x: gr.x, y: gr.y, width: gr.w, height: gr.h, rx: 8, fill: '#fff', 'fill-opacity': .6, stroke: '#cfc7b8', 'stroke-dasharray': '4 3' }, g);
+  const canFold = gr.members.length > 1;
+  const lab = el('g', {}, gLabels);
+  if (canFold) {
+    const tg = el('text', { x: gr.x + 8, y: gr.y + 14, class: 'gtog' }, lab);
+    el('title', {}, tg).textContent = 'Свий / разгъни групата';
+    tg.addEventListener('click', ev => { ev.stopPropagation(); toggleGroup(gr.id); });
+    tg.addEventListener('pointerdown', ev => ev.stopPropagation());
+  }
+  const t = el('text', { x: gr.x + (canFold ? 22 : 10), y: gr.y + 14, class: 'glabel' }, lab); t.textContent = gr.label;
+  t.addEventListener('click', ev => { ev.stopPropagation(); if (!dragged) selectGroup(gr.id); });
+  groupEls[gr.id] = { g, rect, lab, tog: lab.querySelector('.gtog') };
+  if (!canFold) continue;
+  const P = PROXY[gr.id];
+  const pg = el('g', { class: 'proxy', tabindex: 0, role: 'button', 'aria-label': gr.label + ' (свита група)' }, gNodes);
+  el('title', {}, pg).textContent = `${gr.label}: ${gr.members.length} органа. Натиснете, за да разгънете.`;
+  const pr = el('rect', { width: P.w, height: P.h, rx: 8 }, pg);
+  const pt = el('text', { class: 't', x: P.w / 2, y: 20, 'text-anchor': 'middle' }, pg); pt.textContent = gr.label;
+  const ps = el('text', { class: 's', x: P.w / 2, y: 35, 'text-anchor': 'middle' }, pg); ps.textContent = `${gr.members.length} органа · разгъни`;
+  pg.addEventListener('mouseenter', () => { state.hover = P.id; paint(); });
+  pg.addEventListener('mouseleave', () => { state.hover = null; paint(); });
+  pg.addEventListener('click', ev => { ev.stopPropagation(); if (!dragged) toggleGroup(gr.id); });
+  pg.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleGroup(gr.id); } });
+  proxyEls[gr.id] = { g: pg, r: pr, t: pt, s: ps };
 }
 for (const n of NODES) {
   const g = el('g', { class: 'node' + (isMin(n) ? ' mini' : ''), tabindex: 0, role: 'button', 'aria-label': n.label }, gNodes);
@@ -357,14 +454,15 @@ for (const n of NODES) {
   }
   g.addEventListener('mouseenter', () => { state.hover = n.id; paint(); });
   g.addEventListener('mouseleave', () => { state.hover = null; paint(); });
-  g.addEventListener('click', ev => { ev.stopPropagation(); select({ kind: 'node', id: n.id }); });
+  g.addEventListener('click', ev => { ev.stopPropagation(); if (!dragged) select({ kind: 'node', id: n.id }); });
   g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select({ kind: 'node', id: n.id }); } });
   nodeEls[n.id] = { g, r, t, s, ic, stripe: g.querySelector('.stripe') };
 }
+// measure labels and size the boxes; "row" groups spread their members evenly by measured width
 function layoutNodes() {
   const on = state.icons;
   for (const n of NODES) {
-    const { g, r, t, s, ic } = nodeEls[n.id];
+    const { r, t, s, ic } = nodeEls[n.id];
     ic.style.display = on && n.icon ? '' : 'none';
     if (isMin(n)) {
       const x0 = on ? 30 : 14;
@@ -382,29 +480,55 @@ function layoutNodes() {
       t.setAttribute('x', cx); s.setAttribute('x', cx);
       ic.setAttribute('transform', `translate(15,${n.h / 2 - 8}) scale(.68)`);
     }
-    g.setAttribute('transform', `translate(${n.x - n.w / 2},${n.y - n.h / 2})`);
   }
-  // groups marked "row": spread members evenly across the group by their measured widths
   for (const gr of G.groups || []) if (gr.row) {
     const ms = gr.members.map(id => byId[id]), sum = ms.reduce((a, n) => a + n.w, 0);
     const gap = (gr.w - 20 - sum) / (ms.length + 1);
     let x = gr.x + 10 + gap;
-    for (const n of ms) { n.x = x + n.w / 2; x += n.w + gap; nodeEls[n.id].g.setAttribute('transform', `translate(${n.x - n.w / 2},${n.y - n.h / 2})`); }
+    for (const n of ms) { n.x0 = x + n.w / 2; x += n.w + gap; }
+  }
+  for (const P of Object.values(PROXY)) {
+    const pe = proxyEls[P.gr.id]; if (!pe) continue;
+    P.w = Math.min(Math.max(pe.t.getComputedTextLength(), pe.s.getComputedTextLength()) + 30, P.gr.w - 16);
+    pe.r.setAttribute('width', P.w); pe.t.setAttribute('x', P.w / 2); pe.s.setAttribute('x', P.w / 2);
+    if (pe.t.getComputedTextLength() > P.w - 20) { pe.t.setAttribute('textLength', P.w - 20); pe.t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
+  }
+  if (!state.star) for (const n of NODES) { n.x = n.x0; n.y = n.y0; }
+}
+// put every box where its node is, show / hide collapsed groups
+function placeNodes() {
+  for (const n of NODES) {
+    const { g } = nodeEls[n.id];
+    g.setAttribute('transform', `translate(${n.x - n.w / 2},${n.y - n.h / 2})`);
+    g.style.display = isCollapsed(n.id) ? 'none' : '';
+  }
+  for (const [id, pe] of Object.entries(proxyEls)) {
+    const P = PROXY[id], folded = !state.star && state.collapsed.has(id);
+    pe.g.style.display = folded ? '' : 'none';
+    pe.g.setAttribute('transform', `translate(${P.x - P.w / 2},${P.y - P.h / 2})`);
+    const ge = groupEls[id], gr = P.gr;
+    ge.rect.setAttribute('height', folded ? Math.min(P.y + P.h / 2 + 8 - gr.y, gr.h) : gr.h);
+    if (ge.tog) ge.tog.textContent = folded ? '⊞' : '⊟';
   }
 }
-layoutNodes();
+function updateEdges() { for (const e of EDGES) { const d = edgePath(e); edgeEls[e.id].p.setAttribute('d', d); edgeEls[e.id].h.setAttribute('d', d); } }
+layoutNodes(); placeNodes();
 for (const e of EDGES) {
   const t = ET[e.type], d = edgePath(e);
   const p = el('path', { class: 'edge', d, stroke: t.color, 'stroke-width': t.width || 1.7, 'stroke-dasharray': t.dash || '', 'stroke-linecap': t.cap || 'butt', 'marker-end': `url(#ar-${e.type})` }, gEdges);
   const h = el('path', { class: 'edge-hit', d }, gHits);
   h.addEventListener('mousemove', ev => showTip(ev, `<b>${esc(t.label)}</b><br>${esc(byId[e.from].label)} → ${esc(byId[e.to].label)}<br>${esc(e.label)}<br><span class="muted">${esc(e.ref || e.law)}</span>`));
   h.addEventListener('mouseleave', hideTip);
-  h.addEventListener('click', ev => { ev.stopPropagation(); select({ kind: 'edge', id: e.id }); });
+  h.addEventListener('click', ev => { ev.stopPropagation(); if (!dragged) select({ kind: 'edge', id: e.id }); });
   edgeEls[e.id] = { p, h };
 }
-function relayout() { layoutNodes(); for (const e of EDGES) { const d = edgePath(e); edgeEls[e.id].p.setAttribute('d', d); edgeEls[e.id].h.setAttribute('d', d); } }
+function relayout() { layoutNodes(); if (state.star) applyStar(false); placeNodes(); updateEdges(); }
 document.fonts?.ready.then(relayout);
-svg.addEventListener('click', () => { if (!state.scn) { state.group = null; select(null); } });
+svg.addEventListener('click', () => { if (dragged) return; if (!state.scn) { state.group = null; select(null); } });
+function toggleGroup(id) {
+  state.collapsed.has(id) ? state.collapsed.delete(id) : state.collapsed.add(id);
+  placeNodes(); updateEdges(); paint(); if (state.tab === 'info') renderInfo();
+}
 
 function nodeColor(n) { return state.color === 'pub' ? PL[n.pub.level].color : BR[n.branch].color; }
 function colorNodes() {
@@ -413,7 +537,116 @@ function colorNodes() {
     r.setAttribute('fill', '#fff'); r.setAttribute('stroke', c); stripe.setAttribute('fill', c);
     nodeEls[n.id].ic.setAttribute('stroke', c);
   }
+  for (const pe of Object.values(proxyEls)) pe.r.setAttribute('stroke', '#8c877d');
 }
+
+// ---------- zoom & pan ----------
+const vb = { ...VB0 };
+function setVB() { svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
+function toSvg(cx, cy) { const p = svg.createSVGPoint(); p.x = cx; p.y = cy; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+function zoomAt(px, py, f) {
+  const w = Math.min(Math.max(vb.w * f, 220), 2600), k = w / vb.w;
+  vb.x = px - (px - vb.x) * k; vb.y = py - (py - vb.y) * k; vb.w = w; vb.h = vb.h * k; setVB();
+}
+let vbAnim = null;
+function animateVB(t, ms = 450) {
+  cancelAnimationFrame(vbAnim);
+  const from = { ...vb }, t0 = performance.now();
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) ms = 1;
+  const step = now => {
+    const k = Math.min((now - t0) / ms, 1), e = k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+    for (const key of ['x', 'y', 'w', 'h']) vb[key] = from[key] + (t[key] - from[key]) * e;
+    setVB(); if (k < 1) vbAnim = requestAnimationFrame(step);
+  };
+  vbAnim = requestAnimationFrame(step);
+}
+const fitAll = () => animateVB(VB0);
+// fit a set of node ids (with padding), keeping the stage's aspect ratio
+function fitNodes(ids, pad = 70, minW = 900, minH = 680) {
+  const ns = [...ids].map(endOf).filter(Boolean); if (!ns.length) return fitAll();
+  let x1 = Math.min(...ns.map(n => n.x - n.w / 2)) - pad, x2 = Math.max(...ns.map(n => n.x + n.w / 2)) + pad;
+  let y1 = Math.min(...ns.map(n => n.y - n.h / 2)) - pad, y2 = Math.max(...ns.map(n => n.y + n.h / 2)) + pad;
+  const r = svg.getBoundingClientRect(), ar = r.width / Math.max(r.height, 1);
+  let w = Math.max(x2 - x1, minW), h = Math.max(y2 - y1, minH);
+  if (w / h < ar) w = h * ar; else h = w / ar;
+  if (w > VB0.w * 1.05 && h > VB0.h * 1.05) return fitAll();
+  animateVB({ x: (x1 + x2) / 2 - w / 2, y: (y1 + y2) / 2 - h / 2, w, h });
+}
+svg.addEventListener('wheel', ev => { ev.preventDefault(); cancelAnimationFrame(vbAnim); const p = toSvg(ev.clientX, ev.clientY); zoomAt(p.x, p.y, Math.exp(ev.deltaY * (ev.deltaMode ? 0.05 : 0.0015))); }, { passive: false });
+const ptrs = new Map();
+let dragged = false, pan = null;
+svg.addEventListener('pointerdown', ev => {
+  if (ev.button !== 0) return;
+  ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  dragged = false;
+  pan = { x: ev.clientX, y: ev.clientY, vb: { ...vb }, dist: null };
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pan.dist = Math.hypot(a.x - b.x, a.y - b.y); pan.mid = toSvg((a.x + b.x) / 2, (a.y + b.y) / 2); }
+});
+addEventListener('pointermove', ev => {
+  if (!pan || !ptrs.has(ev.pointerId)) return;
+  ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  if (ptrs.size === 2 && pan.dist) {
+    const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (d > 0) { Object.assign(vb, pan.vb); zoomAt(pan.mid.x, pan.mid.y, pan.dist / d); }
+    dragged = true; return;
+  }
+  const dx = ev.clientX - pan.x, dy = ev.clientY - pan.y;
+  if (!dragged && Math.hypot(dx, dy) < 5) return;
+  if (!dragged) { dragged = true; svg.classList.add('panning'); cancelAnimationFrame(vbAnim); try { svg.setPointerCapture(ev.pointerId); } catch {} }
+  const sc = 1 / svg.getScreenCTM().a;
+  vb.x = pan.vb.x - dx * sc; vb.y = pan.vb.y - dy * sc; setVB();
+});
+const endPtr = ev => { ptrs.delete(ev.pointerId); if (!ptrs.size) { svg.classList.remove('panning'); pan = null; setTimeout(() => { dragged = false; }, 0); } };
+addEventListener('pointerup', endPtr); addEventListener('pointercancel', endPtr);
+$('#zin').addEventListener('click', () => zoomAt(vb.x + vb.w / 2, vb.y + vb.h / 2, .8));
+$('#zout').addEventListener('click', () => zoomAt(vb.x + vb.w / 2, vb.y + vb.h / 2, 1.25));
+$('#zfit').addEventListener('click', fitAll);
+
+// ---------- focus mode: the selected institution in the middle, its links on a ring around it ----------
+let posAnim = null;
+function animatePositions(target, ms = 480) {
+  cancelAnimationFrame(posAnim);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) ms = 1;
+  const from = Object.fromEntries(NODES.map(n => [n.id, [n.x, n.y]])), t0 = performance.now();
+  const step = now => {
+    const k = Math.min((now - t0) / ms, 1), e = 1 - (1 - k) ** 3;
+    for (const n of NODES) { const [fx, fy] = from[n.id], [tx, ty] = target[n.id]; n.x = fx + (tx - fx) * e; n.y = fy + (ty - fy) * e; }
+    placeNodes(); updateEdges(); if (k < 1) posAnim = requestAnimationFrame(step);
+  };
+  posAnim = requestAnimationFrame(step);
+}
+function starTargets(cid) {
+  const T = Object.fromEntries(NODES.map(n => [n.id, [n.x0, n.y0]]));
+  if (!cid) return { T, set: null };
+  const c = byId[cid], nb = new Set();
+  for (const e of EDGES) if (!state.hidden.has(e.type) && (e.from === cid || e.to === cid)) nb.add(e.from === cid ? e.to : e.from);
+  nb.delete(cid);
+  const list = [...nb].map(id => byId[id]).sort((a, b) => Math.atan2(a.y0 - c.y0, a.x0 - c.x0) - Math.atan2(b.y0 - c.y0, b.x0 - c.x0));
+  const cx = VB0.w / 2, cy = VB0.h / 2, two = list.length > 14;
+  T[cid] = [cx, cy];
+  list.forEach((n, i) => {
+    const a = -Math.PI / 2 + i / list.length * 2 * Math.PI;
+    const outer = !two || i % 2 === 0, rx = outer ? 520 : 310, ry = outer ? 440 : 250;
+    T[n.id] = [cx + rx * Math.cos(a), cy + ry * Math.sin(a)];
+  });
+  return { T, set: new Set([cid, ...nb]) };
+}
+let starSet = null;
+function starCenter() { return state.sel?.kind === 'node' ? state.sel.id : null; }
+function applyStar(animate = true) {
+  const cid = state.star ? starCenter() : null;
+  const { T, set } = starTargets(cid);
+  starSet = set;
+  gZones.classList.toggle('faded', !!set);
+  if (animate) animatePositions(T); else { for (const n of NODES) [n.x, n.y] = T[n.id]; placeNodes(); updateEdges(); }
+  if (animate) { if (set) animateVB(VB0); }
+}
+function setStar(on) {
+  state.star = on;
+  $('#star').classList.toggle('on', on); $('#star').setAttribute('aria-pressed', on);
+  placeNodes(); applyStar(); paint();
+}
+$('#star').addEventListener('click', () => setStar(!state.star));
 
 function focusSets() {
   const visible = e => !state.hidden.has(e.type);
@@ -423,7 +656,7 @@ function focusSets() {
   }
   if (state.group) {
     const gr = G.groups.find(x => x.id === state.group), nodes = new Set(gr.members), edges = new Set();
-    for (const e of EDGES) if (!state.hidden.has(e.type) && (nodes.has(e.from) || nodes.has(e.to))) edges.add(e.id);
+    for (const e of EDGES) if (visible(e) && (nodes.has(e.from) || nodes.has(e.to))) edges.add(e.id);
     for (const id of edges) { nodes.add(edgeById[id].from); nodes.add(edgeById[id].to); }
     return { nodes, edges };
   }
@@ -436,7 +669,14 @@ function focusSets() {
     }
     return { nodes, edges };
   }
-  const nid = state.hover || (state.sel?.kind === 'node' ? state.sel.id : null);
+  if (state.whoHi) return state.whoHi;
+  const hv = state.hover && !(state.star && starSet) ? state.hover : null;
+  if (hv?.startsWith?.('grp:')) {
+    const gr = PROXY[hv.slice(4)].gr, nodes = new Set(gr.members), edges = new Set();
+    for (const e of EDGES) if (visible(e) && (nodes.has(e.from) || nodes.has(e.to))) { edges.add(e.id); nodes.add(e.from); nodes.add(e.to); }
+    return { nodes, edges };
+  }
+  const nid = hv || (state.sel?.kind === 'node' ? state.sel.id : null);
   if (nid) {
     const nodes = new Set([nid]), edges = new Set();
     for (const e of EDGES) if (visible(e) && (e.from === nid || e.to === nid)) { edges.add(e.id); nodes.add(e.from); nodes.add(e.to); }
@@ -449,17 +689,27 @@ function paint() {
   const f = focusSets();
   for (const e of EDGES) {
     const { p, h } = edgeEls[e.id];
-    const hidden = state.hidden.has(e.type) && !(f?.flow && f.edges.has(e.id));
-    p.style.display = h.style.display = hidden ? 'none' : '';
-    p.classList.toggle('dim', !!f && !f.edges.has(e.id));
-    p.classList.toggle('flow', !!f?.flow && f.edges.has(e.id));
-    p.classList.toggle('on', !!f && f.edges.has(e.id));
+    const inF = !!f && f.edges.has(e.id);
+    const typeOff = state.hidden.has(e.type) && !(f?.flow && inF);
+    const inner = !state.star && isCollapsed(e.from) && isCollapsed(e.to) && groupOf[e.from] === groupOf[e.to];
+    const shown = !typeOff && !inner && (state.lines === 'all' || inF);
+    p.style.display = h.style.display = shown ? '' : 'none';
+    p.classList.toggle('dim', !!f && !inF);
+    p.classList.toggle('flow', !!f?.flow && inF);
+    p.classList.toggle('on', inF);
   }
   for (const n of NODES) {
     const { g } = nodeEls[n.id];
+    g.classList.toggle('gone', !!starSet && !starSet.has(n.id));
     g.classList.toggle('dim', !!f && !f.nodes.has(n.id));
     g.classList.toggle('sel', state.sel?.kind === 'node' && state.sel.id === n.id);
+    g.classList.toggle('pulse', !!state.play && !!f?.flow && f.nodes.has(n.id));
   }
+  for (const [id, pe] of Object.entries(proxyEls)) {
+    pe.g.classList.toggle('dim', !!f && !PROXY[id].gr.members.some(m => f.nodes.has(m)));
+    pe.g.classList.toggle('sel', state.sel?.kind === 'node' && PROXY[id].gr.members.includes(state.sel.id));
+  }
+  syncHash();
 }
 
 // ---------- tooltip ----------
@@ -467,51 +717,68 @@ const tip = $('#tip');
 function showTip(ev, html) { tip.innerHTML = html; tip.style.display = 'block'; tip.style.left = Math.min(ev.clientX + 14, innerWidth - 310) + 'px'; tip.style.top = (ev.clientY + 14) + 'px'; }
 function hideTip() { tip.style.display = 'none'; }
 
-// ---------- filters ----------
+// ---------- filters (one compact row; details in a pop-up) ----------
 function lineSwatch(t, w = 30) {
   return `<svg width="${w}" height="10"><line x1="1" y1="5" x2="${w - 1}" y2="5" stroke="${t.color}" stroke-width="${t.width || 2}" stroke-dasharray="${t.dash || ''}" stroke-linecap="${t.cap || 'butt'}"/></svg>`;
 }
+let fpopOpen = false;
 function renderFilters() {
-  const bar = $('#filters');
-  bar.innerHTML = Object.entries(ET).map(([k, t]) => `<span class="chip${state.hidden.has(k) ? ' off' : ''}" data-et="${k}" role="switch" aria-checked="${!state.hidden.has(k)}" title="Покажи / скрий">${lineSwatch(t, 22)}${esc(t.label)}</span>`).join('')
-    + `<button id="alllines" class="small">${state.hidden.size === Object.keys(ET).length ? 'Покажи всички линии' : 'Скрий всички линии'}</button>`
-    + `<label class="small chip"><input type="checkbox" id="icons" ${state.icons ? 'checked' : ''}> Иконки</label>`
-    + `<span class="sp"></span><label class="small">Цвят: <select id="colormode"><option value="branch">по власт</option><option value="pub">по публичност</option></select></label><span id="clegend" class="clegend"></span>`;
-  bar.querySelectorAll('[data-et]').forEach(c => c.addEventListener('click', () => {
-    const k = c.dataset.et; state.hidden.has(k) ? state.hidden.delete(k) : state.hidden.add(k);
-    renderFilters(); paint(); if (state.tab === 'info') renderInfo();
-  }));
-  $('#alllines').addEventListener('click', () => {
-    const all = Object.keys(ET);
-    if (state.hidden.size === all.length) state.hidden.clear(); else all.forEach(k => state.hidden.add(k));
-    renderFilters(); paint(); if (state.tab === 'info') renderInfo();
-  });
+  const bar = $('#filters'), nOff = state.hidden.size, nFold = state.collapsed.size;
+  const foldable = G.groups.filter(g => g.members.length > 1);
+  bar.innerHTML = `<div class="fwrap"><button id="fbtn" class="small" aria-expanded="${fpopOpen}" aria-controls="fpop">Филтри ▾${nOff ? ` <span class="badge">${nOff} скрити</span>` : ''}</button>
+      <div class="fpop${fpopOpen ? ' on' : ''}" id="fpop">
+        <h4>Видове връзки</h4><div class="chips">${Object.entries(ET).map(([k, t]) => `<span class="chip${state.hidden.has(k) ? ' off' : ''}" data-et="${k}" role="switch" aria-checked="${!state.hidden.has(k)}" title="Покажи / скрий">${lineSwatch(t, 22)}${esc(t.label)}</span>`).join('')}</div>
+        <div class="row" style="margin-top:6px"><button class="small" id="etall">Всички видове</button><button class="small" id="etnone">Никой вид</button></div>
+        <h4>Групи</h4><div class="row"><button class="small" id="foldall">Свий всички</button><button class="small" id="unfoldall">Разгъни всички</button><span class="small muted">${nFold ? `${nFold} свити · ` : ''}⊟ до името на група я свива</span></div>
+        <h4>Изглед</h4><div class="row"><label class="small chip"><input type="checkbox" id="icons" ${state.icons ? 'checked' : ''}> Иконки</label>
+          <label class="small">Цвят: <select id="colormode"><option value="branch">по власт</option><option value="pub">по публичност</option></select></label></div>
+      </div></div>
+    <span class="small muted">Линии:</span><span class="seg" role="group" aria-label="Линии"><button class="${state.lines === 'focus' ? 'on' : ''}" data-lines="focus" title="Само за посочения или избрания орган">при избор</button><button class="${state.lines === 'all' ? 'on' : ''}" data-lines="all">всички</button></span>
+    <span id="clegend" class="clegend"></span>`;
+  const rerender = () => { renderFilters(); paint(); if (state.star) applyStar(); if (state.tab === 'info') renderInfo(); };
+  $('#fbtn').addEventListener('click', ev => { ev.stopPropagation(); fpopOpen = !fpopOpen; renderFilters(); });
+  $('#fpop').addEventListener('click', ev => ev.stopPropagation());
+  bar.querySelectorAll('[data-et]').forEach(c => c.addEventListener('click', () => { const k = c.dataset.et; state.hidden.has(k) ? state.hidden.delete(k) : state.hidden.add(k); rerender(); }));
+  $('#etall').addEventListener('click', () => { state.hidden.clear(); rerender(); });
+  $('#etnone').addEventListener('click', () => { Object.keys(ET).forEach(k => state.hidden.add(k)); rerender(); });
+  $('#foldall').addEventListener('click', () => { foldable.forEach(g => state.collapsed.add(g.id)); placeNodes(); updateEdges(); rerender(); });
+  $('#unfoldall').addEventListener('click', () => { state.collapsed.clear(); placeNodes(); updateEdges(); rerender(); });
+  bar.querySelectorAll('[data-lines]').forEach(b => b.addEventListener('click', () => { state.lines = b.dataset.lines; renderFilters(); paint(); }));
   $('#icons').addEventListener('change', ev => { state.icons = ev.target.checked; relayout(); renderTabAgain(); });
   const cm = $('#colormode'); cm.value = state.color;
   cm.addEventListener('change', () => { state.color = cm.value; colorNodes(); renderColorLegend(); });
   renderColorLegend();
 }
+document.addEventListener('click', () => { if (fpopOpen) { fpopOpen = false; renderFilters(); } });
 function renderColorLegend() {
   const items = state.color === 'pub' ? Object.values(PL) : Object.values(BR);
   $('#clegend').innerHTML = items.map(x => `<span><i style="border-color:${x.color}"></i>${esc(x.label)}</span>`).join('');
 }
 
-function renderTabAgain() { ({ info: renderInfo, scn: renderScn, terms: renderTerms, pub: renderPub, maj: renderMaj, const: renderConst })[state.tab](); }
+const RENDER = { info: () => renderInfo(), scn: () => renderScn(), ref: () => renderRef(), const: () => renderConst() };
+function renderTabAgain() { RENDER[state.tab](); }
 // ---------- tabs ----------
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 function setTab(tab) {
+  if (tab === 'terms' || tab === 'pub' || tab === 'maj' || tab === 'who') { state.ref = tab; tab = 'ref'; }
   state.tab = tab;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
   document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + tab));
-  if (tab !== 'scn') state.scn = null;
+  if (tab !== 'scn') { if (state.scn && state.scn.zoomed) fitAll(); state.scn = null; stopPlay(); setFull(false); }
   if (tab !== 'const') state.art = null;
-  ({ info: renderInfo, scn: renderScn, terms: renderTerms, pub: renderPub, maj: renderMaj, const: renderConst })[tab]();
+  if (tab !== 'ref') state.whoHi = null;
+  RENDER[tab]();
   paint();
 }
 
 // ---------- selection & info pane ----------
-function selectGroup(id) { state.group = state.group === id ? null : id; state.sel = null; state.scn = null; state.art = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
-function select(s) { state.group = null; state.sel = s; state.art = null; state.scn = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
+function selectGroup(id) { state.group = state.group === id ? null : id; state.sel = null; state.scn = null; state.art = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } if (state.star) applyStar(); }
+function select(s) {
+  state.group = null; state.sel = s; state.art = null; state.scn = null;
+  if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); }
+  if (state.star) applyStar();
+  $('#p-info').scrollTop = 0;
+}
 // ---------- institution mentions in free text ----------
 // extra spellings beyond label / abbr / dlabel (stems; endings are matched loosely)
 const ALIASES = {
@@ -557,7 +824,7 @@ function renderInfo() {
   }
   if (!state.sel) {
     p.innerHTML = `<h2>Как се чете схемата</h2>
-      <p class="small">Всяка кутия е институция, всяка стрелка е правомощие: кой кого избира, контролира, проверява или може да свали. Посочете институция, за да видите връзките ѝ, или я изберете за пълна справка. Лилавите етикети като <a class="art" data-art="99">чл. 99, ал. 5</a> показват текста на члена; <span class="law">сивите</span> са уредени в закон, не в Конституцията.</p>
+      <p class="small">Всяка кутия е институция, всяка стрелка е правомощие: кой кого избира, контролира, проверява или може да свали. Посочете институция, за да видите връзките ѝ, или я изберете за пълна справка. „Линии: всички“ показва всички стрелки наведнъж; ✶ (F) подрежда връзките на избрания орган около него; ⊟ до името на група я свива. Лилавите етикети като <a class="art" data-art="99">чл. 99, ал. 5</a> показват текста на члена; <span class="law">сивите</span> са уредени в закон, не в Конституцията.</p>
       <h3>Власти</h3><div class="legend">${Object.entries(BR).map(([k, b]) => `<div data-branch="${k}"><span class="sw" style="border-color:${b.color};background:#fff"></span>${esc(b.label)} <span class="muted small">(${NODES.filter(n => n.branch === k).length})</span></div>`).join('')}</div>
       <h3>Видове връзки</h3><div class="legend">${Object.entries(ET).map(([k, t]) => `<div>${lineSwatch(t)}${esc(t.label)} <span class="muted small">(${EDGES.filter(e => e.type === k).length})</span></div>`).join('')}</div>
       <h3>Групи</h3><div>${G.groups.map(gr => `<span class="who" data-group="${gr.id}">${esc(gr.label)}</span>`).join(' · ')}</div>
@@ -665,7 +932,7 @@ function stepNext(sc, i) {
 function renderScn() {
   const p = $('#p-scn');
   const cur = state.scn && G.scenarios.find(s => s.id === state.scn.id);
-  let h = `<p class="small muted">Изберете процедура. Натиснете кутия от схемата на процедурата, за да видите текста и участниците; те светят и на голямата схема. Стрелките ← → минават по първия изход.</p>`;
+  let h = `<p class="small muted">Изберете процедура. Натиснете кутия от схемата на процедурата, за да видите текста и участниците; те светят и на голямата схема. ▶ минава стъпките автоматично; стрелките ← → ръчно.</p>`;
   h += `<div class="scnpick">${G.scenarios.map(s => `<button class="pick${cur?.id === s.id ? ' on' : ''}" data-scn="${s.id}">${esc(s.title)}</button>`).join('')}</div>`;
   if (cur) {
     // rows: main steps in order; a side step sits on the row of the first step that leads to it
@@ -680,16 +947,56 @@ function renderScn() {
       }
     });
     cur.steps.forEach((st, i) => { if (rowOf[i] === undefined) rowOf[i] = row++; });
-    h += `<div class="flegend"><span><i style="border-color:#8c877d"></i>действие</span><span><i style="border-color:#c98a1b;background:#fff8e6;border-radius:6px"></i>въпрос / решение</span><span><i style="border-color:#2e6b3a;background:#eef6ef;border-width:2.5px"></i>край</span></div>`;
-    h += `<div class="fchart" id="flow">${cur.steps.map((st, i) => `<div class="fbox k-${st.kind}${st.side ? ' side' : ''}${i === state.scn.i ? ' on' : ''}" data-i="${i}" data-row="${rowOf[i]}" style="grid-row:${rowOf[i] + 1};grid-column:${st.side ? 2 : 1}"><span class="n">${i + 1}</span>${esc(st.title)}</div>`).join('')}</div>`;
+    h += `<div class="scnbar"><button id="play" class="small">${state.play ? '⏸ Пауза' : state.scn.i && !stepNext(cur, state.scn.i).length ? '↺ Отначало' : '▶ Пусни'}</button><button id="sprev" class="small" ${state.scn.i ? '' : 'disabled'}>←</button><button id="snext" class="small" ${stepNext(cur, state.scn.i).length ? '' : 'disabled'}>→</button><span class="sp"></span><button id="full" class="small">${state.scnFull ? '✕ Затвори' : '⛶ На цял екран'}</button></div>`;
+    h += `<div class="scnbody"><div class="scnflow"><div class="flegend"><span><i style="border-color:#8c877d"></i>действие</span><span><i style="border-color:#c98a1b;background:#fff8e6;border-radius:6px"></i>въпрос / решение</span><span><i style="border-color:#2e6b3a;background:#eef6ef;border-width:2.5px"></i>край</span></div>`;
+    h += `<div class="fchart" id="flow">${cur.steps.map((st, i) => `<div class="fbox k-${st.kind}${st.side ? ' side' : ''}${i === state.scn.i ? ' on' : ''}${state.scn.seen?.includes(i) && i !== state.scn.i ? ' done' : ''}" data-i="${i}" data-row="${rowOf[i]}" style="grid-row:${rowOf[i] + 1};grid-column:${st.side ? 2 : 1}"><span class="n">${i + 1}</span>${esc(st.title)}</div>`).join('')}</div></div>`;
     const st = cur.steps[state.scn.i];
-    h += `<div class="step"><b>${state.scn.i + 1}. ${esc(st.title)}</b><p>${lk(st.text)}</p><p>${refHtml(st.ref, st.law)}</p><p class="small">${st.nodes.map(who).join(' · ')}</p>
-      ${stepNext(cur, state.scn.i).length ? `<div class="small">Следва: ${stepNext(cur, state.scn.i).map(nx => `<a href="#" class="goto" data-i="${nx.to}">${nx.label ? esc(nx.label) + ' → ' : ''}${esc(cur.steps[nx.to].title)}</a>`).join(' · ')}</div>` : '<div class="small muted">Край на процедурата.</div>'}</div>${articleBlocks(st.ref)}`;
+    h += `<div class="scndet"><div class="step"><b>${state.scn.i + 1}. ${esc(st.title)}</b><p>${lk(st.text)}</p><p>${refHtml(st.ref, st.law)}</p><p class="small">${st.nodes.map(who).join(' · ')}</p>
+      ${stepNext(cur, state.scn.i).length ? `<div class="small">Следва: ${stepNext(cur, state.scn.i).map(nx => `<a href="#" class="goto" data-i="${nx.to}">${nx.label ? esc(nx.label) + ' → ' : ''}${esc(cur.steps[nx.to].title)}</a>`).join(' · ')}</div>` : '<div class="small muted">Край на процедурата.</div>'}</div>${articleBlocks(st.ref)}</div></div>`;
   }
   p.innerHTML = h;
-  p.querySelectorAll('[data-scn]').forEach(b => b.addEventListener('click', () => { state.scn = { id: b.dataset.scn, i: 0 }; state.sel = null; renderScn(); paint(); }));
-  p.querySelectorAll('.fbox, a.goto').forEach(b => b.addEventListener('click', ev => { ev.preventDefault(); state.scn.i = +b.dataset.i; renderScn(); paint(); }));
-  if (cur) requestAnimationFrame(() => drawFlow(cur));
+  p.querySelectorAll('[data-scn]').forEach(b => b.addEventListener('click', () => { stopPlay(); openScn(b.dataset.scn, 0); }));
+  p.querySelectorAll('.fbox, a.goto').forEach(b => b.addEventListener('click', ev => { ev.preventDefault(); goStep(+b.dataset.i); }));
+  if (cur) {
+    $('#play').addEventListener('click', () => state.play ? stopPlay() : startPlay());
+    $('#sprev').addEventListener('click', () => { const sn = state.scn.seen || []; goStep(sn.length > 1 ? sn[sn.length - 2] : 0, true); });
+    $('#snext').addEventListener('click', () => { const nx = stepNext(cur, state.scn.i)[0]; if (nx) goStep(nx.to); });
+    $('#full').addEventListener('click', () => setFull(!state.scnFull));
+    requestAnimationFrame(() => drawFlow(cur));
+  }
+}
+function openScn(id, i = 0) {
+  if (state.tab !== 'scn') setTab('scn');
+  state.scn = { id, i, seen: [i] }; state.sel = null;
+  renderScn(); paint();
+}
+// go to a step; "back" drops the last visited step instead of adding one
+function goStep(i, back = false) {
+  const sc = state.scn; if (!sc) return;
+  if (back) { sc.seen = (sc.seen || []).slice(0, -1); if (!sc.seen.length) sc.seen = [i]; }
+  else (sc.seen ||= []).push(i);
+  sc.i = i; renderScn(); paint();
+  if (state.play) { sc.zoomed = true; fitNodes(G.scenarios.find(s => s.id === sc.id).steps[i].nodes, 90); }
+}
+function startPlay() {
+  const sc = G.scenarios.find(s => s.id === state.scn.id);
+  if (!stepNext(sc, state.scn.i).length) { state.scn.seen = []; state.scn.i = 0; }
+  state.play = setInterval(() => {
+    const nx = stepNext(sc, state.scn.i)[0];
+    if (!nx || (state.scn.seen || []).filter(x => x === nx.to).length > 1) return stopPlay();
+    goStep(nx.to);
+  }, 2800);
+  goStep(state.scn.i);
+}
+function stopPlay(fit = true) {
+  if (!state.play) return;
+  clearInterval(state.play); state.play = null;
+  if (state.tab === 'scn' && state.scn) { renderScn(); paint(); }
+}
+function setFull(on) {
+  if (state.scnFull === on) return;
+  state.scnFull = on; document.querySelector('aside').classList.toggle('full', on);
+  if (state.tab === 'scn') renderScn();
 }
 function drawFlow(sc) {
   const flow = $('#flow'); if (!flow) return;
@@ -729,17 +1036,89 @@ function drawFlow(sc) {
 }
 addEventListener('resize', () => { if (state.tab === 'scn' && state.scn) drawFlow(G.scenarios.find(s => s.id === state.scn.id)); });
 document.addEventListener('keydown', ev => {
-  if (state.tab !== 'scn' || !state.scn || ev.target.closest('input,select')) return;
+  if (ev.target.closest('input,select,textarea')) return;
+  if (ev.key === 'Escape' && state.scnFull) { setFull(false); return; }
+  if (ev.altKey) return;
+  if (state.tab !== 'scn' || !state.scn) return;
   const sc = G.scenarios.find(s => s.id === state.scn.id);
-  if (ev.key === 'ArrowRight') { const nx = stepNext(sc, state.scn.i)[0]; if (nx) { state.scn.i = nx.to; renderScn(); paint(); } }
-  if (ev.key === 'ArrowLeft' && state.scn.i > 0) { state.scn.i--; renderScn(); paint(); }
+  if (ev.key === 'ArrowRight') { const nx = stepNext(sc, state.scn.i)[0]; if (nx) goStep(nx.to); }
+  if (ev.key === 'ArrowLeft') { const sn = state.scn.seen || []; if (sn.length > 1) goStep(sn[sn.length - 2], true); }
+  if (ev.key === ' ') { ev.preventDefault(); state.play ? stopPlay() : startPlay(); }
 });
+
+// ---------- reference tab: who can…, terms, publicity, majorities ----------
+const REFS = { who: 'Кой може…', terms: 'Мандати', pub: 'Публичност', maj: 'Мнозинства' };
+function renderRef() {
+  const p = $('#p-ref');
+  p.innerHTML = `<div class="subtabs seg" role="tablist">${Object.entries(REFS).map(([k, l]) => `<button data-ref="${k}" class="${state.ref === k ? 'on' : ''}" aria-selected="${state.ref === k}">${l}</button>`).join('')}</div><div id="refbody"></div>`;
+  p.querySelectorAll('[data-ref]').forEach(b => b.addEventListener('click', () => { state.ref = b.dataset.ref; state.whoHi = null; renderRef(); paint(); }));
+  ({ who: renderWho, terms: renderTerms, pub: renderPub, maj: renderMaj })[state.ref]();
+}
+
+// "who can …" — the question is read as: verb → link types, institution → target (or source for "какво може X")
+const VERBS = [
+  [/сезир/, ['refer']], [/свал|освобожд|разпус|недовер|отстран|импийчм|уволн|прекрат/, ['dismiss']],
+  [/избир|назнач|избор|излъчв/, ['elect']], [/предлаг|внас|инициатив/, ['propose']], [/вето|връщ|спир/, ['veto']],
+  [/провер|противоконст|отмен|съди|обжалв/, ['review']], [/контрол|отчит|отчет|изслуш|питан|надзор/, ['control']],
+  [/насроч|свикв|мандат|възлаг|референдум/, ['call']], [/замест|служеб/, ['replace']],
+];
+function parseWho(q) {
+  const t = String(q || '').toLowerCase();
+  const types = new Set(); for (const [re, ks] of VERBS) if (re.test(t)) ks.forEach(k => types.add(k));
+  const ids = [...String(q).matchAll(MENTION_RE)].map(m => MENTIONS[+Object.keys(m.groups).find(k => m.groups[k] !== undefined).slice(1)].id);
+  const dir = /^\s*(какво|какви|кого|на кого)/i.test(t) ? 'from' : 'to';
+  return { types, id: ids[0] || null, dir };
+}
+function whoEdges({ types, id, dir }) {
+  if (!id) return [];
+  return EDGES.filter(e => (dir === 'to' ? e.to === id : e.from === id) && (!types.size || types.has(e.type)));
+}
+const WHO_PRESETS = ['Кой може да сезира КС?', 'Кой може да свали правителството?', 'Кой избира членовете на ВСС?', 'Кой може да върне закон?', 'Кой контролира МС?', 'Кой насрочва избори за НС?', 'Кой може да отстрани президента?', 'Какво може президентът?'];
+function whoAnswer(q) {
+  const w = parseWho(q), es = whoEdges(w);
+  if (!w.id) return { html: '<p class="muted small">Не разпознах орган във въпроса. Опитайте с името или съкращението му (НС, МС, КС, ВСС…).</p>', es };
+  const n = byId[w.id], tl = w.types.size ? [...w.types].map(k => ET[k].label.toLowerCase()).join(', ') : 'всички видове връзки';
+  if (!es.length) return { html: `<div class="ans">Няма връзки от вида „${esc(tl)}“ ${w.dir === 'to' ? 'към' : 'от'} ${who(n.id)} в модела.</div>`, es };
+  const by = {}; for (const e of es) (by[w.dir === 'to' ? e.from : e.to] ||= []).push(e);
+  const head = w.dir === 'to' ? `${Object.keys(by).length} органа действат спрямо ${who(n.id)} (${esc(tl)}):` : `${who(n.id)} действа спрямо ${Object.keys(by).length} органа (${esc(tl)}):`;
+  return { html: `<div class="ans">${head}</div>` + Object.entries(by).map(([oid, list]) => `<div class="wres"><h4>${who(oid)}</h4>${list.map(e => `<div class="conn">${lineSwatch(ET[e.type], 22)}<div><span class="muted small">${esc(ET[e.type].label)}</span><br><span class="who" data-edge="${e.id}">${lk(e.label)}</span> ${refHtml(e.ref, e.law)}</div></div>`).join('')}</div>`).join(''), es };
+}
+function renderWho() {
+  const b = $('#refbody'), opts = NODES.slice().sort((a, b) => a.label.localeCompare(b.label, 'bg'));
+  b.innerHTML = `<p class="small muted">Задайте въпрос с глагол и орган, напр. „кой може да сезира КС“ или „какво може президентът“. Отговорът идва от връзките в схемата и свети на нея.</p>
+    <p><input type="search" id="wq" placeholder="Кой може да…" value="${esc(state.whoQ)}"></p>
+    <div class="wq">${WHO_PRESETS.map(x => `<button class="small chip" data-wp="${esc(x)}">${esc(x)}</button>`).join('')}</div>
+    <div class="wq small"><span class="muted">или избери:</span> <select id="wtype"><option value="">всяко действие</option>${Object.entries(ET).map(([k, t]) => `<option value="${k}">${esc(t.label)}</option>`).join('')}</select>
+      <select id="wdir"><option value="to">спрямо</option><option value="from">от страна на</option></select>
+      <select id="wnode"><option value="">орган…</option>${opts.map(n => `<option value="${n.id}">${esc(n.label)}</option>`).join('')}</select></div>
+    <div id="wout"></div>`;
+  const run = () => {
+    const { html, es } = whoAnswer(state.whoQ);
+    $('#wout').innerHTML = state.whoQ.trim() ? html : '';
+    state.whoHi = es.length ? { nodes: new Set(es.flatMap(e => [e.from, e.to])), edges: new Set(es.map(e => e.id)) } : null;
+    paint();
+  };
+  const wq = $('#wq');
+  wq.addEventListener('input', () => { state.whoQ = wq.value; run(); });
+  b.querySelectorAll('[data-wp]').forEach(x => x.addEventListener('click', () => { state.whoQ = wq.value = x.dataset.wp; run(); }));
+  const pickRun = () => {
+    const t = $('#wtype').value, d = $('#wdir').value, id = $('#wnode').value; if (!id) return;
+    const es = EDGES.filter(e => (d === 'to' ? e.to === id : e.from === id) && (!t || e.type === t));
+    state.whoQ = ''; wq.value = '';
+    const by = {}; for (const e of es) (by[d === 'to' ? e.from : e.to] ||= []).push(e);
+    $('#wout').innerHTML = es.length ? `<div class="ans">${es.length} връзки:</div>` + Object.entries(by).map(([oid, list]) => `<div class="wres"><h4>${who(oid)}</h4>${list.map(e => `<div class="conn">${lineSwatch(ET[e.type], 22)}<div><span class="muted small">${esc(ET[e.type].label)}</span><br><span class="who" data-edge="${e.id}">${lk(e.label)}</span> ${refHtml(e.ref, e.law)}</div></div>`).join('')}</div>`).join('') : '<div class="ans">Няма такива връзки в модела.</div>';
+    state.whoHi = es.length ? { nodes: new Set(es.flatMap(e => [e.from, e.to])), edges: new Set(es.map(e => e.id)) } : null;
+    paint();
+  };
+  ['wtype', 'wdir', 'wnode'].forEach(id => $('#' + id).addEventListener('change', pickRun));
+  run();
+}
 
 // ---------- terms ----------
 function renderTerms() {
   const list = NODES.filter(n => n.termYears).sort((a, b) => b.termYears - a.termYears);
   const max = 10;
-  $('#p-terms').innerHTML = `<p class="small muted">Дълъг мандат значи по-малко зависимост от текущото мнозинство. Мандатите, разминаващи се с 4-годишния мандат на НС, позволяват едно мнозинство да „наследи“ органи, избрани от предишно.</p>
+  $('#refbody').innerHTML = `<p class="small muted">Дълъг мандат значи по-малко зависимост от текущото мнозинство. Мандатите, разминаващи се с 4-годишния мандат на НС, позволяват едно мнозинство да „наследи“ органи, избрани от предишно.</p>
     <div class="term"><span></span><span class="small muted" style="display:flex;justify-content:space-between">${[0, 2, 4, 6, 8, 10].map(x => `<span>${x}</span>`).join('')}</span></div>
     ${list.map(n => `<div class="term"><span class="nm who" data-node="${n.id}">${esc(n.label)}</span><span class="tr"><span class="tb" style="width:${n.termYears / max * 100}%;background:${BR[n.branch].color}"></span><span class="tl">${n.termYears} г.</span></span></div>`).join('')}
     <h3>Подробно</h3>
@@ -754,7 +1133,7 @@ function renderPub() {
     h += `<h3><span class="dot" style="background:${l.color}"></span>${esc(l.label)} (${list.length})</h3>`;
     h += list.map(n => `<div class="pubrow">${who(n.id)}<br><span class="small">${lk(n.pub.text, n.id)}</span> ${refHtml(n.pub.ref, n.pub.law)}</div>`).join('');
   }
-  $('#p-pub').innerHTML = h;
+  $('#refbody').innerHTML = h;
 }
 
 // ---------- majorities ----------
@@ -766,7 +1145,7 @@ function renderMaj() {
     bar += `<line x1="${x(m.n)}" y1="${up ? 22 : 30}" x2="${x(m.n)}" y2="${up ? 46 : 54}" stroke="#0b4f8a" stroke-width="1.5"/><text x="${x(m.n)}" y="${up ? 16 : 68}" text-anchor="middle" font-size="11" font-weight="700" fill="#0b4f8a">${m.n}</text>`;
   });
   bar += `<text x="8" y="68" font-size="10" fill="#6b6760">0</text><text x="${w - 8}" y="68" font-size="10" fill="#6b6760" text-anchor="end">240</text></svg>`;
-  $('#p-maj').innerHTML = `<p class="small muted">Праговете в Народното събрание (240 места). „От всички“ значи от 240, независимо колко са в залата.</p>${bar}
+  $('#refbody').innerHTML = `<p class="small muted">Праговете в Народното събрание (240 места). „От всички“ значи от 240, независимо колко са в залата.</p>${bar}
     ${G.majorities.map(m => `<div class="maj"><div><b>${m.n}</b><br><span class="small muted">${esc(m.label)}</span></div><div>${lk(m.what)}<br>${refHtml(m.ref)}</div></div>`).join('')}
     <p class="small muted">Обикновените закони се приемат с мнозинство от присъстващите при кворум над половината ${refHtml('чл. 81')}.</p>`;
 }
@@ -854,7 +1233,7 @@ for (const n of NODES) {
 }
 for (const e of EDGES) SEARCH.push({ kind: 'Връзка · ' + byId[e.from].label + ' → ' + byId[e.to].label, label: e.label, text: e.label, go: () => select({ kind: 'edge', id: e.id }), weak: true });
 for (const g of G.groups) SEARCH.push({ kind: 'Група', label: g.label, text: g.label, go: () => selectGroup(g.id) });
-for (const sc of G.scenarios) SEARCH.push({ kind: 'Сценарий', label: sc.title, text: sc.title + ' ' + sc.steps.map(x => x.title).join(' '), go: () => { setTab('scn'); state.scn = { id: sc.id, i: 0 }; renderScn(); paint(); } });
+for (const sc of G.scenarios) SEARCH.push({ kind: 'Сценарий', label: sc.title, text: sc.title + ' ' + sc.steps.map(x => x.title).join(' '), go: () => openScn(sc.id) });
 for (const [k, a] of Object.entries(C.articles)) SEARCH.push({ kind: 'Конституция', label: 'Чл. ' + k, text: 'чл ' + k + ' член ' + k, extra: a.text, go: () => openArticle(k), weak: true });
 let hits = [], act = 0;
 const qi = $('#q'), res = $('#results');
@@ -867,12 +1246,13 @@ function hl(label, q) {
 function runSearch() {
   const q = qi.value;
   if (norm(q).length < 2) { res.classList.remove('on'); hits = []; return; }
-  hits = SEARCH.map(it => {
+  const asks = /^\s*(кой|коя|кои|какво|какви|кого)(?=\s|$)/i.test(q) && parseWho(q).id;
+  hits = (asks ? [{ it: { kind: 'Отговор от връзките', label: q.trim().replace(/\?*$/, '?'), go: () => { state.whoQ = q.trim(); state.ref = 'who'; setTab('ref'); }, icon: byId[parseWho(q).id] }, sc: 999 }] : []).concat(SEARCH.map(it => {
     let sc = it.abbr && norm(it.abbr) === norm(q) ? 110 : fuzzyScore(q, it.text);
     if (!sc && it.extra) sc = fuzzyScore(q, it.extra) * .6;
     if (it.weak) sc *= .8;
     return { it, sc };
-  }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 14);
+  }).filter(x => x.sc > 0)).sort((a, b) => b.sc - a.sc).slice(0, 14);
   act = 0;
   res.innerHTML = hits.length ? hits.map((h, i) => `<div class="r${i === act ? ' act' : ''}" data-h="${i}" role="option">${h.it.icon ? iconSvg(h.it.icon, 13) : ''}${hl(h.it.label, q)}<div class="k">${esc(h.it.kind)}</div></div>`).join('') : '<div class="r muted">Няма резултати</div>';
   res.classList.add('on');
@@ -889,6 +1269,93 @@ res.addEventListener('mousedown', ev => { const r = ev.target.closest('[data-h]'
 qi.addEventListener('blur', () => setTimeout(() => res.classList.remove('on'), 120));
 document.addEventListener('keydown', ev => { if (ev.key === '/' && !ev.target.closest('input,select,textarea')) { ev.preventDefault(); qi.focus(); } });
 
+// ---------- address of the current view (#…) and back / forward ----------
+function viewHash() {
+  const q = new URLSearchParams();
+  if (state.tab === 'scn' && state.scn) q.set('s', state.scn.id + '.' + (state.scn.i + 1));
+  else if (state.tab === 'scn') q.set('t', 'scn');
+  else if (state.tab === 'const') { if (state.art) q.set('a', state.art); else q.set('t', 'const'); }
+  else if (state.tab === 'ref') { q.set('r', state.ref); if (state.ref === 'who' && state.whoQ) q.set('q', state.whoQ); }
+  else if (state.sel?.kind === 'node') q.set('n', state.sel.id);
+  else if (state.sel?.kind === 'edge') q.set('e', state.sel.id);
+  else if (state.group) q.set('g', state.group);
+  if (state.star) q.set('f', '1');
+  return q.toString().replace(/%2C/g, ',');
+}
+let canPush = true;
+try { history.replaceState(history.state, '', location.href); } catch { canPush = false; }
+const nav = { stack: [], i: -1, applying: false, idx: 0, max: 0 };
+function syncHash() {
+  if (nav.applying) return;
+  const h = viewHash();
+  const noQ = x => x.replace(/(^|&)q=[^&]*/, '');
+  if (canPush) {
+    if (location.hash.slice(1) === h) return;
+    try {
+      if (state.play || noQ(location.hash.slice(1)) === noQ(h)) history.replaceState({ i: nav.idx }, '', '#' + h);
+      else { nav.idx++; nav.max = nav.idx; history.pushState({ i: nav.idx }, '', '#' + h); }
+    } catch { canPush = false; }
+  }
+  if (!canPush) {
+    if (nav.stack[nav.i] === h) return;
+    if ((state.play || noQ(nav.stack[nav.i] || '') === noQ(h)) && nav.i >= 0) nav.stack[nav.i] = h; else { nav.stack = nav.stack.slice(0, nav.i + 1); nav.stack.push(h); nav.i++; }
+  }
+  navButtons();
+}
+function navButtons() {
+  $('#hback').disabled = canPush ? nav.idx <= 0 : nav.i <= 0;
+  $('#hfwd').disabled = canPush ? nav.idx >= nav.max : nav.i >= nav.stack.length - 1;
+}
+function applyHash(h) {
+  const q = new URLSearchParams(h.replace(/^#/, ''));
+  nav.applying = true;
+  try {
+    stopPlay();
+    const star = q.get('f') === '1';
+    state.star = star; $('#star').classList.toggle('on', star); $('#star').setAttribute('aria-pressed', star);
+    state.sel = null; state.group = null; state.art = null; state.whoHi = null;
+    if (q.get('s')) { const [id, i] = q.get('s').split('.'); if (G.scenarios.some(s => s.id === id)) { setTab('scn'); state.scn = { id, i: Math.max((+i || 1) - 1, 0), seen: [Math.max((+i || 1) - 1, 0)] }; renderScn(); } }
+    else if (q.get('t') === 'scn') setTab('scn');
+    else if (q.get('a') && C.articles[q.get('a')]) { setTab('const'); state.art = q.get('a'); renderConst(state.art); }
+    else if (q.get('t') === 'const') setTab('const');
+    else if (q.get('r')) { state.ref = REFS[q.get('r')] ? q.get('r') : 'who'; state.whoQ = q.get('q') || ''; setTab('ref'); }
+    else {
+      if (state.tab !== 'info') setTab('info');
+      if (q.get('n') && byId[q.get('n')]) state.sel = { kind: 'node', id: q.get('n') };
+      else if (q.get('e') && edgeById[q.get('e')]) state.sel = { kind: 'edge', id: q.get('e') };
+      else if (q.get('g') && G.groups.some(g => g.id === q.get('g'))) state.group = q.get('g');
+      renderInfo();
+    }
+    placeNodes(); applyStar(); paint();
+  } finally { nav.applying = false; }
+  navButtons();
+}
+addEventListener('popstate', ev => { nav.idx = ev.state?.i ?? 0; applyHash(location.hash); });
+$('#hback').addEventListener('click', () => { if (canPush) history.back(); else if (nav.i > 0) applyHash(nav.stack[--nav.i]); });
+$('#hfwd').addEventListener('click', () => { if (canPush) history.forward(); else if (nav.i < nav.stack.length - 1) applyHash(nav.stack[++nav.i]); });
+$('#share').addEventListener('click', async () => {
+  const url = location.href.split('#')[0] + '#' + viewHash();
+  const b = $('#share');
+  try { await navigator.clipboard.writeText(url); b.textContent = '✓ Копирано'; setTimeout(() => { b.textContent = '🔗 Линк'; }, 1600); }
+  catch {
+    const row = $('.navrow'); row.querySelector('input')?.remove();
+    const inp = document.createElement('input'); inp.value = url; inp.readOnly = true; inp.setAttribute('aria-label', 'Линк към изгледа');
+    row.insertBefore(inp, b); inp.select();
+  }
+});
+
+// ---------- keyboard ----------
+document.addEventListener('keydown', ev => {
+  if (ev.target.closest('input,select,textarea')) return;
+  if (ev.altKey && ev.key === 'ArrowLeft') { ev.preventDefault(); $('#hback').click(); return; }
+  if (ev.altKey && ev.key === 'ArrowRight') { ev.preventDefault(); $('#hfwd').click(); return; }
+  if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  if (ev.key === '+' || ev.key === '=') zoomAt(vb.x + vb.w / 2, vb.y + vb.h / 2, .8);
+  else if (ev.key === '-') zoomAt(vb.x + vb.w / 2, vb.y + vb.h / 2, 1.25);
+  else if (ev.key === '0') fitAll();
+  else if (ev.key === 'f' || ev.key === 'F' || ev.key === 'ф' || ev.key === 'Ф') setStar(!state.star);
+});
+
 // ---------- delegated clicks ----------
 document.addEventListener('click', ev => {
   const a = ev.target.closest('a.art, .article .hd b[data-art]');
@@ -902,7 +1369,10 @@ document.addEventListener('click', ev => {
   if (ev.target.closest('a.back')) { ev.preventDefault(); select(null); }
 });
 
-renderFilters(); colorNodes(); renderInfo(); paint();
+setTimeout(() => { $('#hint').style.opacity = 0; }, 9000);
+renderFilters(); colorNodes();
+if (location.hash.length > 1) applyHash(location.hash); else { renderInfo(); paint(); }
+navButtons();
 </script>
 </body>
 </html>
