@@ -89,6 +89,13 @@ a.site:hover { text-decoration: underline; }
 .proxy .s { font-size: 10px; fill: var(--muted); }
 .gtog { font-size: 12px; fill: var(--muted); cursor: pointer; font-weight: 700; }
 .gtog:hover { fill: var(--ink); }
+.under { opacity: .35; pointer-events: none; }
+.ubox { cursor: pointer; }
+.ubox:hover rect { stroke-width: 2.6; }
+.uk { font-size: 14px; font-weight: 700; }
+.ut { font-size: 13px; fill: var(--ink); pointer-events: none; }
+.uct { font-size: 15px; font-weight: 700; fill: var(--ink); }
+.ucs { font-size: 11px; fill: var(--muted); }
 .node.gone, .proxy.gone { opacity: .05; pointer-events: none; }
 #gZones.faded { opacity: .25; transition: opacity .3s; }
 .node.pulse rect.box { animation: pulse 1.4s ease-in-out infinite; }
@@ -456,6 +463,7 @@ for (const n of NODES) {
   g.addEventListener('mouseleave', () => { state.hover = null; paint(); });
   g.addEventListener('click', ev => { ev.stopPropagation(); if (!dragged) select({ kind: 'node', id: n.id }); });
   g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select({ kind: 'node', id: n.id }); } });
+  if (n.units) g.addEventListener('dblclick', ev => { ev.stopPropagation(); select({ kind: 'node', id: n.id }); showUnits(n.id); });
   nodeEls[n.id] = { g, r, t, s, ic, stripe: g.querySelector('.stripe') };
 }
 // measure labels and size the boxes; "row" groups spread their members evenly by measured width
@@ -530,6 +538,52 @@ function toggleGroup(id) {
   placeNodes(); updateEdges(); paint(); if (state.tab === 'info') renderInfo();
 }
 
+// ---------- a ministry's agencies and units drawn around it ----------
+const gUnits = el('g', { class: 'units' }, svg);
+function showUnits(id) {
+  state.unitsOf = state.unitsOf === id ? null : id;
+  drawUnits();
+  if (state.tab === 'info') renderInfo();
+}
+function drawUnits() {
+  gUnits.innerHTML = '';
+  const on = !!state.unitsOf;
+  for (const g of [gZones, gEdges, gHits, gLabels, gNodes]) g.classList.toggle('under', on);
+  if (!on) return;
+  const n = byId[state.unitsOf], us = n.units, c = nodeColor(n);
+  const cx = VB0.w / 2;
+  el('rect', { x: 0, y: 0, width: VB0.w, height: VB0.h, fill: '#f4f1ea', 'fill-opacity': .82 }, gUnits)
+    .addEventListener('click', ev => { ev.stopPropagation(); if (!dragged) showUnits(null); });
+  // the ministry on top, its units below in a grid, one block per kind
+  const COLS = 4, GX = 14, GY = 10, UW = 300, UH = 40, X0 = (VB0.w - (COLS * UW + (COLS - 1) * GX)) / 2;
+  const cg = el('g', { transform: `translate(${cx - 170},40)` }, gUnits);
+  el('rect', { width: 340, height: 56, rx: 9, fill: '#fff', stroke: c, 'stroke-width': 3 }, cg);
+  const t1 = el('text', { x: 170, y: 24, 'text-anchor': 'middle', class: 'uct' }, cg); t1.textContent = n.label;
+  if (t1.getComputedTextLength() > 320) { t1.setAttribute('textLength', 320); t1.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
+  const t2 = el('text', { x: 170, y: 43, 'text-anchor': 'middle', class: 'ucs' }, cg); t2.textContent = `${unitCount(n)} подчинени структури · Esc или клик върху фона затваря`;
+  let y = 124;
+  for (const kind of [...new Set(us.map(u => u.kind))]) {
+    const list = us.filter(u => u.kind === kind);
+    const h = el('text', { x: X0, y: y + 12, class: 'uk', fill: c }, gUnits); h.textContent = `${kind} · ${list.reduce((a, u) => a + (u.n || 1), 0)}`;
+    y += 24;
+    list.forEach((u, i) => {
+      const x = X0 + (i % COLS) * (UW + GX), yy = y + Math.floor(i / COLS) * (UH + GY);
+      const g = el('g', { class: 'ubox', transform: `translate(${x},${yy})`, tabindex: 0, role: 'button' }, gUnits);
+      el('title', {}, g).textContent = `${u.n ? u.n + ' × ' : ''}${u.name}${u.area && !u.name.includes(u.area) ? ' · ' + u.area : ''}`;
+      el('rect', { width: UW, height: UH, rx: 5, fill: '#fff', stroke: c, 'stroke-width': 1.3 }, g);
+      el('rect', { x: 4, y: 5, width: 3, height: UH - 10, rx: 1.5, fill: c }, g);
+      const t = el('text', { x: 14, y: 25, class: 'ut' }, g);
+      const full = (u.n ? u.n + ' × ' : '') + u.name; t.textContent = full;
+      const room = UW - 20;
+      if (t.getComputedTextLength() > room * 1.3) { let s = full; while (s.length > 8) { s = s.slice(0, -1); t.textContent = s.trim() + '…'; if (t.getComputedTextLength() <= room * 1.3) break; } }
+      if (t.getComputedTextLength() > room) { t.setAttribute('textLength', room); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
+      const go = ev => { ev.stopPropagation(); if (dragged) return; state.unitHi = u.name; renderInfo(); const e2 = document.querySelector('.unit.hi'), pane = $('#p-info'); if (e2) pane.scrollTop = e2.offsetTop - pane.clientHeight / 2; state.unitHi = null; };
+      g.addEventListener('click', go); g.addEventListener('keydown', ev => { if (ev.key === 'Enter') go(ev); });
+    });
+    y += Math.ceil(list.length / COLS) * (UH + GY) + 14;
+  }
+  animateVB(y > VB0.h ? { x: 0, y: 0, w: VB0.w * y / VB0.h, h: y } : VB0);
+}
 function nodeColor(n) { return state.color === 'pub' ? PL[n.pub.level].color : BR[n.branch].color; }
 function colorNodes() {
   for (const n of NODES) {
@@ -767,6 +821,7 @@ function setTab(tab) {
   if (tab !== 'scn') { if (state.scn && state.scn.zoomed) fitAll(); state.scn = null; stopPlay(); setFull(false); }
   if (tab !== 'const') state.art = null;
   if (tab !== 'ref') state.whoHi = null;
+  if (tab !== 'info' && state.unitsOf) { state.unitsOf = null; drawUnits(); }
   RENDER[tab]();
   paint();
 }
@@ -774,6 +829,7 @@ function setTab(tab) {
 // ---------- selection & info pane ----------
 function selectGroup(id) { state.group = state.group === id ? null : id; state.sel = null; state.scn = null; state.art = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } if (state.star) applyStar(); }
 function select(s) {
+  if (state.unitsOf && !(s?.kind === 'node' && s.id === state.unitsOf)) { state.unitsOf = null; drawUnits(); }
   state.group = null; state.sel = s; state.art = null; state.scn = null;
   if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); }
   if (state.star) applyStar();
@@ -872,7 +928,7 @@ function ministryBars() {
 }
 function unitsHtml(n) {
   const kinds = [...new Set(n.units.map(u => u.kind))];
-  return `<h3>Подчинени структури (${unitCount(n)})</h3>
+  return `<h3>Подчинени структури (${unitCount(n)})</h3><p><button class="small" data-units="${n.id}">${state.unitsOf === n.id ? 'Скрий от схемата' : 'Покажи на схемата'}</button></p>
     ${n.unitsNote ? `<p class="small">${lk(n.unitsNote, n.id)}</p>` : ''}
     ${kinds.map(k => { const us = n.units.filter(u => u.kind === k); return `<p class="small" style="margin:8px 0 2px"><b>${esc(k)}</b> · ${us.reduce((x, u) => x + (u.n || 1), 0)}</p>${us.map(u => `<div class="unit${state.unitHi === u.name ? ' hi' : ''}"><span>${u.n ? `<b>${u.n}</b> × ` : ''}${esc(u.name)}${u.area && !u.name.includes(u.area) ? ` <span class="muted">· ${esc(u.area)}</span>` : ''}${u.site ? ` <a class="site" href="${esc(u.site)}" target="_blank" rel="noopener">сайт ↗</a>` : ''}</span>${u.src === 'reg' && n.registry ? `<a class="law reg" href="${esc(n.registry)}" target="_blank" rel="noopener" title="Потвърдено в Административния регистър">регистър ↗</a>` : '<span class="law" title="По устройствения закон или правилник">закон</span>'}</div>`).join('')}`; }).join('')}
     ${n.registry ? `<p class="small"><a class="ext" href="${n.registry}" target="_blank" rel="noopener">Структура в Административния регистър ↗</a></p>` : ''}`;
@@ -1038,6 +1094,7 @@ addEventListener('resize', () => { if (state.tab === 'scn' && state.scn) drawFlo
 document.addEventListener('keydown', ev => {
   if (ev.target.closest('input,select,textarea')) return;
   if (ev.key === 'Escape' && state.scnFull) { setFull(false); return; }
+  if (ev.key === 'Escape' && state.unitsOf) { showUnits(null); return; }
   if (ev.altKey) return;
   if (state.tab !== 'scn' || !state.scn) return;
   const sc = G.scenarios.find(s => s.id === state.scn.id);
@@ -1368,6 +1425,8 @@ document.addEventListener('click', ev => {
   if (gq) { ev.preventDefault(); selectGroup(gq.dataset.group); return; }
   const ed = ev.target.closest('[data-edge]');
   if (ed) { ev.preventDefault(); select({ kind: 'edge', id: ed.dataset.edge }); return; }
+  const ub = ev.target.closest('[data-units]');
+  if (ub) { ev.preventDefault(); showUnits(ub.dataset.units); return; }
   if (ev.target.closest('a.back')) { ev.preventDefault(); select(null); }
 });
 
