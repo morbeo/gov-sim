@@ -67,6 +67,14 @@ a.ext:hover { text-decoration: underline; }
 .node { cursor: pointer; }
 .node rect.box { stroke-width: 1.6; }
 .node .t { font-size: 12.5px; font-weight: 700; fill: var(--ink); pointer-events: none; }
+.node .mt { font-size: 11px; font-weight: 600; fill: var(--ink); pointer-events: none; }
+.node .cnt { fill: #f3e6d6; }
+.node .cntt { font-size: 11px; font-weight: 700; fill: #8a4a06; pointer-events: none; }
+.zone { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.glabel { font-size: 10.5px; fill: var(--muted); font-weight: 600; cursor: pointer; }
+.glabel:hover { fill: var(--ink); text-decoration: underline; }
+.group.dim { opacity: .35; }
+.unit { padding: 3px 0; border-top: 1px dotted var(--line); font-size: 12.5px; display: flex; gap: 8px; justify-content: space-between; }
 .node .s { font-size: 10px; fill: var(--muted); pointer-events: none; }
 .node.sel rect.box { stroke-width: 3.2; }
 .edge { fill: none; opacity: .55; }
@@ -115,7 +123,7 @@ a.ext:hover { text-decoration: underline; }
 <main>
   <div id="left">
     <div class="bar" id="filters"></div>
-    <div id="stage"><svg id="graph" viewBox="0 0 1300 860" role="img" aria-label="Схема на институциите и връзките между тях"></svg></div>
+    <div id="stage"><svg id="graph" viewBox="0 0 1300 850" role="img" aria-label="Схема на институциите и връзките между тях"></svg></div>
   </div>
   <aside>
     <div class="tabs" role="tablist">
@@ -147,7 +155,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const arts = ref => [...String(ref || '').matchAll(ART_RE)].map(m => m[1]);
 
-const state = { sel: null, hover: null, scn: null, art: null, hidden: new Set(), color: 'branch', tab: 'info' };
+const state = { group: null, sel: null, hover: null, scn: null, art: null, hidden: new Set(), color: 'branch', tab: 'info' };
 
 // ---------- links to the Constitution ----------
 function officialUrl(key) {
@@ -176,8 +184,8 @@ for (const s of G.scenarios) for (const st of s.steps) cite(st.ref, { kind: 'scn
 for (const m of G.majorities) cite(m.ref, { kind: 'maj', id: m.n, label: 'Мнозинство ' + m.label });
 
 // ---------- geometry ----------
-const W = n => Math.max(128, n.label.length * 7 + 24), H = 46;
-for (const n of NODES) { n.w = W(n); n.h = H; }
+const isMin = n => n.kind === 'ministry';
+for (const n of NODES) { n.w = isMin(n) ? 144 : 140; n.h = isMin(n) ? 30 : 46; }
 function boxPoint(n, tx, ty) {
   const dx = tx - n.x, dy = ty - n.y;
   if (!dx && !dy) return [n.x, n.y];
@@ -215,14 +223,34 @@ for (const [k, t] of Object.entries(ET)) {
   const m = el('marker', { id: 'ar-' + k, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto-start-reverse' }, defs);
   el('path', { d: 'M0,1 L10,5 L0,9 z', fill: t.color }, m);
 }
-const gEdges = el('g', {}, svg), gHits = el('g', {}, svg), gNodes = el('g', {}, svg);
-const edgeEls = {}, nodeEls = {};
+const gZones = el('g', {}, svg), gEdges = el('g', {}, svg), gHits = el('g', {}, svg), gLabels = el('g', {}, svg), gNodes = el('g', {}, svg);
+const edgeEls = {}, nodeEls = {}, groupEls = {};
+for (const z of G.zones || []) {
+  el('rect', { x: z.x, y: z.y, width: z.w, height: z.h, rx: 12, fill: z.color, 'fill-opacity': .045, stroke: z.color, 'stroke-opacity': .35 }, gZones);
+  const t = el('text', { x: z.x + 14, y: z.y + 18, class: 'zone' , fill: z.color }, gZones); t.textContent = z.label;
+}
+for (const gr of G.groups || []) {
+  const g = el('g', { class: 'group' }, gZones);
+  el('rect', { x: gr.x, y: gr.y, width: gr.w, height: gr.h, rx: 8, fill: '#fff', 'fill-opacity': .6, stroke: '#cfc7b8', 'stroke-dasharray': '4 3' }, g);
+  const t = el('text', { x: gr.x + 10, y: gr.y + 14, class: 'glabel' }, gLabels); t.textContent = gr.label;
+  t.addEventListener('click', ev => { ev.stopPropagation(); selectGroup(gr.id); });
+  groupEls[gr.id] = g;
+}
 for (const n of NODES) {
-  const g = el('g', { class: 'node', tabindex: 0, role: 'button', 'aria-label': n.label }, gNodes);
-  const r = el('rect', { class: 'box', width: n.w, height: n.h, rx: 8 }, g);
-  el('rect', { class: 'stripe', width: 6, height: n.h - 12, x: 6, y: 6, rx: 2 }, g);
-  const t = el('text', { class: 't', x: n.w / 2 + 3, y: 20, 'text-anchor': 'middle' }, g); t.textContent = n.label;
-  const s = el('text', { class: 's', x: n.w / 2 + 3, y: 35, 'text-anchor': 'middle' }, g); s.textContent = n.sub || '';
+  const g = el('g', { class: 'node' + (isMin(n) ? ' mini' : ''), tabindex: 0, role: 'button', 'aria-label': n.label }, gNodes);
+  el('title', {}, g).textContent = n.label + (isMin(n) ? ` · ${n.units.length} подчинени структури` : '');
+  const r = el('rect', { class: 'box', width: n.w, height: n.h, rx: isMin(n) ? 5 : 8 }, g);
+  el('rect', { class: 'stripe', width: isMin(n) ? 4 : 6, height: n.h - (isMin(n) ? 10 : 12), x: isMin(n) ? 5 : 6, y: isMin(n) ? 5 : 6, rx: 2 }, g);
+  let t, s, badge;
+  if (isMin(n)) {
+    t = el('text', { class: 'mt', x: 14, y: 19 }, g); t.textContent = n.short;
+    badge = el('g', {}, g);
+    el('rect', { x: n.w - 32, y: 6, width: 26, height: 18, rx: 9, class: 'cnt' }, badge);
+    const c = el('text', { x: n.w - 19, y: 19, 'text-anchor': 'middle', class: 'cntt' }, badge); c.textContent = n.units.length;
+  } else {
+    t = el('text', { class: 't', x: n.w / 2 + 3, y: 20, 'text-anchor': 'middle' }, g); t.textContent = n.label;
+    s = el('text', { class: 's', x: n.w / 2 + 3, y: 35, 'text-anchor': 'middle' }, g); s.textContent = n.sub || '';
+  }
   g.addEventListener('mouseenter', () => { state.hover = n.id; paint(); });
   g.addEventListener('mouseleave', () => { state.hover = null; paint(); });
   g.addEventListener('click', ev => { ev.stopPropagation(); select({ kind: 'node', id: n.id }); });
@@ -232,9 +260,14 @@ for (const n of NODES) {
 function layoutNodes() {
   for (const n of NODES) {
     const { g, r, t, s } = nodeEls[n.id];
-    n.w = Math.ceil(Math.max(t.getComputedTextLength(), s.getComputedTextLength())) + 34;
-    r.setAttribute('width', n.w);
-    t.setAttribute('x', n.w / 2 + 4); s.setAttribute('x', n.w / 2 + 4);
+    if (isMin(n)) {
+      const room = n.w - 14 - 38;
+      if (t.getComputedTextLength() > room) { t.setAttribute('textLength', room); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
+    } else {
+      n.w = Math.ceil(Math.max(t.getComputedTextLength(), s.getComputedTextLength())) + 34;
+      r.setAttribute('width', n.w);
+      t.setAttribute('x', n.w / 2 + 4); s.setAttribute('x', n.w / 2 + 4);
+    }
     g.setAttribute('transform', `translate(${n.x - n.w / 2},${n.y - n.h / 2})`);
   }
 }
@@ -250,7 +283,7 @@ for (const e of EDGES) {
 }
 function relayout() { layoutNodes(); for (const e of EDGES) { const d = edgePath(e); edgeEls[e.id].p.setAttribute('d', d); edgeEls[e.id].h.setAttribute('d', d); } }
 document.fonts?.ready.then(relayout);
-svg.addEventListener('click', () => { if (!state.scn) select(null); });
+svg.addEventListener('click', () => { if (!state.scn) { state.group = null; select(null); } });
 
 function nodeColor(n) { return state.color === 'pub' ? PL[n.pub.level].color : BR[n.branch].color; }
 function colorNodes() {
@@ -265,6 +298,12 @@ function focusSets() {
   if (state.scn) {
     const st = G.scenarios.find(s => s.id === state.scn.id).steps[state.scn.i];
     return { nodes: new Set(st.nodes), edges: new Set(st.edges), flow: true };
+  }
+  if (state.group) {
+    const gr = G.groups.find(x => x.id === state.group), nodes = new Set(gr.members), edges = new Set();
+    for (const e of EDGES) if (!state.hidden.has(e.type) && (nodes.has(e.from) || nodes.has(e.to))) edges.add(e.id);
+    for (const id of edges) { nodes.add(edgeById[id].from); nodes.add(edgeById[id].to); }
+    return { nodes, edges };
   }
   if (state.art) {
     const items = CITED[state.art] || [];
@@ -335,19 +374,26 @@ function setTab(tab) {
 }
 
 // ---------- selection & info pane ----------
-function select(s) { state.sel = s; state.art = null; state.scn = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
+function selectGroup(id) { state.group = state.group === id ? null : id; state.sel = null; state.scn = null; state.art = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
+function select(s) { state.group = null; state.sel = s; state.art = null; state.scn = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
 function who(id) { const n = byId[id]; return `<span class="who" data-node="${id}">${esc(n.label)}</span>`; }
 function connRow(e, other) {
   return `<div class="conn">${lineSwatch(ET[e.type], 22)}<div>${who(other)} <span class="muted small">· ${esc(ET[e.type].label)}</span><br>${esc(e.label)} ${refHtml(e.ref, e.law)}</div></div>`;
 }
 function renderInfo() {
   const p = $('#p-info');
+  if (!state.sel && state.group) {
+    const gr = G.groups.find(x => x.id === state.group);
+    p.innerHTML = `<p class="small muted"><a href="#" class="back">← всички институции</a></p><h2>${esc(gr.label)}</h2><p class="small muted">Групата и всичко, с което е свързана, свети на схемата.</p><h3>Състав (${gr.members.length})</h3>${gr.members.map(id => `<div class="pubrow">${who(id)}${byId[id].units ? ` <span class="muted small">· ${byId[id].units.length} подчинени структури</span>` : ''}<br><span class="small">${esc(byId[id].comp)}</span></div>`).join('')}`;
+    return;
+  }
   if (!state.sel) {
     p.innerHTML = `<h2>Как се чете схемата</h2>
       <p class="small">Всяка кутия е институция, всяка стрелка е правомощие: кой кого избира, контролира, проверява или може да свали. Посочете институция, за да видите връзките ѝ, или я изберете за пълна справка. Лилавите етикети като <a class="art" data-art="99">чл. 99, ал. 5</a> показват текста на члена; <span class="law">сивите</span> са уредени в закон, не в Конституцията.</p>
       <h3>Власти</h3><div class="legend">${Object.entries(BR).map(([k, b]) => `<div data-branch="${k}"><span class="sw" style="border-color:${b.color};background:#fff"></span>${esc(b.label)} <span class="muted small">(${NODES.filter(n => n.branch === k).length})</span></div>`).join('')}</div>
       <h3>Видове връзки</h3><div class="legend">${Object.entries(ET).map(([k, t]) => `<div>${lineSwatch(t)}${esc(t.label)} <span class="muted small">(${EDGES.filter(e => e.type === k).length})</span></div>`).join('')}</div>
-      <h3>Институции</h3><div>${NODES.map(n => who(n.id)).join(' · ')}</div>
+      <h3>Групи</h3><div>${G.groups.map(gr => `<span class="who" data-group="${gr.id}">${esc(gr.label)}</span>`).join(' · ')}</div>
+      <h3>Министерства по брой подчинени структури</h3>${ministryBars()}
       <h3>Източник</h3><div class="src">${esc(C.source.title)}, ${esc(C.source.version)}.<br><a class="ext" href="${C.source.official}" target="_blank" rel="noopener">Официален текст (parliament.bg) ↗</a> · <a class="ext" href="${C.source.consolidated}" target="_blank" rel="noopener">консолидиран PDF ↗</a> · <a class="ext" href="${C.source.english}" target="_blank" rel="noopener">English ↗</a><br><span class="muted">Титулярите не са включени: схемата описва правилата, не кой заема постовете.</span></div>`;
     p.querySelectorAll('[data-branch]').forEach(d => {
       d.addEventListener('mouseenter', () => { for (const n of NODES) nodeEls[n.id].g.classList.toggle('dim', n.branch !== d.dataset.branch); });
@@ -377,10 +423,23 @@ function renderInfo() {
       <dt>Как се прекратява</dt><dd>${esc(n.removed)}</dd>
       <dt>Основание</dt><dd>${refHtml(n.refs, n.law) || '<span class="muted">—</span>'}</dd>
     </dl>
+    ${n.units ? unitsHtml(n) : ''}
     <h3>Правомощия</h3><ul class="pw">${(n.powers || []).map(pw => `<li>${esc(pw.t)} ${refHtml(pw.ref, pw.law)}</li>`).join('')}</ul>
     <h3>Публичност</h3><p><span class="dot" style="background:${pl.color}"></span>${esc(n.pub.text)} ${refHtml(n.pub.ref, n.pub.law)}</p>
     <h3>Действа спрямо (${out.length})</h3>${out.map(e => connRow(e, e.to)).join('') || '<p class="muted small">—</p>'}
     <h3>Зависи от (${inc.length})</h3>${inc.map(e => connRow(e, e.from)).join('') || '<p class="muted small">—</p>'}`;
+}
+function ministryBars() {
+  const ms = NODES.filter(isMin).sort((a, b) => b.units.length - a.units.length), max = ms[0].units.length;
+  return ms.map(n => `<div class="term"><span class="nm who" data-node="${n.id}">${esc(n.short)}</span><span class="tr"><span class="tb" style="width:${Math.max(n.units.length / max * 100, 1)}%;background:${BR.executive.color}"></span><span class="tl" style="${n.units.length / max < .12 ? 'left:auto;right:6px;color:#8a4a06' : ''}">${n.units.length}</span></span></div>`).join('')
+    + `<p class="small muted">Изпълнителни агенции, структури по закон или постановление и териториални звена (областни дирекции, инспекции). Самите дирекции в министерствата не са броени. Източник: Административният регистър и устройствените закони.</p>`;
+}
+function unitsHtml(n) {
+  const kinds = [...new Set(n.units.map(u => u.kind))];
+  return `<h3>Подчинени структури (${n.units.length})</h3>
+    ${n.unitsNote ? `<p class="small">${esc(n.unitsNote)}</p>` : ''}
+    ${kinds.map(k => { const us = n.units.filter(u => u.kind === k); return `<p class="small" style="margin:8px 0 2px"><b>${esc(k)}</b> · ${us.length}</p>${us.map(u => `<div class="unit"><span>${esc(u.name)}</span>${u.src === 'reg' ? '<span class="law" title="Потвърдено в Административния регистър">регистър</span>' : '<span class="law" title="По устройствения закон или правилник">закон</span>'}</div>`).join('')}`; }).join('')}
+    <p class="small"><a class="ext" href="${n.registry}" target="_blank" rel="noopener">Структура в Административния регистър ↗</a></p>`;
 }
 function articleBlocks(ref) {
   return [...new Set(arts(ref))].map(k => {
@@ -487,6 +546,8 @@ document.addEventListener('click', ev => {
   if (a) { ev.preventDefault(); openArticle(a.dataset.art); return; }
   const w = ev.target.closest('[data-node]');
   if (w) { ev.preventDefault(); select({ kind: 'node', id: w.dataset.node }); return; }
+  const gq = ev.target.closest('[data-group]');
+  if (gq) { ev.preventDefault(); selectGroup(gq.dataset.group); return; }
   const ed = ev.target.closest('[data-edge]');
   if (ed) { ev.preventDefault(); select({ kind: 'edge', id: ed.dataset.edge }); return; }
   if (ev.target.closest('a.back')) { ev.preventDefault(); select(null); }
