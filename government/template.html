@@ -167,6 +167,9 @@ a.ext:hover { text-decoration: underline; }
 .unit { padding: 3px 0; border-top: 1px dotted var(--line); font-size: 12.5px; display: flex; gap: 8px; justify-content: space-between; }
 .node .s { font-size: 10px; fill: var(--muted); pointer-events: none; }
 .node.sel rect.box { stroke-width: 3.2; }
+.node.nonstate rect.box { stroke-dasharray: 5 3; fill: #fbfaf6; }
+.nsbadge { font-size: 8.5px; font-weight: 700; fill: #6b6760; letter-spacing: .04em; }
+.badge.ns { color: #6b6760; border-style: dashed; }
 .edge { fill: none; opacity: .55; }
 .edge.on { opacity: 1; }
 .edge-hit { fill: none; stroke: transparent; stroke-width: 12px; cursor: pointer; }
@@ -464,7 +467,9 @@ for (const n of NODES) {
   g.addEventListener('click', ev => { ev.stopPropagation(); if (!dragged) select({ kind: 'node', id: n.id }); });
   g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select({ kind: 'node', id: n.id }); } });
   if (n.units) g.addEventListener('dblclick', ev => { ev.stopPropagation(); select({ kind: 'node', id: n.id }); showUnits(n.id); });
-  nodeEls[n.id] = { g, r, t, s, ic, stripe: g.querySelector('.stripe') };
+  if (n.nonstate) { g.classList.add('nonstate'); el('title', {}, g).textContent = 'Недържавен орган'; }
+  nodeEls[n.id] = { g, r, t, s, ic, stripe: g.querySelector('.stripe'), ns: n.nonstate ? el('text', { class: 'nsbadge', y: -4 }, g) : null };
+  if (n.nonstate) nodeEls[n.id].ns.textContent = 'НЕДЪРЖАВЕН';
 }
 // measure labels and size the boxes; "row" groups spread their members evenly by measured width
 function layoutNodes() {
@@ -509,6 +514,7 @@ function placeNodes() {
     const { g } = nodeEls[n.id];
     g.setAttribute('transform', `translate(${n.x - n.w / 2},${n.y - n.h / 2})`);
     g.style.display = isCollapsed(n.id) ? 'none' : '';
+    if (nodeEls[n.id].ns) { nodeEls[n.id].ns.setAttribute('x', n.w); nodeEls[n.id].ns.setAttribute('text-anchor', 'end'); }
   }
   for (const [id, pe] of Object.entries(proxyEls)) {
     const P = PROXY[id], folded = !state.star && state.collapsed.has(id);
@@ -882,6 +888,7 @@ function renderInfo() {
     p.innerHTML = `<h2>Как се чете схемата</h2>
       <p class="small">Всяка кутия е институция, всяка стрелка е правомощие: кой кого избира, контролира, проверява или може да свали. Посочете институция, за да видите връзките ѝ, или я изберете за пълна справка. „Линии: всички“ показва всички стрелки наведнъж; ✶ (F) подрежда връзките на избрания орган около него; ⊟ до името на група я свива. Лилавите етикети като <a class="art" data-art="99">чл. 99, ал. 5</a> показват текста на члена; <span class="law">сивите</span> са уредени в закон, не в Конституцията.</p>
       <h3>Власти</h3><div class="legend">${Object.entries(BR).map(([k, b]) => `<div data-branch="${k}"><span class="sw" style="border-color:${b.color};background:#fff"></span>${esc(b.label)} <span class="muted small">(${NODES.filter(n => n.branch === k).length})</span></div>`).join('')}</div>
+      <p class="small"><svg width="26" height="14" style="vertical-align:-2px"><rect x="1" y="1" width="24" height="12" rx="3" fill="#fbfaf6" stroke="#6b6760" stroke-dasharray="5 3"/></svg> пунктирна рамка и „недържавен“: орган извън държавата, на който законът възлага публични функции (напр. адвокатурата).</p>
       <h3>Видове връзки</h3><div class="legend">${Object.entries(ET).map(([k, t]) => `<div>${lineSwatch(t)}${esc(t.label)} <span class="muted small">(${EDGES.filter(e => e.type === k).length})</span></div>`).join('')}</div>
       <h3>Групи</h3><div>${G.groups.map(gr => `<span class="who" data-group="${gr.id}">${esc(gr.label)}</span>`).join(' · ')}</div>
       <h3>Министерства по брой подчинени структури</h3>${ministryBars()}
@@ -906,7 +913,7 @@ function renderInfo() {
   const out = EDGES.filter(e => e.from === n.id && vis(e)), inc = EDGES.filter(e => e.to === n.id && vis(e));
   p.innerHTML = `<p class="small muted"><a href="#" class="back">← всички институции</a></p>
     <h2>${iconSvg(n, 20)} ${esc(n.label)}</h2>
-    <p><span class="badge" style="color:${b.color}">${esc(b.label)}</span> <span class="badge" style="color:${pl.color}">Публичност: ${esc(pl.label)}</span></p>
+    <p><span class="badge" style="color:${b.color}">${esc(b.label)}</span> <span class="badge" style="color:${pl.color}">Публичност: ${esc(pl.label)}</span>${n.nonstate ? ' <span class="badge ns">Недържавен орган</span>' : ''}</p>${n.nonstate ? `<p class="small muted">${esc(n.nonstate)}</p>` : ''}
     ${n.site ? `<p class="small"><a class="site" href="${esc(n.site)}" target="_blank" rel="noopener">${n.siteLabel ? esc(n.siteLabel) : 'Официален сайт: ' + esc(n.site.replace(/^https?:\/\//, '').replace(/\/$/, ''))} ↗</a>${n.siteLabel ? '' : ' <span class="muted">· контактите са на сайта</span>'}</p>` : ''}
     <dl>
       <dt>Състав</dt><dd>${lk(n.comp, n.id)}</dd>
