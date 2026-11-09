@@ -77,6 +77,8 @@ def validate(gov: dict, const: dict) -> list[str]:
             check_ref(where, st.get("ref"))
             errors += [f"{where}: непознат възел {x!r}" for x in st["nodes"] if x not in node_ids]
             errors += [f"{where}: непозната връзка {x!r}" for x in st["edges"] if x not in edge_ids]
+            errors += [f"{where}: преход към несъществуваща стъпка {n['to']}" for n in st.get("next", [])
+                       if not 0 <= n["to"] < len(s["steps"])]
 
     for m in gov["majorities"]:
         check_ref(f"мнозинство {m['n']}", m.get("ref"))
