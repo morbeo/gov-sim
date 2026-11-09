@@ -128,7 +128,8 @@
     "level": "open",
     "text": "Гласуването е тайно; резултатите по секции и протоколите се публикуват от ЦИК."
    },
-   "site": "https://www.cik.bg"
+   "site": "https://www.cik.bg",
+   "icon": "ballot"
   },
   {
    "id": "ns",
@@ -198,7 +199,9 @@
     "text": "Заседанията са открити; по изключение могат да бъдат закрити. Гласуването е лично и явно. Актовете се обнародват в „Държавен вестник“ до 15 дни след приемането.",
     "ref": "чл. 82; чл. 81, ал. 3; чл. 88, ал. 3"
    },
-   "site": "https://www.parliament.bg"
+   "site": "https://www.parliament.bg",
+   "icon": "columns",
+   "abbr": "НС"
   },
   {
    "id": "chair",
@@ -240,7 +243,8 @@
     "text": "Действа в открити заседания; подписаните актове се обнародват.",
     "ref": "чл. 77, ал. 1"
    },
-   "site": "https://www.parliament.bg"
+   "site": "https://www.parliament.bg",
+   "icon": "mic"
   },
   {
    "id": "vns",
@@ -282,14 +286,16 @@
     "text": "Действа като Народно събрание: открити заседания и обнародване на актовете от председателя му до 7 дни.",
     "ref": "чл. 163"
    },
-   "site": "https://www.parliament.bg"
+   "site": "https://www.parliament.bg",
+   "icon": "columns",
+   "abbr": "ВНС"
   },
   {
    "id": "prez",
    "label": "Президент",
    "sub": "държавен глава",
    "branch": "executive",
-   "x": 560,
+   "x": 520,
    "y": 165,
    "comp": "Президент, подпомаган от вицепрезидент.",
    "term": "5 години, най-много 2 мандата",
@@ -344,14 +350,15 @@
     "text": "Указите се обнародват и, освен изброените изключения, се приподписват от министър-председателя или министър. Мотивите на ветото се изпращат в НС. Консултативният съвет за национална сигурност заседава закрито.",
     "ref": "чл. 102"
    },
-   "site": "https://www.president.bg"
+   "site": "https://www.president.bg",
+   "icon": "star"
   },
   {
    "id": "vp",
    "label": "Вицепрезидент",
-   "sub": "в една листа с президента",
+   "sub": "с президента",
    "branch": "executive",
-   "x": 770,
+   "x": 670,
    "y": 165,
    "comp": "Едно лице.",
    "term": "5 години, най-много 2 мандата",
@@ -374,7 +381,8 @@
     "text": "Указите по делегираните правомощия се обнародват.",
     "ref": "чл. 102"
    },
-   "site": "https://www.president.bg"
+   "site": "https://www.president.bg",
+   "icon": "user"
   },
   {
    "id": "ms",
@@ -433,7 +441,9 @@
     "text": "Заседанията не са публични; дневният ред и решенията се публикуват, постановленията се обнародват в „Държавен вестник“. Проектите на нормативни актове минават обществено обсъждане.",
     "law": "Закон за нормативните актове; Устройствен правилник на МС"
    },
-   "site": "https://www.gov.bg"
+   "site": "https://www.gov.bg",
+   "icon": "building",
+   "abbr": "МС"
   },
   {
    "id": "oblast",
@@ -636,7 +646,9 @@
    ],
    "unitsNote": "По една областна администрация за всяка от 28-те области. За София (столица) делата на МВР води СДВР.",
    "registry": "https://iisda.government.bg/ras/adm_structures/district_administrations",
-   "site": "https://iisda.government.bg/ras/adm_structures/district_administrations"
+   "site": "https://iisda.government.bg/ras/adm_structures/district_administrations",
+   "icon": "pin",
+   "siteLabel": "Списък в Административния регистър"
   },
   {
    "id": "ks",
@@ -687,7 +699,9 @@
     "ref": "чл. 151, ал. 2",
     "law": "Закон за Конституционен съд"
    },
-   "site": "https://www.constcourt.bg"
+   "site": "https://www.constcourt.bg",
+   "icon": "book",
+   "abbr": "КС"
   },
   {
    "id": "vss",
@@ -729,7 +743,9 @@
     "text": "Заседанията са публични и се излъчват онлайн; дневният ред, протоколите и решенията се публикуват.",
     "law": "Закон за съдебната власт"
    },
-   "site": "https://vss.justice.bg"
+   "site": "https://vss.justice.bg",
+   "icon": "users",
+   "abbr": "ВСС"
   },
   {
    "id": "insp",
@@ -763,7 +779,9 @@
     "text": "Предоставя публично информация за дейността си; годишен доклад пред ВСС.",
     "ref": "чл. 132а, ал. 8; чл. 132а, ал. 9"
    },
-   "site": "https://www.inspectoratvss.bg"
+   "site": "https://www.inspectoratvss.bg",
+   "icon": "search",
+   "abbr": "ИВСС"
   },
   {
    "id": "vks",
@@ -797,7 +815,9 @@
     "text": "Делата се разглеждат публично, актовете се мотивират и се публикуват.",
     "ref": "чл. 121, ал. 3; чл. 121, ал. 4"
    },
-   "site": "https://www.vks.bg"
+   "site": "https://www.vks.bg",
+   "icon": "scale",
+   "abbr": "ВКС"
   },
   {
    "id": "vas",
@@ -835,7 +855,9 @@
     "text": "Делата се разглеждат публично, актовете се мотивират и се публикуват.",
     "ref": "чл. 121, ал. 3; чл. 121, ал. 4"
    },
-   "site": "https://www.sac.government.bg"
+   "site": "https://www.sac.government.bg",
+   "icon": "scale",
+   "abbr": "ВАС"
   },
   {
    "id": "pg",
@@ -878,7 +900,9 @@
     "ref": "чл. 84, т. 16",
     "law": "Наказателно-процесуален кодекс"
    },
-   "site": "https://prb.bg"
+   "site": "https://prb.bg",
+   "icon": "shield",
+   "abbr": "ГП"
   },
   {
    "id": "courts",
@@ -912,7 +936,8 @@
     "text": "Делата се разглеждат публично, освен когато законът предвижда друго; актовете се мотивират.",
     "ref": "чл. 121, ал. 3; чл. 121, ал. 4"
    },
-   "site": "https://ecase.justice.bg"
+   "site": "https://ecase.justice.bg",
+   "icon": "scale"
   },
   {
    "id": "bnb",
@@ -920,7 +945,7 @@
    "sub": "централна банка",
    "branch": "independent",
    "x": 210,
-   "y": 400,
+   "y": 446,
    "comp": "Управител, трима подуправители и управителен съвет. От 2026 г. част от Евросистемата.",
    "term": "Управител 6 години",
    "termYears": 6,
@@ -944,7 +969,9 @@
     "text": "Управителният съвет заседава закрито; решенията и отчетите се публикуват.",
     "law": "Закон за Българската народна банка"
    },
-   "site": "https://www.bnb.bg"
+   "site": "https://www.bnb.bg",
+   "icon": "euro",
+   "abbr": "БНБ"
   },
   {
    "id": "smetna",
@@ -952,7 +979,7 @@
    "sub": "външен одит",
    "branch": "independent",
    "x": 210,
-   "y": 462,
+   "y": 506,
    "comp": "Председател, двама заместник-председатели и двама членове.",
    "term": "7 години",
    "termYears": 7,
@@ -976,7 +1003,9 @@
     "ref": "чл. 84, т. 17",
     "law": "Закон за Сметната палата"
    },
-   "site": "https://www.bulnao.government.bg"
+   "site": "https://www.bulnao.government.bg",
+   "icon": "audit",
+   "abbr": "СП"
   },
   {
    "id": "ombuds",
@@ -984,7 +1013,7 @@
    "sub": "застъпник за правата",
    "branch": "independent",
    "x": 210,
-   "y": 524,
+   "y": 566,
    "comp": "Омбудсман и заместник-омбудсман.",
    "term": "5 години",
    "termYears": 5,
@@ -1012,7 +1041,8 @@
     "ref": "чл. 84, т. 17",
     "law": "Закон за омбудсмана"
    },
-   "site": "https://www.ombudsman.bg"
+   "site": "https://www.ombudsman.bg",
+   "icon": "heart"
   },
   {
    "id": "cik",
@@ -1051,7 +1081,9 @@
     "text": "Заседанията са открити и се излъчват онлайн; решенията и протоколите се публикуват.",
     "law": "Изборен кодекс"
    },
-   "site": "https://www.cik.bg"
+   "site": "https://www.cik.bg",
+   "icon": "ballot",
+   "abbr": "ЦИК"
   },
   {
    "id": "sem",
@@ -1059,7 +1091,7 @@
    "sub": "медиен регулатор",
    "branch": "independent",
    "x": 210,
-   "y": 586,
+   "y": 626,
    "comp": "5 членове: 3 избрани от НС и 2 назначени от президента.",
    "term": "6 години",
    "termYears": 6,
@@ -1078,7 +1110,9 @@
     "text": "Заседанията са открити; решенията се публикуват.",
     "law": "Закон за радиото и телевизията"
    },
-   "site": "https://www.cem.bg"
+   "site": "https://www.cem.bg",
+   "icon": "tv",
+   "abbr": "СЕМ"
   },
   {
    "id": "local",
@@ -1109,7 +1143,9 @@
     "text": "Заседанията на общинския съвет са публични; решенията се публикуват на сайта на общината.",
     "law": "Закон за местното самоуправление и местната администрация"
    },
-   "site": "https://iisda.government.bg/ras/adm_structures/municipality_administrations"
+   "site": "https://iisda.government.bg/ras/adm_structures/municipality_administrations",
+   "icon": "home",
+   "siteLabel": "Списък в Административния регистър"
   },
   {
    "id": "min_fin",
@@ -1172,7 +1208,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/88",
-   "site": "https://www.minfin.bg"
+   "site": "https://www.minfin.bg",
+   "icon": "euro",
+   "abbr": "МФ"
   },
   {
    "id": "min_mvr",
@@ -1405,7 +1443,9 @@
    ],
    "unitsNote": "Структурата е по Закона за МВР: главни дирекции, СДВР и 27 областни дирекции.",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/78",
-   "site": "https://www.mvr.bg"
+   "site": "https://www.mvr.bg",
+   "icon": "shield",
+   "abbr": "МВР"
   },
   {
    "id": "min_def",
@@ -1471,7 +1511,9 @@
    ],
    "unitsNote": "Въоръжените сили не са включени в броя.",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/89",
-   "site": "https://www.mod.bg"
+   "site": "https://www.mod.bg",
+   "icon": "jet",
+   "abbr": "МО"
   },
   {
    "id": "min_mfa",
@@ -1526,7 +1568,9 @@
    ],
    "unitsNote": "Посолствата и консулствата не са включени.",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/90",
-   "site": "https://www.mfa.bg"
+   "site": "https://www.mfa.bg",
+   "icon": "globe",
+   "abbr": "МВнР"
   },
   {
    "id": "minjust",
@@ -1606,7 +1650,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/61",
-   "site": "https://www.justice.government.bg"
+   "site": "https://www.justice.government.bg",
+   "icon": "scale",
+   "abbr": "МП"
   },
   {
    "id": "min_mlsp",
@@ -1674,7 +1720,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/87",
-   "site": "https://www.mlsp.government.bg"
+   "site": "https://www.mlsp.government.bg",
+   "icon": "briefcase",
+   "abbr": "МТСП"
   },
   {
    "id": "min_mon",
@@ -1913,7 +1961,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/81",
-   "site": "https://www.mon.bg"
+   "site": "https://www.mon.bg",
+   "icon": "cap",
+   "abbr": "МОН"
   },
   {
    "id": "min_mz",
@@ -2137,7 +2187,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/79",
-   "site": "https://www.mh.government.bg"
+   "site": "https://www.mh.government.bg",
+   "icon": "cross",
+   "abbr": "МЗ"
   },
   {
    "id": "min_mi",
@@ -2213,7 +2265,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/1091",
-   "site": "https://www.mi.government.bg"
+   "site": "https://www.mi.government.bg",
+   "icon": "factory",
+   "abbr": "МИИИ"
   },
   {
    "id": "min_mitd",
@@ -2267,7 +2321,9 @@
     }
    ],
    "unitsNote": "",
-   "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/3454"
+   "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/3454",
+   "icon": "chip",
+   "abbr": "МИДТ"
   },
   {
    "id": "min_mrrb",
@@ -2319,7 +2375,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/85",
-   "site": "https://www.mrrb.bg"
+   "site": "https://www.mrrb.bg",
+   "icon": "road",
+   "abbr": "МРРБ"
   },
   {
    "id": "min_me",
@@ -2364,7 +2422,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/1467",
-   "site": "https://www.me.government.bg"
+   "site": "https://www.me.government.bg",
+   "icon": "bolt",
+   "abbr": "МЕ"
   },
   {
    "id": "min_mtc",
@@ -2432,7 +2492,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/86",
-   "site": "https://www.mtc.government.bg"
+   "site": "https://www.mtc.government.bg",
+   "icon": "bus",
+   "abbr": "МТС"
   },
   {
    "id": "min_mzh",
@@ -2703,7 +2765,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/84",
-   "site": "https://www.mzh.government.bg"
+   "site": "https://www.mzh.government.bg",
+   "icon": "wheat",
+   "abbr": "МЗХ"
   },
   {
    "id": "min_moew",
@@ -2880,7 +2944,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/82",
-   "site": "https://www.moew.government.bg"
+   "site": "https://www.moew.government.bg",
+   "icon": "leaf",
+   "abbr": "МОСВ"
   },
   {
    "id": "min_mk",
@@ -2936,7 +3002,9 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/80",
-   "site": "https://mc.government.bg"
+   "site": "https://mc.government.bg",
+   "icon": "mask",
+   "abbr": "МК"
   },
   {
    "id": "min_mt",
@@ -2975,7 +3043,9 @@
    "units": [],
    "unitsNote": "В регистъра няма подчинени структури; работи чрез администрацията на министерството.",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/1468",
-   "site": "https://www.tourism.government.bg"
+   "site": "https://www.tourism.government.bg",
+   "icon": "sun",
+   "abbr": "МТ"
   },
   {
    "id": "min_mms",
@@ -3020,7 +3090,123 @@
    ],
    "unitsNote": "",
    "registry": "https://iisda.government.bg/ras/adm_structures/ministry_organigram/1202",
-   "site": "https://mpes.government.bg"
+   "site": "https://mpes.government.bg",
+   "icon": "ball",
+   "abbr": "ММС"
+  },
+  {
+   "id": "cmte",
+   "label": "Парламентарни комисии",
+   "sub": "постоянни и временни",
+   "branch": "legislative",
+   "x": 210,
+   "y": 360,
+   "comp": "Постоянни комисии по области (бюджет, правни въпроси, отбрана, енергетика и др.) и временни комисии за проучвания и анкети, избрани от народните представители. Броят и съставът се определят за всяко НС.",
+   "term": "в рамките на мандата на НС",
+   "termYears": null,
+   "chosen": "НС ги избира от своя състав; местата се разпределят пропорционално на парламентарните групи.",
+   "removed": "С решение на НС или с края на мандата.",
+   "refs": "чл. 79; чл. 80",
+   "law": "Правилник за организацията и дейността на НС",
+   "powers": [
+    {
+     "t": "Подпомагат НС и обсъждат законопроектите преди пленарната зала",
+     "ref": "чл. 79, ал. 2"
+    },
+    {
+     "t": "Упражняват от името на НС парламентарен контрол",
+     "ref": "чл. 79, ал. 2"
+    },
+    {
+     "t": "Временни комисии правят проучвания и анкети",
+     "ref": "чл. 79, ал. 3"
+    },
+    {
+     "t": "Могат да задължават министрите да се явяват и да отговарят",
+     "ref": "чл. 83, ал. 2"
+    },
+    {
+     "t": "Длъжностни лица и граждани са длъжни да се явят и да дадат сведения",
+     "ref": "чл. 80"
+    }
+   ],
+   "pub": {
+    "level": "open",
+    "text": "Заседанията по правило са открити и се излъчват онлайн; стенограмите и докладите се публикуват на сайта на НС.",
+    "law": "Правилник за организацията и дейността на НС"
+   },
+   "site": "https://www.parliament.bg/bg/parliamentarycommittees",
+   "icon": "users"
+  },
+  {
+   "id": "kevr",
+   "label": "КЕВР",
+   "sub": "енергиен и воден регулатор",
+   "branch": "independent",
+   "x": 210,
+   "y": 686,
+   "comp": "Комисия за енергийно и водно регулиране: председател и членове с енергиен и воден състав.",
+   "term": "5 години",
+   "termYears": 5,
+   "termLaw": true,
+   "chosen": "Председателят и членовете се избират от НС.",
+   "removed": "От НС на основанията в закона.",
+   "law": "Закон за енергетиката",
+   "powers": [
+    {
+     "t": "Определя цените на тока, парното, природния газ и водата за регулираните пазари",
+     "law": "Закон за енергетиката; Закон за регулиране на водоснабдителните и канализационните услуги"
+    },
+    {
+     "t": "Издава лицензи и контролира енергийните и ВиК дружествата",
+     "law": "Закон за енергетиката"
+    },
+    {
+     "t": "Отчита се пред НС",
+     "ref": "чл. 84, т. 17",
+     "law": "Закон за енергетиката"
+    }
+   ],
+   "pub": {
+    "level": "open",
+    "text": "Ценовите решения се приемат след открито заседание и обществено обсъждане; заседанията се излъчват онлайн и решенията се публикуват.",
+    "law": "Закон за енергетиката"
+   },
+   "site": "https://www.dker.bg",
+   "icon": "bolt",
+   "abbr": "КЕВР"
+  },
+  {
+   "id": "nso",
+   "label": "НСО",
+   "sub": "служба за охрана",
+   "branch": "executive",
+   "x": 815,
+   "y": 165,
+   "comp": "Национална служба за охрана: специализирана служба към президента. Охранява президента, вицепрезидента, председателя на НС, министър-председателя и други лица и обекти, определени със закон.",
+   "term": "Началникът: без фиксиран срок",
+   "termYears": null,
+   "chosen": "Началникът се назначава с указ на президента по предложение на Министерския съвет.",
+   "removed": "По същия ред.",
+   "law": "Закон за Националната служба за охрана",
+   "powers": [
+    {
+     "t": "Охрана на висшите държавни лица и на чуждестранни делегации",
+     "law": "Закон за Националната служба за охрана"
+    },
+    {
+     "t": "Охрана на обекти, определени от закона (Президентство, НС, МС)",
+     "law": "Закон за Националната служба за охрана"
+    }
+   ],
+   "pub": {
+    "level": "closed",
+    "text": "Дейността по охраната не е публична; годишен отчет пред президента.",
+    "law": "Закон за Националната служба за охрана"
+   },
+   "site": "https://www.nso.bg",
+   "icon": "shield",
+   "abbr": "НСО"
   }
  ],
  "edges": [
@@ -3691,6 +3877,47 @@
    "type": "call",
    "label": "Организира изборите и референдумите и обявява резултатите",
    "law": "Изборен кодекс"
+  },
+  {
+   "id": "ns_cmte",
+   "from": "ns",
+   "to": "cmte",
+   "type": "elect",
+   "label": "Избира постоянни и временни комисии от своя състав",
+   "ref": "чл. 79, ал. 1"
+  },
+  {
+   "id": "cmte_ms",
+   "from": "cmte",
+   "to": "ms",
+   "type": "control",
+   "label": "Парламентарен контрол от името на НС; изслушват министри",
+   "ref": "чл. 79, ал. 2; чл. 83, ал. 2"
+  },
+  {
+   "id": "ns_kevr",
+   "from": "ns",
+   "to": "kevr",
+   "type": "elect",
+   "label": "Избира председателя и членовете на КЕВР",
+   "law": "Закон за енергетиката"
+  },
+  {
+   "id": "kevr_ns",
+   "from": "kevr",
+   "to": "ns",
+   "type": "control",
+   "label": "Отчита се пред НС",
+   "ref": "чл. 84, т. 17",
+   "law": "Закон за енергетиката"
+  },
+  {
+   "id": "prez_nso",
+   "from": "prez",
+   "to": "nso",
+   "type": "elect",
+   "label": "Назначава началника на НСО по предложение на МС; службата е към президента",
+   "law": "Закон за Националната служба за охрана"
   }
  ],
  "scenarios": [
@@ -4566,25 +4793,27 @@
    "x": 40,
    "y": 120,
    "w": 340,
-   "h": 200,
+   "h": 265,
    "members": [
     "ns",
     "chair",
-    "vns"
+    "vns",
+    "cmte"
    ]
   },
   {
    "id": "g_ind",
    "label": "Независими органи, избирани от НС",
    "x": 40,
-   "y": 354,
+   "y": 400,
    "w": 340,
-   "h": 265,
+   "h": 319,
    "members": [
     "bnb",
     "smetna",
     "ombuds",
-    "sem"
+    "sem",
+    "kevr"
    ]
   },
   {
@@ -4596,7 +4825,8 @@
    "h": 78,
    "members": [
     "prez",
-    "vp"
+    "vp",
+    "nso"
    ]
   },
   {

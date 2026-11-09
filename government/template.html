@@ -22,6 +22,15 @@ html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4
 header { padding: 12px 16px 10px; border-bottom: 1px solid var(--line); background: var(--panel); display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
 h1 { margin: 0; font-size: 20px; }
 header p { margin: 0; color: var(--muted); flex: 1 1 320px; }
+.srch { position: relative; flex: 0 1 380px; min-width: 240px; }
+.srch input { width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; font: inherit; }
+#results { position: absolute; right: 0; left: 0; top: 100%; margin-top: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.12); max-height: 60vh; overflow: auto; z-index: 10; display: none; }
+#results.on { display: block; }
+#results .r { padding: 6px 10px; cursor: pointer; border-top: 1px solid #eee7da; font-size: 13px; }
+#results .r:first-child { border-top: 0; }
+#results .r.act, #results .r:hover { background: #eef4fb; }
+#results .r .k { font-size: 11px; color: var(--muted); }
+#results mark { background: #ffe9a8; padding: 0; }
 main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; height: calc(100vh - 52px); }
 #left { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .bar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--panel); align-items: center; }
@@ -44,6 +53,8 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; height: calc(
 .flegend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11.5px; color: var(--muted); }
 .flegend span { display: inline-flex; gap: 5px; align-items: center; }
 .flegend i { width: 18px; height: 11px; border: 1.5px solid; display: inline-block; }
+a.law.reg { text-decoration: none; color: #0b4f8a; }
+a.law.reg:hover { text-decoration: underline; }
 a.site { font-size: 11.5px; color: var(--accent); text-decoration: none; white-space: nowrap; }
 a.site:hover { text-decoration: underline; }
 #stage { position: relative; flex: 1; min-height: 0; overflow: auto; }
@@ -53,7 +64,7 @@ aside { border-left: 1px solid var(--line); background: var(--panel); display: f
 .tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
 .tabs button { border: 0; border-radius: 0; background: none; padding: 8px 4px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; font-size: 13px; }
 .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
-.pane { padding: 14px 16px 28px; overflow: auto; flex: 1; display: none; }
+.pane { position: relative; padding: 14px 16px 28px; overflow: auto; flex: 1; display: none; }
 .pane.on { display: block; }
 h2 { font-size: 17px; margin: 0 0 4px; }
 h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 6px; }
@@ -83,6 +94,7 @@ a.ext:hover { text-decoration: underline; }
 .sw { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; flex: none; }
 .node { cursor: pointer; }
 .node rect.box { stroke-width: 1.6; }
+.ico { vertical-align: -2px; margin-right: 3px; flex: none; }
 .node .t { font-size: 12.5px; font-weight: 700; fill: var(--ink); pointer-events: none; }
 .node .mt.two { font-size: 9.6px; }
 .node .mt { font-size: 11px; font-weight: 600; fill: var(--ink); pointer-events: none; }
@@ -92,6 +104,7 @@ a.ext:hover { text-decoration: underline; }
 .glabel { font-size: 10.5px; fill: var(--muted); font-weight: 600; cursor: pointer; }
 .glabel:hover { fill: var(--ink); text-decoration: underline; }
 .group.dim { opacity: .35; }
+.unit.hi { background: var(--hi); }
 .unit { padding: 3px 0; border-top: 1px dotted var(--line); font-size: 12.5px; display: flex; gap: 8px; justify-content: space-between; }
 .node .s { font-size: 10px; fill: var(--muted); pointer-events: none; }
 .node.sel rect.box { stroke-width: 3.2; }
@@ -138,6 +151,7 @@ a.ext:hover { text-decoration: underline; }
 <header>
   <h1>Държавно устройство на България</h1>
   <p>Кой кого избира, кой може да спре, свали или провери другия. Всяко правомощие е с линк към члена от Конституцията.</p>
+  <div class="srch"><input type="search" id="q" placeholder="Търси: институция, агенция, област, правомощие, член…" autocomplete="off" aria-label="Търсене"><div id="results" role="listbox"></div></div>
 </header>
 <main>
   <div id="left">
@@ -174,7 +188,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const arts = ref => [...String(ref || '').matchAll(ART_RE)].map(m => m[1]);
 
-const state = { group: null, sel: null, hover: null, scn: null, art: null, hidden: new Set(), color: 'branch', tab: 'info' };
+const state = { unitHi: null, icons: true, group: null, sel: null, hover: null, scn: null, art: null, hidden: new Set(), color: 'branch', tab: 'info' };
 
 // ---------- links to the Constitution ----------
 function officialUrl(key) {
@@ -201,6 +215,42 @@ for (const n of NODES) {
 for (const e of EDGES) cite(e.ref, { kind: 'edge', id: e.id, label: `${byId[e.from].label} → ${byId[e.to].label}` });
 for (const s of G.scenarios) for (const st of s.steps) cite(st.ref, { kind: 'scn', id: s.id, label: 'Сценарий: ' + s.title });
 for (const m of G.majorities) cite(m.ref, { kind: 'maj', id: m.n, label: 'Мнозинство ' + m.label });
+
+const ICONS = {
+  ballot: 'M4 12h16v8H4z M8 12V4h8v8 M10 8l1.5 1.5L14 7',
+  columns: 'M3 21h18 M4 10h16 M12 3l9 5H3z M6 10v8 M10 10v8 M14 10v8 M18 10v8',
+  mic: 'M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z M5 11a7 7 0 0 0 14 0 M12 18v3',
+  users: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6 M16 5.2a3 3 0 0 1 0 5.6 M21 20c0-2.8-1.6-5-4-5.8',
+  euro: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M15.5 9a3.5 3.5 0 1 0 0 6 M7.5 11h6 M7.5 13h6',
+  audit: 'M9 3h6v3H9z M7 4.5H5V21h14V4.5h-2 M8.5 14l2.5 2.5 4.5-5',
+  heart: 'M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z',
+  tv: 'M3 7h18v12H3z M8 3l4 4 4-4',
+  bolt: 'M13 2L4 14h7l-1 8 9-12h-7z',
+  star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z',
+  user: 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M4 21c0-4 3.6-7 8-7s8 3 8 7',
+  shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
+  building: 'M4 21V4h16v17 M8 8h2 M14 8h2 M8 12h2 M14 12h2 M8 16h2 M14 16h2 M3 21h18',
+  pin: 'M12 21s-7-6-7-12a7 7 0 0 1 14 0c0 6-7 12-7 12z M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+  home: 'M3 11l9-8 9 8 M5 9v12h14V9 M10 21v-6h4v6',
+  book: 'M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z M12 6v14',
+  search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M21 21l-5-5',
+  scale: 'M12 3v18 M7 21h10 M4 7h16 M4 7l-2.5 6a3 3 0 0 0 5 0z M20 7l-2.5 6a3 3 0 0 0 5 0z',
+  jet: 'M12 2l2.5 7.5L21 13v2l-6.5-1.5L13 19l2 2H9l2-2-1.5-5.5L3 15v-2l6.5-3.5z',
+  globe: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M3 12h18 M12 3c3 3.5 3 14.5 0 18 M12 3c-3 3.5-3 14.5 0 18',
+  briefcase: 'M3 8h18v12H3z M9 8V5h6v3 M3 13h18',
+  cap: 'M2 9l10-5 10 5-10 5z M6 11v5c3 2 9 2 12 0v-5 M22 9v6',
+  cross: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6z',
+  factory: 'M3 21V10l6 4V10l6 4V5h6v16z M3 21h18',
+  chip: 'M7 7h10v10H7z M10 3v4 M14 3v4 M10 17v4 M14 17v4 M3 10h4 M3 14h4 M17 10h4 M17 14h4',
+  road: 'M8 21L10 3 M16 21L14 3 M12 5v2 M12 10v3 M12 16v3',
+  bus: 'M6 3h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M4 11h16 M8 21v-3 M16 21v-3 M8 14.5h.01 M16 14.5h.01',
+  wheat: 'M12 21V8 M12 8c-3 0-4-3-4-5 2 0 4 1 4 5 M12 8c3 0 4-3 4-5-2 0-4 1-4 5 M12 14c-3 0-4-3-4-5 2 0 4 1 4 5 M12 14c3 0 4-3 4-5-2 0-4 1-4 5',
+  leaf: 'M5 21c0-9 5-15 15-16-1 10-7 15-15 16z M5 21l8-8',
+  mask: 'M4 4h16v6a8 8 0 0 1-16 0z M9 9h.01 M15 9h.01 M9 13c1.5 1.5 4.5 1.5 6 0',
+  sun: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4',
+  ball: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7.5l4 3-1.5 4.5h-5L8 10.5z'
+};
+const iconSvg = (n, size = 16) => n.icon && state.icons ? `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${BR[n.branch].color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICONS[n.icon]}"/></svg>` : '';
 
 // ---------- geometry ----------
 const isMin = n => n.kind === 'ministry';
@@ -261,6 +311,8 @@ for (const n of NODES) {
   const r = el('rect', { class: 'box', width: n.w, height: n.h, rx: isMin(n) ? 5 : 8 }, g);
   el('rect', { class: 'stripe', width: isMin(n) ? 4 : 6, height: n.h - (isMin(n) ? 10 : 12), x: isMin(n) ? 5 : 6, y: isMin(n) ? 5 : 6, rx: 2 }, g);
   let t, s, badge;
+  const ic = el('g', { class: 'ic' }, g);
+  el('path', { d: ICONS[n.icon] || '', fill: 'none', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, ic);
   if (isMin(n)) {
     const parts = n.short.split('|');
     t = el('text', { class: 'mt', x: 14, y: parts.length > 1 ? 13 : 19 }, g);
@@ -277,18 +329,28 @@ for (const n of NODES) {
   g.addEventListener('mouseleave', () => { state.hover = null; paint(); });
   g.addEventListener('click', ev => { ev.stopPropagation(); select({ kind: 'node', id: n.id }); });
   g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select({ kind: 'node', id: n.id }); } });
-  nodeEls[n.id] = { g, r, t, s, stripe: g.querySelector('.stripe') };
+  nodeEls[n.id] = { g, r, t, s, ic, stripe: g.querySelector('.stripe') };
 }
 function layoutNodes() {
+  const on = state.icons;
   for (const n of NODES) {
-    const { g, r, t, s } = nodeEls[n.id];
+    const { g, r, t, s, ic } = nodeEls[n.id];
+    ic.style.display = on && n.icon ? '' : 'none';
     if (isMin(n)) {
-      const room = n.w - 14 - 38;
-      if (!t.classList.contains('two') && t.getComputedTextLength() > room) { t.setAttribute('textLength', room); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
+      const x0 = on ? 30 : 14;
+      ic.setAttribute('transform', `translate(10,${n.h / 2 - 7}) scale(.58)`);
+      t.setAttribute('x', x0); t.querySelectorAll('tspan').forEach(ts => ts.setAttribute('x', x0));
+      t.removeAttribute('textLength');
+      const room = n.w - x0 - 36;
+      if (t.classList.contains('two')) t.querySelectorAll('tspan').forEach(ts => { ts.removeAttribute('textLength'); if (ts.getComputedTextLength() > room) { ts.setAttribute('textLength', room); ts.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } });
+      else if (t.getComputedTextLength() > room) { t.setAttribute('textLength', room); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
     } else {
-      n.w = Math.ceil(Math.max(t.getComputedTextLength(), s.getComputedTextLength())) + 34;
+      const pad = on ? 22 : 0;
+      n.w = Math.ceil(Math.max(t.getComputedTextLength(), s.getComputedTextLength())) + 34 + pad;
       r.setAttribute('width', n.w);
-      t.setAttribute('x', n.w / 2 + 4); s.setAttribute('x', n.w / 2 + 4);
+      const cx = (14 + pad + n.w - 8) / 2;
+      t.setAttribute('x', cx); s.setAttribute('x', cx);
+      ic.setAttribute('transform', `translate(15,${n.h / 2 - 8}) scale(.68)`);
     }
     g.setAttribute('transform', `translate(${n.x - n.w / 2},${n.y - n.h / 2})`);
   }
@@ -312,6 +374,7 @@ function colorNodes() {
   for (const n of NODES) {
     const c = nodeColor(n), { r, stripe } = nodeEls[n.id];
     r.setAttribute('fill', '#fff'); r.setAttribute('stroke', c); stripe.setAttribute('fill', c);
+    nodeEls[n.id].ic.setAttribute('stroke', c);
   }
 }
 
@@ -375,6 +438,7 @@ function renderFilters() {
   const bar = $('#filters');
   bar.innerHTML = Object.entries(ET).map(([k, t]) => `<span class="chip${state.hidden.has(k) ? ' off' : ''}" data-et="${k}" role="switch" aria-checked="${!state.hidden.has(k)}" title="Покажи / скрий">${lineSwatch(t, 22)}${esc(t.label)}</span>`).join('')
     + `<button id="alllines" class="small">${state.hidden.size === Object.keys(ET).length ? 'Покажи всички линии' : 'Скрий всички линии'}</button>`
+    + `<label class="small chip"><input type="checkbox" id="icons" ${state.icons ? 'checked' : ''}> Иконки</label>`
     + `<span class="sp"></span><label class="small">Цвят: <select id="colormode"><option value="branch">по власт</option><option value="pub">по публичност</option></select></label><span id="clegend" class="clegend"></span>`;
   bar.querySelectorAll('[data-et]').forEach(c => c.addEventListener('click', () => {
     const k = c.dataset.et; state.hidden.has(k) ? state.hidden.delete(k) : state.hidden.add(k);
@@ -385,6 +449,7 @@ function renderFilters() {
     if (state.hidden.size === all.length) state.hidden.clear(); else all.forEach(k => state.hidden.add(k));
     renderFilters(); paint(); if (state.tab === 'info') renderInfo();
   });
+  $('#icons').addEventListener('change', ev => { state.icons = ev.target.checked; relayout(); renderTabAgain(); });
   const cm = $('#colormode'); cm.value = state.color;
   cm.addEventListener('change', () => { state.color = cm.value; colorNodes(); renderColorLegend(); });
   renderColorLegend();
@@ -394,6 +459,7 @@ function renderColorLegend() {
   $('#clegend').innerHTML = items.map(x => `<span><i style="border-color:${x.color}"></i>${esc(x.label)}</span>`).join('');
 }
 
+function renderTabAgain() { ({ info: renderInfo, scn: renderScn, terms: renderTerms, pub: renderPub, maj: renderMaj, const: renderConst })[state.tab](); }
 // ---------- tabs ----------
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 function setTab(tab) {
@@ -409,7 +475,7 @@ function setTab(tab) {
 // ---------- selection & info pane ----------
 function selectGroup(id) { state.group = state.group === id ? null : id; state.sel = null; state.scn = null; state.art = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
 function select(s) { state.group = null; state.sel = s; state.art = null; state.scn = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
-function who(id) { const n = byId[id]; return `<span class="who" data-node="${id}">${esc(n.label)}</span>`; }
+function who(id) { const n = byId[id]; return `<span class="who" data-node="${id}">${iconSvg(n, 13)}${esc(n.label)}</span>`; }
 function connRow(e, other) {
   return `<div class="conn">${lineSwatch(ET[e.type], 22)}<div>${who(other)} <span class="muted small">· ${esc(ET[e.type].label)}</span><br>${esc(e.label)} ${refHtml(e.ref, e.law)}</div></div>`;
 }
@@ -447,9 +513,9 @@ function renderInfo() {
   const vis = e => !state.hidden.has(e.type);
   const out = EDGES.filter(e => e.from === n.id && vis(e)), inc = EDGES.filter(e => e.to === n.id && vis(e));
   p.innerHTML = `<p class="small muted"><a href="#" class="back">← всички институции</a></p>
-    <h2>${esc(n.label)}</h2>
+    <h2>${iconSvg(n, 20)} ${esc(n.label)}</h2>
     <p><span class="badge" style="color:${b.color}">${esc(b.label)}</span> <span class="badge" style="color:${pl.color}">Публичност: ${esc(pl.label)}</span></p>
-    ${n.site ? `<p class="small"><a class="site" href="${esc(n.site)}" target="_blank" rel="noopener">Официален сайт: ${esc(n.site.replace(/^https?:\/\//, ''))} ↗</a> <span class="muted">· контактите са на сайта</span></p>` : ''}
+    ${n.site ? `<p class="small"><a class="site" href="${esc(n.site)}" target="_blank" rel="noopener">${n.siteLabel ? esc(n.siteLabel) : 'Официален сайт: ' + esc(n.site.replace(/^https?:\/\//, '').replace(/\/$/, ''))} ↗</a>${n.siteLabel ? '' : ' <span class="muted">· контактите са на сайта</span>'}</p>` : ''}
     <dl>
       <dt>Състав</dt><dd>${esc(n.comp)}</dd>
       <dt>Мандат</dt><dd>${esc(n.term)}${n.termLaw ? ' <span class="law">по закон</span>' : ''}</dd>
@@ -472,7 +538,7 @@ function unitsHtml(n) {
   const kinds = [...new Set(n.units.map(u => u.kind))];
   return `<h3>Подчинени структури (${n.units.length})</h3>
     ${n.unitsNote ? `<p class="small">${esc(n.unitsNote)}</p>` : ''}
-    ${kinds.map(k => { const us = n.units.filter(u => u.kind === k); return `<p class="small" style="margin:8px 0 2px"><b>${esc(k)}</b> · ${us.length}</p>${us.map(u => `<div class="unit"><span>${esc(u.name)}${u.site ? ` <a class="site" href="${esc(u.site)}" target="_blank" rel="noopener">сайт ↗</a>` : ''}</span>${u.src === 'reg' ? '<span class="law" title="Потвърдено в Административния регистър">регистър</span>' : '<span class="law" title="По устройствения закон или правилник">закон</span>'}</div>`).join('')}`; }).join('')}
+    ${kinds.map(k => { const us = n.units.filter(u => u.kind === k); return `<p class="small" style="margin:8px 0 2px"><b>${esc(k)}</b> · ${us.length}</p>${us.map(u => `<div class="unit${state.unitHi === u.name ? ' hi' : ''}"><span>${esc(u.name)}${u.site ? ` <a class="site" href="${esc(u.site)}" target="_blank" rel="noopener">сайт ↗</a>` : ''}</span>${u.src === 'reg' ? `<a class="law reg" href="${esc(n.registry)}" target="_blank" rel="noopener" title="Потвърдено в Административния регистър">регистър ↗</a>` : '<span class="law" title="По устройствения закон или правилник">закон</span>'}</div>`).join('')}`; }).join('')}
     <p class="small"><a class="ext" href="${n.registry}" target="_blank" rel="noopener">Структура в Административния регистър ↗</a></p>`;
 }
 function articleBlocks(ref) {
@@ -630,6 +696,89 @@ function openArticle(k) {
   setTab('const');
   state.art = k; renderConst(k); paint();
 }
+
+// ---------- fuzzy search ----------
+const norm = x => String(x || '').toLowerCase().replace(/[„“"'’«»().,;:!?–—-]/g, ' ').replace(/\s+/g, ' ').trim();
+function lev1(a, b) { // edit distance ≤ limit, cheap
+  if (Math.abs(a.length - b.length) > 2) return 9;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+function fuzzyScore(q, text) {
+  const t = norm(text); if (!t) return 0;
+  const nq = norm(q); if (!nq) return 0;
+  if (t === nq) return 100;
+  if (t.startsWith(nq)) return 90;
+  if (t.includes(nq)) return 75;
+  const words = t.split(' ');
+  const inits = words.filter(w => w.length > 2 || /^[а-я]{2,}$/.test(w)).map(w => w[0]).join('');
+  if (nq.length >= 2 && !nq.includes(' ') && (inits === nq || words.map(w => w[0]).join('') === nq)) return 95;
+  let total = 0;
+  for (const qt of nq.split(' ')) {
+    let best = 0;
+    for (const w of words) {
+      if (w.startsWith(qt)) best = Math.max(best, 1);
+      else if (qt.length >= 4 && w.length >= 3) {
+        const dd = lev1(qt, w.slice(0, qt.length + 1)), d2 = lev1(qt, w);
+        const m = Math.min(dd, d2);
+        if (m <= (qt.length >= 7 ? 2 : 1)) best = Math.max(best, .7);
+      }
+      if (!best && qt.length >= 2 && qt.length <= 5 && w.length > 1 && qt === w.replace(/[^а-яa-z]/g, '').slice(0, qt.length)) best = .9;
+    }
+    if (!best) {  // initials: "кс" → Конституционен съд
+      const ini = words.map(w => w[0]).join('');
+      if (qt.length >= 2 && ini.includes(qt)) best = .8;
+    }
+    if (!best) return 0;
+    total += best;
+  }
+  return 60 * total / nq.split(' ').length;
+}
+const SEARCH = [];
+for (const n of NODES) {
+  SEARCH.push({ kind: 'Институция', label: n.label + (n.abbr && n.abbr !== n.label ? ` (${n.abbr})` : ''), abbr: n.abbr, text: [n.label, n.short, n.sub, n.abbr].join(' '), extra: n.comp, go: () => select({ kind: 'node', id: n.id }), icon: n });
+  for (const u of n.units || []) SEARCH.push({ kind: 'Структура · ' + (n.short || n.label).replace('|', ' '), label: u.name, text: u.name + ' ' + (u.area || ''), go: () => { select({ kind: 'node', id: n.id }); state.unitHi = u.name; renderInfo(); { const u = document.querySelector('.unit.hi'), pane = $('#p-info'); if (u) pane.scrollTop = u.offsetTop - pane.clientHeight / 2; } state.unitHi = null; }, icon: n });
+  for (const pw of n.powers || []) SEARCH.push({ kind: 'Правомощие · ' + n.label, label: pw.t, text: pw.t, go: () => select({ kind: 'node', id: n.id }), weak: true });
+}
+for (const e of EDGES) SEARCH.push({ kind: 'Връзка · ' + byId[e.from].label + ' → ' + byId[e.to].label, label: e.label, text: e.label, go: () => select({ kind: 'edge', id: e.id }), weak: true });
+for (const g of G.groups) SEARCH.push({ kind: 'Група', label: g.label, text: g.label, go: () => selectGroup(g.id) });
+for (const sc of G.scenarios) SEARCH.push({ kind: 'Сценарий', label: sc.title, text: sc.title + ' ' + sc.steps.map(x => x.title).join(' '), go: () => { setTab('scn'); state.scn = { id: sc.id, i: 0 }; renderScn(); paint(); } });
+for (const [k, a] of Object.entries(C.articles)) SEARCH.push({ kind: 'Конституция', label: 'Чл. ' + k, text: 'чл ' + k + ' член ' + k, extra: a.text, go: () => openArticle(k), weak: true });
+let hits = [], act = 0;
+const qi = $('#q'), res = $('#results');
+function hl(label, q) {
+  const nq = norm(q).split(' ').filter(x => x.length > 1);
+  let h = esc(label);
+  for (const t of nq) h = h.replace(new RegExp('(' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig'), '<mark>$1</mark>');
+  return h;
+}
+function runSearch() {
+  const q = qi.value;
+  if (norm(q).length < 2) { res.classList.remove('on'); hits = []; return; }
+  hits = SEARCH.map(it => {
+    let sc = it.abbr && norm(it.abbr) === norm(q) ? 110 : fuzzyScore(q, it.text);
+    if (!sc && it.extra) sc = fuzzyScore(q, it.extra) * .6;
+    if (it.weak) sc *= .8;
+    return { it, sc };
+  }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 14);
+  act = 0;
+  res.innerHTML = hits.length ? hits.map((h, i) => `<div class="r${i === act ? ' act' : ''}" data-h="${i}" role="option">${h.it.icon ? iconSvg(h.it.icon, 13) : ''}${hl(h.it.label, q)}<div class="k">${esc(h.it.kind)}</div></div>`).join('') : '<div class="r muted">Няма резултати</div>';
+  res.classList.add('on');
+}
+function pick(i) { const h = hits[i]; if (!h) return; res.classList.remove('on'); h.it.go(); }
+qi.addEventListener('input', runSearch);
+qi.addEventListener('focus', runSearch);
+qi.addEventListener('keydown', ev => {
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') { ev.preventDefault(); act = (act + (ev.key === 'ArrowDown' ? 1 : -1) + hits.length) % Math.max(hits.length, 1); res.querySelectorAll('.r').forEach((r, i) => r.classList.toggle('act', i === act)); res.querySelector('.r.act')?.scrollIntoView({ block: 'nearest' }); }
+  if (ev.key === 'Enter') { ev.preventDefault(); pick(act); }
+  if (ev.key === 'Escape') { res.classList.remove('on'); qi.blur(); }
+});
+res.addEventListener('mousedown', ev => { const r = ev.target.closest('[data-h]'); if (r) { ev.preventDefault(); pick(+r.dataset.h); } });
+qi.addEventListener('blur', () => setTimeout(() => res.classList.remove('on'), 120));
+document.addEventListener('keydown', ev => { if (ev.key === '/' && !ev.target.closest('input,select,textarea')) { ev.preventDefault(); qi.focus(); } });
 
 // ---------- delegated clicks ----------
 document.addEventListener('click', ev => {
