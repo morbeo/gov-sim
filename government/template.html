@@ -91,6 +91,9 @@ a.ext:hover { text-decoration: underline; }
 .conn { padding: 5px 0; border-top: 1px solid var(--line); display: flex; gap: 8px; align-items: flex-start; }
 .conn svg { flex: none; margin-top: 6px; }
 .who { font-weight: 600; cursor: pointer; } .who:hover { text-decoration: underline; }
+.who.mbtn { display: inline-flex; align-items: center; gap: 1px; font-weight: 600; padding: 0 5px; border: 1px solid var(--line); border-radius: 5px; background: #fff; line-height: 1.35; white-space: nowrap; }
+.who.mbtn:hover { border-color: var(--accent); text-decoration: none; background: #f2f6fb; }
+.who.mbtn .ico { vertical-align: 0; margin-right: 2px; }
 .legend div { display: flex; align-items: center; gap: 8px; margin: 3px 0; cursor: pointer; }
 .sw { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; flex: none; }
 .node { cursor: pointer; }
@@ -509,15 +512,47 @@ function setTab(tab) {
 // ---------- selection & info pane ----------
 function selectGroup(id) { state.group = state.group === id ? null : id; state.sel = null; state.scn = null; state.art = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
 function select(s) { state.group = null; state.sel = s; state.art = null; state.scn = null; if (state.tab !== 'info') setTab('info'); else { renderInfo(); paint(); } }
+// ---------- institution mentions in free text ----------
+// extra spellings beyond label / abbr / dlabel (stems; endings are matched loosely)
+const ALIASES = {
+  ms: ['правителство', 'кабинет'], ns: ['парламент'], cik: ['Централна избирателна комисия'],
+  pg: ['прокуратура', 'главния прокурор'], local: ['кмет', 'общински съвет'], oblast: ['областен управител'],
+  ec: ['Еврокомисия'], ep: ['Европарламент'], cmte: ['комисии на НС', 'парламентарна комисия'],
+};
+const stem = w => w.length > 7 ? w.slice(0, -2) : w.length > 3 ? w.slice(0, -1) : w;
+const reEsc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const wordPat = phrase => phrase.split(/\s+/).map(w => /^[А-ЯA-Z]{2,}[а-я]?[А-Я]*$/.test(w) ? reEsc(w) : reEsc(stem(w)) + '[а-яё]{0,4}').join('\\s+');
+const MENTIONS = [];
+// exact patterns where loose endings would over-match (избиратели ≠ избирателни)
+const RAW = { narod: '[Ии]збирател(?:и|ите|я|ят)' };
+for (const [id, src] of Object.entries(RAW)) MENTIONS.push({ id, src, ci: false });
+for (const n of NODES) {
+  const names = new Set(RAW[n.id] ? [] : [n.label, n.dlabel, ...(ALIASES[n.id] || [])].filter(Boolean));
+  for (const x of names) MENTIONS.push({ id: n.id, src: /^[А-ЯA-Z]{2,}[а-я]?[А-Я]*$/.test(x) ? reEsc(x) : wordPat(x), ci: !/^[А-ЯA-Z]{2,}[а-я]?[А-Я]*$/.test(x) });
+  if (n.abbr) MENTIONS.push({ id: n.id, src: reEsc(n.abbr), ci: false });
+}
+MENTIONS.sort((a, b) => b.src.length - a.src.length);
+const MENTION_RE = new RegExp(`(?<![\\p{L}\\d])(?:${MENTIONS.map((m, i) => `(?<m${i}>${m.ci ? m.src.replace(/^(.)/, c => `[${c.toUpperCase()}${c.toLowerCase()}]`) : m.src})`).join('|')})(?![\\p{L}])`, 'gu');
+// escape text and turn institution mentions into buttons; self is not linked
+function lk(text, self) {
+  const t = String(text ?? ''); let h = '', at = 0;
+  for (const m of t.matchAll(MENTION_RE)) {
+    const i = +Object.keys(m.groups).find(k => m.groups[k] !== undefined).slice(1), id = MENTIONS[i].id;
+    if (id === self) continue;
+    h += esc(t.slice(at, m.index)) + `<span class="who mbtn" data-node="${id}" title="${esc(byId[id].label)}">${iconSvg(byId[id], 12)}${esc(m[0])}</span>`;
+    at = m.index + m[0].length;
+  }
+  return h + esc(t.slice(at));
+}
 function who(id) { const n = byId[id]; return `<span class="who" data-node="${id}">${iconSvg(n, 13)}${esc(n.label)}</span>`; }
 function connRow(e, other) {
-  return `<div class="conn">${lineSwatch(ET[e.type], 22)}<div>${who(other)} <span class="muted small">· ${esc(ET[e.type].label)}</span><br>${esc(e.label)} ${refHtml(e.ref, e.law)}</div></div>`;
+  return `<div class="conn">${lineSwatch(ET[e.type], 22)}<div>${who(other)} <span class="muted small">· ${esc(ET[e.type].label)}</span><br>${lk(e.label, other)} ${refHtml(e.ref, e.law)}</div></div>`;
 }
 function renderInfo() {
   const p = $('#p-info');
   if (!state.sel && state.group) {
     const gr = G.groups.find(x => x.id === state.group);
-    p.innerHTML = `<p class="small muted"><a href="#" class="back">← всички институции</a></p><h2>${esc(gr.label)}</h2><p class="small muted">Групата и всичко, с което е свързана, свети на схемата.</p><h3>Състав (${gr.members.length})</h3>${gr.members.map(id => `<div class="pubrow">${who(id)}${byId[id].units ? ` <span class="muted small">· ${unitCount(byId[id])} подчинени структури</span>` : ''}<br><span class="small">${esc(byId[id].comp)}</span></div>`).join('')}`;
+    p.innerHTML = `<p class="small muted"><a href="#" class="back">← всички институции</a></p><h2>${esc(gr.label)}</h2><p class="small muted">Групата и всичко, с което е свързана, свети на схемата.</p><h3>Състав (${gr.members.length})</h3>${gr.members.map(id => `<div class="pubrow">${who(id)}${byId[id].units ? ` <span class="muted small">· ${unitCount(byId[id])} подчинени структури</span>` : ''}<br><span class="small">${lk(byId[id].comp, id)}</span></div>`).join('')}`;
     return;
   }
   if (!state.sel) {
@@ -538,7 +573,7 @@ function renderInfo() {
     const e = edgeById[state.sel.id], t = ET[e.type];
     p.innerHTML = `<p class="small muted"><a href="#" class="back">← назад</a></p>
       <h2>${esc(byId[e.from].label)} → ${esc(byId[e.to].label)}</h2>
-      <p>${lineSwatch(t)} <b>${esc(t.label)}</b></p><p>${esc(e.label)}</p><p>${refHtml(e.ref, e.law)}</p>
+      <p>${lineSwatch(t)} <b>${esc(t.label)}</b></p><p>${lk(e.label)}</p><p>${refHtml(e.ref, e.law)}</p>
       ${articleBlocks(e.ref)}
       <h3>Страни</h3><div>${who(e.from)} → ${who(e.to)}</div>`;
     return;
@@ -551,15 +586,15 @@ function renderInfo() {
     <p><span class="badge" style="color:${b.color}">${esc(b.label)}</span> <span class="badge" style="color:${pl.color}">Публичност: ${esc(pl.label)}</span></p>
     ${n.site ? `<p class="small"><a class="site" href="${esc(n.site)}" target="_blank" rel="noopener">${n.siteLabel ? esc(n.siteLabel) : 'Официален сайт: ' + esc(n.site.replace(/^https?:\/\//, '').replace(/\/$/, ''))} ↗</a>${n.siteLabel ? '' : ' <span class="muted">· контактите са на сайта</span>'}</p>` : ''}
     <dl>
-      <dt>Състав</dt><dd>${esc(n.comp)}</dd>
-      <dt>Мандат</dt><dd>${esc(n.term)}${n.termLaw ? ' <span class="law">по закон</span>' : ''}</dd>
-      <dt>Как се избира</dt><dd>${esc(n.chosen)}</dd>
-      <dt>Как се прекратява</dt><dd>${esc(n.removed)}</dd>
+      <dt>Състав</dt><dd>${lk(n.comp, n.id)}</dd>
+      <dt>Мандат</dt><dd>${lk(n.term, n.id)}${n.termLaw ? ' <span class="law">по закон</span>' : ''}</dd>
+      <dt>Как се избира</dt><dd>${lk(n.chosen, n.id)}</dd>
+      <dt>Как се прекратява</dt><dd>${lk(n.removed, n.id)}</dd>
       <dt>Основание</dt><dd>${refHtml(n.refs, n.law) || '<span class="muted">—</span>'}</dd>
     </dl>
     ${n.units ? unitsHtml(n) : ''}
-    <h3>Правомощия</h3><ul class="pw">${(n.powers || []).map(pw => `<li>${esc(pw.t)} ${refHtml(pw.ref, pw.law)}</li>`).join('')}</ul>
-    <h3>Публичност</h3><p><span class="dot" style="background:${pl.color}"></span>${esc(n.pub.text)} ${refHtml(n.pub.ref, n.pub.law)}</p>
+    <h3>Правомощия</h3><ul class="pw">${(n.powers || []).map(pw => `<li>${lk(pw.t, n.id)} ${refHtml(pw.ref, pw.law)}</li>`).join('')}</ul>
+    <h3>Публичност</h3><p><span class="dot" style="background:${pl.color}"></span>${lk(n.pub.text, n.id)} ${refHtml(n.pub.ref, n.pub.law)}</p>
     <h3>Действа спрямо (${out.length})</h3>${out.map(e => connRow(e, e.to)).join('') || '<p class="muted small">—</p>'}
     <h3>Зависи от (${inc.length})</h3>${inc.map(e => connRow(e, e.from)).join('') || '<p class="muted small">—</p>'}`;
 }
@@ -571,7 +606,7 @@ function ministryBars() {
 function unitsHtml(n) {
   const kinds = [...new Set(n.units.map(u => u.kind))];
   return `<h3>Подчинени структури (${unitCount(n)})</h3>
-    ${n.unitsNote ? `<p class="small">${esc(n.unitsNote)}</p>` : ''}
+    ${n.unitsNote ? `<p class="small">${lk(n.unitsNote, n.id)}</p>` : ''}
     ${kinds.map(k => { const us = n.units.filter(u => u.kind === k); return `<p class="small" style="margin:8px 0 2px"><b>${esc(k)}</b> · ${us.reduce((x, u) => x + (u.n || 1), 0)}</p>${us.map(u => `<div class="unit${state.unitHi === u.name ? ' hi' : ''}"><span>${u.n ? `<b>${u.n}</b> × ` : ''}${esc(u.name)}${u.area && !u.name.includes(u.area) ? ` <span class="muted">· ${esc(u.area)}</span>` : ''}${u.site ? ` <a class="site" href="${esc(u.site)}" target="_blank" rel="noopener">сайт ↗</a>` : ''}</span>${u.src === 'reg' && n.registry ? `<a class="law reg" href="${esc(n.registry)}" target="_blank" rel="noopener" title="Потвърдено в Административния регистър">регистър ↗</a>` : '<span class="law" title="По устройствения закон или правилник">закон</span>'}</div>`).join('')}`; }).join('')}
     ${n.registry ? `<p class="small"><a class="ext" href="${n.registry}" target="_blank" rel="noopener">Структура в Административния регистър ↗</a></p>` : ''}`;
 }
@@ -648,7 +683,7 @@ function renderScn() {
     h += `<div class="flegend"><span><i style="border-color:#8c877d"></i>действие</span><span><i style="border-color:#c98a1b;background:#fff8e6;border-radius:6px"></i>въпрос / решение</span><span><i style="border-color:#2e6b3a;background:#eef6ef;border-width:2.5px"></i>край</span></div>`;
     h += `<div class="fchart" id="flow">${cur.steps.map((st, i) => `<div class="fbox k-${st.kind}${st.side ? ' side' : ''}${i === state.scn.i ? ' on' : ''}" data-i="${i}" data-row="${rowOf[i]}" style="grid-row:${rowOf[i] + 1};grid-column:${st.side ? 2 : 1}"><span class="n">${i + 1}</span>${esc(st.title)}</div>`).join('')}</div>`;
     const st = cur.steps[state.scn.i];
-    h += `<div class="step"><b>${state.scn.i + 1}. ${esc(st.title)}</b><p>${esc(st.text)}</p><p>${refHtml(st.ref, st.law)}</p><p class="small">${st.nodes.map(who).join(' · ')}</p>
+    h += `<div class="step"><b>${state.scn.i + 1}. ${esc(st.title)}</b><p>${lk(st.text)}</p><p>${refHtml(st.ref, st.law)}</p><p class="small">${st.nodes.map(who).join(' · ')}</p>
       ${stepNext(cur, state.scn.i).length ? `<div class="small">Следва: ${stepNext(cur, state.scn.i).map(nx => `<a href="#" class="goto" data-i="${nx.to}">${nx.label ? esc(nx.label) + ' → ' : ''}${esc(cur.steps[nx.to].title)}</a>`).join(' · ')}</div>` : '<div class="small muted">Край на процедурата.</div>'}</div>${articleBlocks(st.ref)}`;
   }
   p.innerHTML = h;
@@ -708,7 +743,7 @@ function renderTerms() {
     <div class="term"><span></span><span class="small muted" style="display:flex;justify-content:space-between">${[0, 2, 4, 6, 8, 10].map(x => `<span>${x}</span>`).join('')}</span></div>
     ${list.map(n => `<div class="term"><span class="nm who" data-node="${n.id}">${esc(n.label)}</span><span class="tr"><span class="tb" style="width:${n.termYears / max * 100}%;background:${BR[n.branch].color}"></span><span class="tl">${n.termYears} г.</span></span></div>`).join('')}
     <h3>Подробно</h3>
-    ${list.concat(NODES.filter(n => !n.termYears && n.term !== '—')).map(n => `<div class="pubrow">${who(n.id)}: ${esc(n.term)}${n.termLaw ? ' <span class="law">по закон</span>' : ''} ${refHtml(n.refs)}</div>`).join('')}`;
+    ${list.concat(NODES.filter(n => !n.termYears && n.term !== '—')).map(n => `<div class="pubrow">${who(n.id)}: ${lk(n.term, n.id)}${n.termLaw ? ' <span class="law">по закон</span>' : ''} ${refHtml(n.refs)}</div>`).join('')}`;
 }
 
 // ---------- publicity ----------
@@ -717,7 +752,7 @@ function renderPub() {
   for (const [lv, l] of Object.entries(PL)) {
     const list = NODES.filter(n => n.pub.level === lv);
     h += `<h3><span class="dot" style="background:${l.color}"></span>${esc(l.label)} (${list.length})</h3>`;
-    h += list.map(n => `<div class="pubrow">${who(n.id)}<br><span class="small">${esc(n.pub.text)}</span> ${refHtml(n.pub.ref, n.pub.law)}</div>`).join('');
+    h += list.map(n => `<div class="pubrow">${who(n.id)}<br><span class="small">${lk(n.pub.text, n.id)}</span> ${refHtml(n.pub.ref, n.pub.law)}</div>`).join('');
   }
   $('#p-pub').innerHTML = h;
 }
@@ -732,7 +767,7 @@ function renderMaj() {
   });
   bar += `<text x="8" y="68" font-size="10" fill="#6b6760">0</text><text x="${w - 8}" y="68" font-size="10" fill="#6b6760" text-anchor="end">240</text></svg>`;
   $('#p-maj').innerHTML = `<p class="small muted">Праговете в Народното събрание (240 места). „От всички“ значи от 240, независимо колко са в залата.</p>${bar}
-    ${G.majorities.map(m => `<div class="maj"><div><b>${m.n}</b><br><span class="small muted">${esc(m.label)}</span></div><div>${esc(m.what)}<br>${refHtml(m.ref)}</div></div>`).join('')}
+    ${G.majorities.map(m => `<div class="maj"><div><b>${m.n}</b><br><span class="small muted">${esc(m.label)}</span></div><div>${lk(m.what)}<br>${refHtml(m.ref)}</div></div>`).join('')}
     <p class="small muted">Обикновените закони се приемат с мнозинство от присъстващите при кворум над половината ${refHtml('чл. 81')}.</p>`;
 }
 
