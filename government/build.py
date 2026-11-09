@@ -73,7 +73,7 @@ def validate(gov: dict, const: dict) -> list[str]:
 
     for s in gov["scenarios"]:
         for i, st in enumerate(s["steps"], 1):
-            where = f"сценарий {s['id']}, стъпка {i}"
+            where = f"процедура {s['id']}, стъпка {i}"
             check_ref(where, st.get("ref"))
             errors += [f"{where}: непознат възел {x!r}" for x in st["nodes"] if x not in node_ids]
             errors += [f"{where}: непозната връзка {x!r}" for x in st["edges"] if x not in edge_ids]

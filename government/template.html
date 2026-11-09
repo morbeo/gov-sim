@@ -243,7 +243,7 @@ mark.cit { background: #ffe58a; color: inherit; border-radius: 3px; padding: 1px
     </div>
     <div class="tabs" role="tablist">
       <button data-tab="info" aria-selected="true">Институция</button>
-      <button data-tab="scn">Сценарии</button>
+      <button data-tab="scn">Процедури</button>
       <button data-tab="ref">Справки</button>
       <button data-tab="const">Конституция</button>
     </div>
@@ -317,7 +317,7 @@ for (const n of NODES) {
   for (const p of n.powers || []) cite(p.ref, it);
 }
 for (const e of EDGES) cite(e.ref, { kind: 'edge', id: e.id, label: `${byId[e.from].label} → ${byId[e.to].label}` });
-for (const s of G.scenarios) for (const st of s.steps) cite(st.ref, { kind: 'scn', id: s.id, label: 'Сценарий: ' + s.title });
+for (const s of G.scenarios) for (const st of s.steps) cite(st.ref, { kind: 'scn', id: s.id, label: 'Процедура: ' + s.title });
 for (const m of G.majorities) cite(m.ref, { kind: 'maj', id: m.n, label: 'Мнозинство ' + m.label });
 
 const ICONS = {
@@ -1299,7 +1299,7 @@ for (const n of NODES) {
 }
 for (const e of EDGES) SEARCH.push({ kind: 'Връзка · ' + byId[e.from].label + ' → ' + byId[e.to].label, label: e.label, text: e.label, go: () => select({ kind: 'edge', id: e.id }), weak: true });
 for (const g of G.groups) SEARCH.push({ kind: 'Група', label: g.label, text: g.label, go: () => selectGroup(g.id) });
-for (const sc of G.scenarios) SEARCH.push({ kind: 'Сценарий', label: sc.title, text: sc.title + ' ' + sc.steps.map(x => x.title).join(' '), go: () => openScn(sc.id) });
+for (const sc of G.scenarios) SEARCH.push({ kind: 'Процедура', label: sc.title, text: sc.title + ' ' + sc.steps.map(x => x.title).join(' '), go: () => openScn(sc.id) });
 for (const [k, a] of Object.entries(C.articles)) SEARCH.push({ kind: 'Конституция', label: 'Чл. ' + k, text: 'чл ' + k + ' член ' + k, extra: a.text, go: () => openArticle(k), weak: true });
 let hits = [], act = 0;
 const qi = $('#q'), res = $('#results');
