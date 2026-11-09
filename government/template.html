@@ -53,8 +53,9 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; height: calc(
 .flegend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11.5px; color: var(--muted); }
 .flegend span { display: inline-flex; gap: 5px; align-items: center; }
 .flegend i { width: 18px; height: 11px; border: 1.5px solid; display: inline-block; }
-a.law.reg { text-decoration: none; color: #0b4f8a; }
-a.law.reg:hover { text-decoration: underline; }
+a.law.reg, a.law.lnk { text-decoration: none; color: #0b4f8a; }
+a.law.lnk { white-space: normal; }
+a.law.reg:hover, a.law.lnk:hover { text-decoration: underline; }
 a.site { font-size: 11.5px; color: var(--accent); text-decoration: none; white-space: nowrap; }
 a.site:hover { text-decoration: underline; }
 #stage { position: relative; flex: 1; min-height: 0; overflow: auto; }
@@ -156,7 +157,7 @@ a.ext:hover { text-decoration: underline; }
 <main>
   <div id="left">
     <div class="bar" id="filters"></div>
-    <div id="stage"><svg id="graph" viewBox="0 0 1300 850" role="img" aria-label="Схема на институциите и връзките между тях"></svg></div>
+    <div id="stage"><svg id="graph" viewBox="0 0 1300 1090" role="img" aria-label="Схема на институциите и връзките между тях"></svg></div>
   </div>
   <aside>
     <div class="tabs" role="tablist">
@@ -200,8 +201,29 @@ function refHtml(ref, law) {
     const k = arts(p)[0];
     return k ? `<a class="art" data-art="${esc(k)}" title="Покажи текста на чл. ${esc(k)}">${esc(p)}</a>` : `<span class="law">${esc(p)}</span>`;
   }).join('');
-  if (law) h += `<span class="law" title="Уредено в закон, не в Конституцията">${esc(law)}</span>`;
+  if (law) h += lawHtml(law);
   return h ? `<span class="refs">${h}</span>` : '';
+}
+
+// ---------- links to laws ----------
+const EU_ACTS = {
+  'Договор за Европейския съюз': 'CELEX:12016M/TXT',
+  'Договор за функционирането на ЕС': 'CELEX:12016E/TXT',
+  'Регламент (ЕС) 2017/1939': 'CELEX:32017R1939',
+};
+function lawUrl(name) {
+  const base = name.replace(/,?\s*(чл\.|ал\.|т\.).*$/, '').trim();
+  for (const [k, v] of Object.entries(EU_ACTS)) if (base.startsWith(k)) return { url: 'https://eur-lex.europa.eu/legal-content/BG/TXT/?uri=' + v, where: 'EUR-Lex' };
+  if (/^(Закон|Изборен кодекс|Кодекс|Административнопроцесуален|Наказателен|Граждански|Правилник|Устройствен)/.test(base))
+    return { url: 'https://www.google.com/search?q=' + encodeURIComponent(`site:lex.bg "${base}"`), where: 'lex.bg' };
+  return null;
+}
+function lawHtml(law) {
+  return String(law).split(';').map(p => p.trim()).filter(Boolean).map(p => {
+    const u = lawUrl(p);
+    return u ? `<a class="law lnk" href="${esc(u.url)}" target="_blank" rel="noopener" title="Уредено в закон, не в Конституцията. Текст в ${u.where}">${esc(p)} ↗</a>`
+             : `<span class="law" title="Уредено в закон, не в Конституцията">${esc(p)}</span>`;
+  }).join('');
 }
 
 // ---------- citation index ----------
@@ -253,6 +275,7 @@ const ICONS = {
 const iconSvg = (n, size = 16) => n.icon && state.icons ? `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${BR[n.branch].color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICONS[n.icon]}"/></svg>` : '';
 
 // ---------- geometry ----------
+const unitCount = n => (n.units || []).reduce((a, u) => a + (u.n || 1), 0);
 const isMin = n => n.kind === 'ministry';
 for (const n of NODES) { n.w = isMin(n) ? 144 : 140; n.h = isMin(n) ? 30 : 46; }
 function boxPoint(n, tx, ty) {
@@ -292,10 +315,13 @@ for (const [k, t] of Object.entries(ET)) {
   const m = el('marker', { id: 'ar-' + k, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto-start-reverse' }, defs);
   el('path', { d: 'M0,1 L10,5 L0,9 z', fill: t.color }, m);
 }
+{ const pt = el('pattern', { id: 'hatch', width: 10, height: 10, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' }, defs);
+  el('rect', { width: 10, height: 10, fill: '#f2f5fb' }, pt); el('line', { x1: 0, y1: 0, x2: 0, y2: 10, stroke: '#1f4e9c', 'stroke-opacity': .09, 'stroke-width': 4 }, pt); }
 const gZones = el('g', {}, svg), gEdges = el('g', {}, svg), gHits = el('g', {}, svg), gLabels = el('g', {}, svg), gNodes = el('g', {}, svg);
 const edgeEls = {}, nodeEls = {}, groupEls = {};
 for (const z of G.zones || []) {
-  el('rect', { x: z.x, y: z.y, width: z.w, height: z.h, rx: 12, fill: z.color, 'fill-opacity': .045, stroke: z.color, 'stroke-opacity': .35 }, gZones);
+  el('rect', { x: z.x, y: z.y, width: z.w, height: z.h, rx: 12, fill: z.external ? 'url(#hatch)' : z.color, 'fill-opacity': z.external ? 1 : .045, stroke: z.color, 'stroke-opacity': z.external ? .8 : .35, 'stroke-width': z.external ? 2 : 1, 'stroke-dasharray': z.external ? '10 5' : '' }, gZones);
+  if (z.external) el('line', { x1: 10, x2: 1290, y1: z.y - 5, y2: z.y - 5, stroke: z.color, 'stroke-width': 1.5, 'stroke-dasharray': '2 4' }, gZones);
   const t = el('text', { x: z.x + 14, y: z.y + 18, class: 'zone' , fill: z.color }, gZones); t.textContent = z.label;
 }
 for (const gr of G.groups || []) {
@@ -307,7 +333,7 @@ for (const gr of G.groups || []) {
 }
 for (const n of NODES) {
   const g = el('g', { class: 'node' + (isMin(n) ? ' mini' : ''), tabindex: 0, role: 'button', 'aria-label': n.label }, gNodes);
-  el('title', {}, g).textContent = n.label + (isMin(n) ? ` · ${n.units.length} подчинени структури` : '');
+  el('title', {}, g).textContent = n.label + (isMin(n) ? ` · ${unitCount(n)} подчинени структури` : '');
   const r = el('rect', { class: 'box', width: n.w, height: n.h, rx: isMin(n) ? 5 : 8 }, g);
   el('rect', { class: 'stripe', width: isMin(n) ? 4 : 6, height: n.h - (isMin(n) ? 10 : 12), x: isMin(n) ? 5 : 6, y: isMin(n) ? 5 : 6, rx: 2 }, g);
   let t, s, badge;
@@ -320,9 +346,9 @@ for (const n of NODES) {
     if (parts.length > 1) t.classList.add('two');
     badge = el('g', {}, g);
     el('rect', { x: n.w - 32, y: 6, width: 26, height: 18, rx: 9, class: 'cnt' }, badge);
-    const c = el('text', { x: n.w - 19, y: 19, 'text-anchor': 'middle', class: 'cntt' }, badge); c.textContent = n.units.length;
+    const c = el('text', { x: n.w - 19, y: 19, 'text-anchor': 'middle', class: 'cntt' }, badge); c.textContent = unitCount(n);
   } else {
-    t = el('text', { class: 't', x: n.w / 2 + 3, y: 20, 'text-anchor': 'middle' }, g); t.textContent = n.label;
+    t = el('text', { class: 't', x: n.w / 2 + 3, y: 20, 'text-anchor': 'middle' }, g); t.textContent = n.dlabel || n.label;
     s = el('text', { class: 's', x: n.w / 2 + 3, y: 35, 'text-anchor': 'middle' }, g); s.textContent = n.sub || '';
   }
   g.addEventListener('mouseenter', () => { state.hover = n.id; paint(); });
@@ -353,6 +379,13 @@ function layoutNodes() {
       ic.setAttribute('transform', `translate(15,${n.h / 2 - 8}) scale(.68)`);
     }
     g.setAttribute('transform', `translate(${n.x - n.w / 2},${n.y - n.h / 2})`);
+  }
+  // groups marked "row": spread members evenly across the group by their measured widths
+  for (const gr of G.groups || []) if (gr.row) {
+    const ms = gr.members.map(id => byId[id]), sum = ms.reduce((a, n) => a + n.w, 0);
+    const gap = (gr.w - 20 - sum) / (ms.length + 1);
+    let x = gr.x + 10 + gap;
+    for (const n of ms) { n.x = x + n.w / 2; x += n.w + gap; nodeEls[n.id].g.setAttribute('transform', `translate(${n.x - n.w / 2},${n.y - n.h / 2})`); }
   }
 }
 layoutNodes();
@@ -483,7 +516,7 @@ function renderInfo() {
   const p = $('#p-info');
   if (!state.sel && state.group) {
     const gr = G.groups.find(x => x.id === state.group);
-    p.innerHTML = `<p class="small muted"><a href="#" class="back">← всички институции</a></p><h2>${esc(gr.label)}</h2><p class="small muted">Групата и всичко, с което е свързана, свети на схемата.</p><h3>Състав (${gr.members.length})</h3>${gr.members.map(id => `<div class="pubrow">${who(id)}${byId[id].units ? ` <span class="muted small">· ${byId[id].units.length} подчинени структури</span>` : ''}<br><span class="small">${esc(byId[id].comp)}</span></div>`).join('')}`;
+    p.innerHTML = `<p class="small muted"><a href="#" class="back">← всички институции</a></p><h2>${esc(gr.label)}</h2><p class="small muted">Групата и всичко, с което е свързана, свети на схемата.</p><h3>Състав (${gr.members.length})</h3>${gr.members.map(id => `<div class="pubrow">${who(id)}${byId[id].units ? ` <span class="muted small">· ${unitCount(byId[id])} подчинени структури</span>` : ''}<br><span class="small">${esc(byId[id].comp)}</span></div>`).join('')}`;
     return;
   }
   if (!state.sel) {
@@ -493,7 +526,7 @@ function renderInfo() {
       <h3>Видове връзки</h3><div class="legend">${Object.entries(ET).map(([k, t]) => `<div>${lineSwatch(t)}${esc(t.label)} <span class="muted small">(${EDGES.filter(e => e.type === k).length})</span></div>`).join('')}</div>
       <h3>Групи</h3><div>${G.groups.map(gr => `<span class="who" data-group="${gr.id}">${esc(gr.label)}</span>`).join(' · ')}</div>
       <h3>Министерства по брой подчинени структури</h3>${ministryBars()}
-      <h3>Източник</h3><div class="src">${esc(C.source.title)}, ${esc(C.source.version)}.<br><a class="ext" href="${C.source.official}" target="_blank" rel="noopener">Официален текст (parliament.bg) ↗</a> · <a class="ext" href="${C.source.consolidated}" target="_blank" rel="noopener">консолидиран PDF ↗</a> · <a class="ext" href="${C.source.english}" target="_blank" rel="noopener">English ↗</a><br><span class="muted">Титулярите не са включени: схемата описва правилата, не кой заема постовете.</span></div>`;
+      <h3>Източник</h3><div class="src">${esc(C.source.title)}, ${esc(C.source.version)}.<br><a class="ext" href="${C.source.official}" target="_blank" rel="noopener">Официален текст (parliament.bg) ↗</a> · <a class="ext" href="${C.source.consolidated}" target="_blank" rel="noopener">консолидиран PDF ↗</a> · <a class="ext" href="${C.source.lex}" target="_blank" rel="noopener">lex.bg ↗</a> · <a class="ext" href="${C.source.english}" target="_blank" rel="noopener">English ↗</a><br><span class="muted">Титулярите не са включени: схемата описва правилата, не кой заема постовете.</span></div>`;
     p.querySelectorAll('[data-branch]').forEach(d => {
       d.addEventListener('mouseenter', () => { for (const n of NODES) nodeEls[n.id].g.classList.toggle('dim', n.branch !== d.dataset.branch); });
       d.addEventListener('mouseleave', paint);
@@ -530,16 +563,16 @@ function renderInfo() {
     <h3>Зависи от (${inc.length})</h3>${inc.map(e => connRow(e, e.from)).join('') || '<p class="muted small">—</p>'}`;
 }
 function ministryBars() {
-  const ms = NODES.filter(isMin).sort((a, b) => b.units.length - a.units.length), max = ms[0].units.length;
-  return ms.map(n => `<div class="term"><span class="nm who" data-node="${n.id}">${esc(n.short.replace('|', ' '))}</span><span class="tr"><span class="tb" style="width:${Math.max(n.units.length / max * 100, 1)}%;background:${BR.executive.color}"></span><span class="tl" style="${n.units.length / max < .12 ? 'left:auto;right:6px;color:#8a4a06' : ''}">${n.units.length}</span></span></div>`).join('')
+  const ms = NODES.filter(isMin).sort((a, b) => unitCount(b) - unitCount(a)), max = unitCount(ms[0]);
+  return ms.map(n => `<div class="term"><span class="nm who" data-node="${n.id}">${esc(n.short.replace('|', ' '))}</span><span class="tr"><span class="tb" style="width:${Math.max(unitCount(n) / max * 100, 1)}%;background:${BR.executive.color}"></span><span class="tl" style="${unitCount(n) / max < .12 ? 'left:auto;right:6px;color:#8a4a06' : ''}">${unitCount(n)}</span></span></div>`).join('')
     + `<p class="small muted">Изпълнителни агенции, структури по закон или постановление и териториални звена (областни дирекции, инспекции). Самите дирекции в министерствата не са броени. Източник: Административният регистър и устройствените закони.</p>`;
 }
 function unitsHtml(n) {
   const kinds = [...new Set(n.units.map(u => u.kind))];
-  return `<h3>Подчинени структури (${n.units.length})</h3>
+  return `<h3>Подчинени структури (${unitCount(n)})</h3>
     ${n.unitsNote ? `<p class="small">${esc(n.unitsNote)}</p>` : ''}
-    ${kinds.map(k => { const us = n.units.filter(u => u.kind === k); return `<p class="small" style="margin:8px 0 2px"><b>${esc(k)}</b> · ${us.length}</p>${us.map(u => `<div class="unit${state.unitHi === u.name ? ' hi' : ''}"><span>${esc(u.name)}${u.site ? ` <a class="site" href="${esc(u.site)}" target="_blank" rel="noopener">сайт ↗</a>` : ''}</span>${u.src === 'reg' ? `<a class="law reg" href="${esc(n.registry)}" target="_blank" rel="noopener" title="Потвърдено в Административния регистър">регистър ↗</a>` : '<span class="law" title="По устройствения закон или правилник">закон</span>'}</div>`).join('')}`; }).join('')}
-    <p class="small"><a class="ext" href="${n.registry}" target="_blank" rel="noopener">Структура в Административния регистър ↗</a></p>`;
+    ${kinds.map(k => { const us = n.units.filter(u => u.kind === k); return `<p class="small" style="margin:8px 0 2px"><b>${esc(k)}</b> · ${us.reduce((x, u) => x + (u.n || 1), 0)}</p>${us.map(u => `<div class="unit${state.unitHi === u.name ? ' hi' : ''}"><span>${u.n ? `<b>${u.n}</b> × ` : ''}${esc(u.name)}${u.area && !u.name.includes(u.area) ? ` <span class="muted">· ${esc(u.area)}</span>` : ''}${u.site ? ` <a class="site" href="${esc(u.site)}" target="_blank" rel="noopener">сайт ↗</a>` : ''}</span>${u.src === 'reg' && n.registry ? `<a class="law reg" href="${esc(n.registry)}" target="_blank" rel="noopener" title="Потвърдено в Административния регистър">регистър ↗</a>` : '<span class="law" title="По устройствения закон или правилник">закон</span>'}</div>`).join('')}`; }).join('')}
+    ${n.registry ? `<p class="small"><a class="ext" href="${n.registry}" target="_blank" rel="noopener">Структура в Административния регистър ↗</a></p>` : ''}`;
 }
 function articleBlocks(ref) {
   return [...new Set(arts(ref))].map(k => {
@@ -575,7 +608,7 @@ function renderScn() {
     h += `<div class="flegend"><span><i style="border-color:#8c877d"></i>действие</span><span><i style="border-color:#c98a1b;background:#fff8e6;border-radius:6px"></i>въпрос / решение</span><span><i style="border-color:#2e6b3a;background:#eef6ef;border-width:2.5px"></i>край</span></div>`;
     h += `<div class="fchart" id="flow">${cur.steps.map((st, i) => `<div class="fbox k-${st.kind}${st.side ? ' side' : ''}${i === state.scn.i ? ' on' : ''}" data-i="${i}" data-row="${rowOf[i]}" style="grid-row:${rowOf[i] + 1};grid-column:${st.side ? 2 : 1}"><span class="n">${i + 1}</span>${esc(st.title)}</div>`).join('')}</div>`;
     const st = cur.steps[state.scn.i];
-    h += `<div class="step"><b>${state.scn.i + 1}. ${esc(st.title)}</b><p>${esc(st.text)}</p><p>${refHtml(st.ref)}</p><p class="small">${st.nodes.map(who).join(' · ')}</p>
+    h += `<div class="step"><b>${state.scn.i + 1}. ${esc(st.title)}</b><p>${esc(st.text)}</p><p>${refHtml(st.ref, st.law)}</p><p class="small">${st.nodes.map(who).join(' · ')}</p>
       ${stepNext(cur, state.scn.i).length ? `<div class="small">Следва: ${stepNext(cur, state.scn.i).map(nx => `<a href="#" class="goto" data-i="${nx.to}">${nx.label ? esc(nx.label) + ' → ' : ''}${esc(cur.steps[nx.to].title)}</a>`).join(' · ')}</div>` : '<div class="small muted">Край на процедурата.</div>'}</div>${articleBlocks(st.ref)}`;
   }
   p.innerHTML = h;
@@ -669,7 +702,7 @@ function renderConst(scrollTo) {
   const p = $('#p-const');
   const keys = Object.keys(C.articles).sort((a, b) => parseInt(a) - parseInt(b) || a.localeCompare(b, 'bg'));
   const q = constQuery.trim().toLowerCase();
-  let h = `<div class="src">${esc(C.source.title)}, ${esc(C.source.version)}.<br><a class="ext" href="${C.source.official}" target="_blank" rel="noopener">Официален текст (parliament.bg) ↗</a> · <a class="ext" href="${C.source.consolidated}" target="_blank" rel="noopener">консолидиран PDF ↗</a> · <a class="ext" href="${C.source.english}" target="_blank" rel="noopener">English ↗</a><br><span class="muted">${esc(C.source.note)}</span></div>
+  let h = `<div class="src">${esc(C.source.title)}, ${esc(C.source.version)}.<br><a class="ext" href="${C.source.official}" target="_blank" rel="noopener">Официален текст (parliament.bg) ↗</a> · <a class="ext" href="${C.source.consolidated}" target="_blank" rel="noopener">консолидиран PDF ↗</a> · <a class="ext" href="${C.source.lex}" target="_blank" rel="noopener">lex.bg ↗</a> · <a class="ext" href="${C.source.english}" target="_blank" rel="noopener">English ↗</a><br><span class="muted">${esc(C.source.note)}</span></div>
     <p><input type="search" id="cq" placeholder="Търси в членовете: напр. недоверие, 99, прокурор" value="${esc(constQuery)}"></p>
     <p class="small muted">Изберете член, за да светнат институциите и връзките, които се позовават на него.</p>`;
   let lastCh = null, shown = 0;
