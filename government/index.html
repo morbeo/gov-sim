@@ -136,6 +136,7 @@ a.ext:hover { text-decoration: underline; }
 .article .hd { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .article .hd b { cursor: pointer; } .article .hd b:hover { text-decoration: underline; }
 .article .tx { white-space: pre-wrap; font-size: 12.5px; margin: 4px 0; }
+mark.cit { background: #ffe58a; color: inherit; border-radius: 3px; padding: 1px 2px; box-shadow: inset 3px 0 0 #c98a1b; }
 .article .cited { font-size: 12px; color: var(--muted); }
 .chap { font-weight: 700; margin: 14px 0 4px; font-size: 13px; color: #3d2a6e; }
 .note { font-size: 12px; color: #7a4a00; }
@@ -199,7 +200,7 @@ function refHtml(ref, law) {
   let h = '';
   if (ref) h += String(ref).split(';').map(p => p.trim()).filter(Boolean).map(p => {
     const k = arts(p)[0];
-    return k ? `<a class="art" data-art="${esc(k)}" title="Покажи текста на чл. ${esc(k)}">${esc(p)}</a>` : `<span class="law">${esc(p)}</span>`;
+    return k ? `<a class="art" data-art="${esc(k)}" data-ref="${esc(p)}" title="Покажи текста на чл. ${esc(k)}">${esc(p)}</a>` : `<span class="law">${esc(p)}</span>`;
   }).join('');
   if (law) h += lawHtml(law);
   return h ? `<span class="refs">${h}</span>` : '';
@@ -574,10 +575,49 @@ function unitsHtml(n) {
     ${kinds.map(k => { const us = n.units.filter(u => u.kind === k); return `<p class="small" style="margin:8px 0 2px"><b>${esc(k)}</b> · ${us.reduce((x, u) => x + (u.n || 1), 0)}</p>${us.map(u => `<div class="unit${state.unitHi === u.name ? ' hi' : ''}"><span>${u.n ? `<b>${u.n}</b> × ` : ''}${esc(u.name)}${u.area && !u.name.includes(u.area) ? ` <span class="muted">· ${esc(u.area)}</span>` : ''}${u.site ? ` <a class="site" href="${esc(u.site)}" target="_blank" rel="noopener">сайт ↗</a>` : ''}</span>${u.src === 'reg' && n.registry ? `<a class="law reg" href="${esc(n.registry)}" target="_blank" rel="noopener" title="Потвърдено в Административния регистър">регистър ↗</a>` : '<span class="law" title="По устройствения закон или правилник">закон</span>'}</div>`).join('')}`; }).join('')}
     ${n.registry ? `<p class="small"><a class="ext" href="${n.registry}" target="_blank" rel="noopener">Структура в Административния регистър ↗</a></p>` : ''}`;
 }
+// cited points of an article: "чл. 84, т. 8; чл. 99, ал. 5" → { '84': [{al: null, t: '8'}], '99': [{al: '5', t: null}] }
+function citedParts(ref) {
+  const out = {};
+  for (const part of String(ref || '').split(';')) {
+    const k = arts(part)[0]; if (!k) continue;
+    const al = part.match(/ал\.\s*(\d+[а-я]?)/)?.[1] || null, t = part.match(/т\.\s*(\d+[а-я]?)/)?.[1] || null;
+    if (al || t) (out[k] ||= []).push({ al, t });
+  }
+  return out;
+}
+// article text with the cited paragraphs (ал.) and points (т.) highlighted
+function articleTextHtml(k, ref) {
+  const text = C.articles[k].text, want = citedParts(ref)[k];
+  if (!want) return esc(text);
+  const marks = [];
+  for (const m of text.matchAll(/(^|\s)\((\d+[а-я]?)\)\s/g)) marks.push({ type: 'al', n: m[2], pos: m.index + m[1].length });
+  for (const m of text.matchAll(/(^|\n|[:;]\s)(\d+[а-я]?)\.\s/g)) marks.push({ type: 't', n: m[2], pos: m.index + m[1].length });
+  marks.sort((a, b) => a.pos - b.pos);
+  const endOf = (i, sameOnly) => { for (let j = i + 1; j < marks.length; j++) if (!sameOnly || marks[j].type === 'al') return marks[j].pos; return text.length; };
+  const ranges = [];
+  for (const w of want) {
+    let lo = 0, hi = text.length;
+    if (w.al) {
+      const i = marks.findIndex(m => m.type === 'al' && m.n === w.al);
+      if (i < 0) continue;
+      lo = marks[i].pos; hi = endOf(i, true);
+    }
+    if (w.t) {
+      const i = marks.findIndex(m => m.type === 't' && m.n === w.t && m.pos >= lo && m.pos < hi);
+      if (i < 0) continue;
+      lo = marks[i].pos; hi = Math.min(hi, endOf(i, false));
+    }
+    ranges.push([lo, text.slice(lo, hi).trimEnd().length + lo]);
+  }
+  ranges.sort((a, b) => a[0] - b[0]);
+  let h = '', at = 0;
+  for (const [lo, hi] of ranges) { if (lo < at) continue; h += esc(text.slice(at, lo)) + `<mark class="cit">${esc(text.slice(lo, hi))}</mark>`; at = hi; }
+  return h + esc(text.slice(at));
+}
 function articleBlocks(ref) {
   return [...new Set(arts(ref))].map(k => {
     const a = C.articles[k];
-    return `<div class="article"><div class="hd"><b data-art="${k}">Чл. ${esc(k)}</b><span class="badge muted">${a.verbatim ? 'Текст' : 'Резюме'}</span><a class="ext" href="${officialUrl(k)}" target="_blank" rel="noopener">официален текст ↗</a></div><div class="tx">${esc(a.text)}</div>${a.note ? `<div class="note">${esc(a.note)}</div>` : ''}</div>`;
+    return `<div class="article"><div class="hd"><b data-art="${k}" data-ref="${esc(ref)}">Чл. ${esc(k)}</b><span class="badge muted">${a.verbatim ? 'Текст' : 'Резюме'}</span><a class="ext" href="${officialUrl(k)}" target="_blank" rel="noopener">официален текст ↗</a></div><div class="tx">${articleTextHtml(k, ref)}</div>${a.note ? `<div class="note">${esc(a.note)}</div>` : ''}</div>`;
   }).join('');
 }
 
@@ -713,7 +753,7 @@ function renderConst(scrollTo) {
     const cited = CITED[k] || [];
     const uniq = [...new Map(cited.map(c => [c.kind + c.id, c])).values()];
     h += `<div class="article${state.art === k ? ' hi' : ''}" id="art-${k}"><div class="hd"><b data-pick="${k}">Чл. ${esc(k)}</b><span class="badge muted">${a.verbatim ? 'Текст' : 'Резюме'}</span><a class="ext" href="${officialUrl(k)}" target="_blank" rel="noopener">официален текст ↗</a></div>
-      <div class="tx">${esc(a.text)}</div>${a.note ? `<div class="note">${esc(a.note)}</div>` : ''}
+      <div class="tx">${articleTextHtml(k, state.art === k ? state.artRef : null)}</div>${a.note ? `<div class="note">${esc(a.note)}</div>` : ''}
       ${uniq.length ? `<div class="cited">Цитиран в: ${uniq.map(c => c.kind === 'node' ? who(c.id) : c.kind === 'edge' ? `<span class="who" data-edge="${c.id}">${esc(c.label)}</span>` : esc(c.label)).join(' · ')}</div>` : ''}</div>`;
     shown++;
   }
@@ -721,13 +761,14 @@ function renderConst(scrollTo) {
   p.innerHTML = h;
   const cq = $('#cq');
   cq.addEventListener('input', () => { constQuery = cq.value; renderConst(); const c = $('#cq'); c.focus(); c.setSelectionRange(c.value.length, c.value.length); });
-  p.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => { state.art = state.art === b.dataset.pick ? null : b.dataset.pick; renderConst(); paint(); }));
+  p.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => { state.art = state.art === b.dataset.pick ? null : b.dataset.pick; state.artRef = null; renderConst(); paint(); }));
   if (scrollTo) document.getElementById('art-' + scrollTo)?.scrollIntoView({ block: 'start' });
 }
-function openArticle(k) {
+function openArticle(k, ref) {
   constQuery = '';
   setTab('const');
-  state.art = k; renderConst(k); paint();
+  state.art = k; state.artRef = ref || null; renderConst(k); paint();
+  document.querySelector(`#art-${CSS.escape(k)} mark.cit`)?.scrollIntoView({ block: 'center' });
 }
 
 // ---------- fuzzy search ----------
@@ -816,7 +857,7 @@ document.addEventListener('keydown', ev => { if (ev.key === '/' && !ev.target.cl
 // ---------- delegated clicks ----------
 document.addEventListener('click', ev => {
   const a = ev.target.closest('a.art, .article .hd b[data-art]');
-  if (a) { ev.preventDefault(); openArticle(a.dataset.art); return; }
+  if (a) { ev.preventDefault(); openArticle(a.dataset.art, a.dataset.ref); return; }
   const w = ev.target.closest('[data-node]');
   if (w) { ev.preventDefault(); select({ kind: 'node', id: w.dataset.node }); return; }
   const gq = ev.target.closest('[data-group]');
