@@ -42,7 +42,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; flex: 1; min-
 .clegend { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 11.5px; flex: 1 1 300px; justify-content: flex-end; }
 .clegend span { display: inline-flex; align-items: center; gap: 5px; }
 .clegend i { width: 12px; height: 12px; border: 2.5px solid; border-radius: 3px; background: #fff; }
-.fchart { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 118px; column-gap: 30px; row-gap: 24px; align-items: start; padding: 6px 0 6px 46px; margin: 10px 0; }
+.fchart { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 118px; column-gap: 30px; row-gap: 24px; align-items: start; padding: 6px 0 6px 64px; margin: 10px 0; }
 .fchart svg.fl { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
 .fbox { background: #fff; border: 1.5px solid #8c877d; border-radius: 6px; padding: 6px 8px; font-size: 12.5px; line-height: 1.3; cursor: pointer; position: relative; z-index: 1; }
 .fbox:hover { border-color: var(--ink); }
@@ -213,7 +213,7 @@ mark.cit { background: #ffe58a; color: inherit; border-radius: 3px; padding: 1px
 <main>
   <div id="left">
     <div class="bar" id="filters"></div>
-    <div id="stage"><svg id="graph" viewBox="0 0 1300 1090" role="img" aria-label="Схема на институциите и връзките между тях"></svg>
+    <div id="stage"><svg id="graph" viewBox="0 0 1300 1310" role="img" aria-label="Схема на институциите и връзките между тях"></svg>
       <div class="ctl">
         <button id="zin" title="Приближи (+)" aria-label="Приближи">+</button>
         <button id="zout" title="Отдалечи (−)" aria-label="Отдалечи">−</button>
@@ -347,7 +347,7 @@ const ICONS = {
 const iconSvg = (n, size = 16) => n.icon && state.icons ? `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${BR[n.branch].color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICONS[n.icon]}"/></svg>` : '';
 
 // ---------- geometry ----------
-const VB0 = { x: 0, y: 0, w: 1300, h: 1090 };
+const VB0 = { x: 0, y: 0, w: 1300, h: 1310 };
 const unitCount = n => (n.units || []).reduce((a, u) => a + (u.n || 1), 0);
 const isMin = n => n.kind === 'ministry';
 for (const n of NODES) { n.w = isMin(n) ? 144 : 140; n.h = isMin(n) ? 30 : 46; n.x0 = n.x; n.y0 = n.y; }
@@ -401,7 +401,7 @@ for (const [k, t] of Object.entries(ET)) {
 const gZones = el('g', { id: 'gZones' }, svg), gEdges = el('g', {}, svg), gHits = el('g', {}, svg), gLabels = el('g', {}, svg), gNodes = el('g', {}, svg);
 const edgeEls = {}, nodeEls = {}, groupEls = {}, proxyEls = {};
 for (const z of G.zones || []) {
-  el('rect', { x: z.x, y: z.y, width: z.w, height: z.h, rx: 12, fill: z.external ? 'url(#hatch)' : z.color, 'fill-opacity': z.external ? 1 : .045, stroke: z.color, 'stroke-opacity': z.external ? .8 : .35, 'stroke-width': z.external ? 2 : 1, 'stroke-dasharray': z.external ? '10 5' : '' }, gZones);
+  el('rect', { x: z.x, y: z.y, width: z.w, height: z.h, rx: 12, fill: z.external ? 'url(#hatch)' : z.color, 'fill-opacity': z.external ? 1 : .045, stroke: z.color, 'stroke-opacity': z.external || z.layer ? .8 : .35, 'stroke-width': z.external || z.layer ? 2 : 1, 'stroke-dasharray': z.external ? '10 5' : z.layer ? '6 4' : '' }, gZones);
   if (z.external) el('line', { x1: 10, x2: 1290, y1: z.y - 5, y2: z.y - 5, stroke: z.color, 'stroke-width': 1.5, 'stroke-dasharray': '2 4' }, gZones);
   const t = el('text', { x: z.x + 14, y: z.y + 18, class: 'zone' , fill: z.color }, gZones); t.textContent = z.label;
 }
@@ -783,7 +783,7 @@ function select(s) {
 // extra spellings beyond label / abbr / dlabel (stems; endings are matched loosely)
 const ALIASES = {
   ms: ['правителство', 'кабинет'], ns: ['парламент'], cik: ['Централна избирателна комисия'],
-  pg: ['прокуратура', 'главния прокурор'], local: ['кмет', 'общински съвет'], oblast: ['областен управител'],
+  pg: ['прокуратура', 'главния прокурор'], kmet: ['кмет'], obs: ['общински съвет'], rkmet: ['кметство'], oblast: ['областен управител'],
   ec: ['Еврокомисия'], ep: ['Европарламент'], cmte: ['комисии на НС', 'парламентарна комисия'],
 };
 const stem = w => w.length > 7 ? w.slice(0, -2) : w.length > 3 ? w.slice(0, -1) : w;
@@ -1027,8 +1027,8 @@ function drawFlow(sc) {
         const y = b.t > a.b ? b.cy : b.cy;
         path(`M${a.cx},${a.b} L${a.cx},${y} L${b.r + 1},${y}`, L, a.cx - 4, a.b + 12, 'end');
       } else {                                                                     // jump via the left gutter
-        const x = 34 - (lane++ % 3) * 7;
-        path(`M${a.l},${a.cy} L${x},${a.cy} L${x},${b.cy} L${b.l - 1},${b.cy}`, L, a.l - 3, a.cy - 4, 'end');
+        const x = 52 - (lane++ % 3) * 7;
+        path(`M${a.l},${a.cy} L${x},${a.cy} L${x},${b.cy} L${b.l - 1},${b.cy}`, L, b.l - 4, b.cy - 5, 'end');   // label at the target: several jumps can leave one box
       }
     }
   });
