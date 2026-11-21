@@ -1,0 +1,397 @@
+{
+  "uid": "bgfin-explorer",
+  "title": "Indicator explorer",
+  "description": "Any indicator, any source, any geography; values, changes and revisions.",
+  "tags": [
+    "bgfin"
+  ],
+  "timezone": "browser",
+  "style": "light",
+  "editable": false,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "time": {
+    "from": "now-20y",
+    "to": "now"
+  },
+  "refresh": "1h",
+  "templating": {
+    "list": [
+      {
+        "name": "indicator",
+        "label": "Indicator",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "bgfin-pg"
+        },
+        "query": "SELECT code AS __value, name || ' (' || code || ')' AS __text FROM indicator ORDER BY category, code",
+        "definition": "SELECT code AS __value, name || ' (' || code || ')' AS __text FROM indicator ORDER BY category, code",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "sort": 0,
+        "current": {
+          "text": "hicp_inflation",
+          "value": "hicp_inflation"
+        }
+      },
+      {
+        "name": "freq",
+        "label": "Frequency",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "bgfin-pg"
+        },
+        "query": "SELECT DISTINCT frequency FROM series WHERE indicator_code = '$indicator' UNION SELECT DISTINCT frequency FROM derived_observation WHERE indicator_code = '$indicator'",
+        "definition": "SELECT DISTINCT frequency FROM series WHERE indicator_code = '$indicator' UNION SELECT DISTINCT frequency FROM derived_observation WHERE indicator_code = '$indicator'",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "sort": 0
+      },
+      {
+        "name": "geo",
+        "label": "Geography",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "bgfin-pg"
+        },
+        "query": "SELECT DISTINCT geo FROM v_indicator_values WHERE indicator_code = '$indicator' ORDER BY 1",
+        "definition": "SELECT DISTINCT geo FROM v_indicator_values WHERE indicator_code = '$indicator' ORDER BY 1",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": false,
+        "sort": 0,
+        "current": {
+          "text": "BG",
+          "value": "BG"
+        }
+      },
+      {
+        "name": "role",
+        "label": "Role",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "bgfin-pg"
+        },
+        "query": "SELECT DISTINCT role FROM v_indicator_values WHERE indicator_code = '$indicator' AND vintage = ''",
+        "definition": "SELECT DISTINCT role FROM v_indicator_values WHERE indicator_code = '$indicator' AND vintage = ''",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "$indicator: values",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT period::timestamptz AS time, value, geo || ' ' || source_code || ' (' || role || ')' AS metric FROM v_indicator_values WHERE indicator_code = '$indicator' AND frequency = '$freq' AND geo IN ($geo) AND role IN ($role) AND vintage = '' AND $__timeFilter(period) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "drawStyle": "line",
+            "axisCenteredZero": false
+          },
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^BG.*"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 4
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 10
+      },
+      "id": 1
+    },
+    {
+      "type": "timeseries",
+      "title": "Change on a year earlier (difference)",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT period::timestamptz AS time, yoy_diff AS value, geo || ' ' || source_code AS metric FROM v_changes WHERE indicator_code = '$indicator' AND frequency = '$freq' AND geo IN ($geo) AND role IN ($role) AND $__timeFilter(period) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "drawStyle": "line",
+            "axisCenteredZero": false
+          },
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^BG.*"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 4
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 12,
+        "h": 8
+      },
+      "id": 2
+    },
+    {
+      "type": "timeseries",
+      "title": "Change on a year earlier (%)",
+      "description": "Relative change; meaningful for levels and indices, not for rates.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT period::timestamptz AS time, yoy_pct AS value, geo || ' ' || source_code AS metric FROM v_changes WHERE indicator_code = '$indicator' AND frequency = '$freq' AND geo IN ($geo) AND role IN ($role) AND $__timeFilter(period) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "drawStyle": "line",
+            "axisCenteredZero": false
+          },
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^BG.*"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 4
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 10,
+        "w": 12,
+        "h": 8
+      },
+      "id": 3
+    },
+    {
+      "type": "table",
+      "title": "Values",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT geo, source_code AS source, role, period_label AS period, round(value::numeric, 3) AS value, obs_type AS status, unit, origin FROM v_indicator_values WHERE indicator_code = '$indicator' AND frequency = '$freq' AND geo IN ($geo) AND role IN ($role) AND vintage = '' ORDER BY period DESC, geo LIMIT 500"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 12
+      },
+      "id": 4
+    },
+    {
+      "type": "table",
+      "title": "Revisions",
+      "description": "Every change to a value we had already stored. Old values are kept, never overwritten.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT geo, source_code AS source, period_label AS period, vintage, revision, previous_value, new_value, round(delta::numeric, 3) AS delta, previous_status, new_status, retrieved_at FROM v_revisions WHERE indicator_code = '$indicator' AND geo IN ($geo) ORDER BY retrieved_at DESC LIMIT 500"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 12
+      },
+      "id": 5
+    }
+  ],
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "bgfin"
+      ],
+      "asDropdown": true,
+      "title": "bgfin dashboards"
+    }
+  ]
+}

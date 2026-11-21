@@ -1,0 +1,95 @@
+# Source definitions. Every key here has a default in code, so a source only
+# needs the settings it changes. See docs/source-inventory.md for what each
+# source offers and its known limitations.
+#
+#   enabled             set false to skip a source entirely
+#   interval_hours      how often the scheduler collects the source
+#   min_interval_s      pause between requests (politeness / rate limits)
+#   timeout_s, retries  HTTP behaviour; retries back off exponentially and
+#                       honour Retry-After on 429/503
+#   incremental_periods how many recent periods an incremental run re-reads
+#                       per frequency, so recent revisions are picked up
+#   full_refresh_days   re-read full history this often to catch old revisions
+
+defaults:
+  timeout_s: 60
+  retries: 4
+  min_interval_s: 1.0
+  interval_hours: 24
+  full_refresh_days: 30
+  incremental_periods: {D: 400, B: 400, M: 36, Q: 16, S: 8, A: 10}
+
+sources:
+  eurostat:
+    name: Eurostat dissemination API (JSON-stat 2.0)
+    institution: Eurostat
+    homepage: https://ec.europa.eu/eurostat/web/main/data/web-services
+    api_base: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data
+    formats: [JSON-stat, SDMX-ML, SDMX-CSV, TSV]
+    interval_hours: 12          # releases at 11:00 CET on working days
+    min_interval_s: 0.5
+
+  ecb:
+    name: ECB Data Portal (SDMX 2.1 REST)
+    institution: European Central Bank
+    homepage: https://data.ecb.europa.eu/help/api/overview
+    api_base: https://data-api.ecb.europa.eu/service
+    formats: [SDMX-CSV, SDMX-ML, SDMX-JSON]
+    interval_hours: 12
+    min_interval_s: 0.5
+
+  imf:
+    name: IMF SDMX 3.0 API
+    institution: International Monetary Fund
+    homepage: https://data.imf.org
+    api_base: https://api.imf.org/external/sdmx/3.0
+    formats: [SDMX-CSV 2.0, SDMX-JSON, SDMX-ML]
+    interval_hours: 168         # WEO is published twice a year (April, October)
+    min_interval_s: 2.0
+
+  worldbank:
+    name: World Bank Indicators API v2
+    institution: World Bank
+    homepage: https://datahelpdesk.worldbank.org/knowledgebase/topics/125589
+    api_base: https://api.worldbank.org/v2
+    formats: [JSON, XML]
+    interval_hours: 168
+    min_interval_s: 1.0
+
+  bis:
+    name: BIS Data Portal (SDMX 2.1 REST)
+    institution: Bank for International Settlements
+    homepage: https://stats.bis.org/api-doc/v1/
+    api_base: https://stats.bis.org/api/v1
+    formats: [SDMX-CSV, SDMX-ML]
+    interval_hours: 168
+    min_interval_s: 1.0
+
+  ameco:
+    name: AMECO bulk download (European Commission, DG ECFIN)
+    institution: European Commission
+    homepage: https://economy-finance.ec.europa.eu/economic-research-and-databases/economic-databases/ameco-database_en
+    api_base: https://ec.europa.eu/economy_finance/db_indicators/ameco/documents/ameco0.zip
+    formats: [semicolon-separated TXT in ZIP]
+    interval_hours: 168         # updated with the spring and autumn forecasts
+    full_refresh_days: 7        # the bulk file is always complete history
+
+  nsi:
+    name: NSI open data portal (JSON-stat 2.0)
+    institution: National Statistical Institute of Bulgaria
+    homepage: https://www.nsi.bg/opendata
+    api_base: https://www.nsi.bg/opendata
+    formats: [JSON-stat, CSV]
+    interval_hours: 24
+    min_interval_s: 2.0
+
+  bnb:
+    name: Bulgarian National Bank statistics
+    institution: Bulgarian National Bank
+    homepage: https://www.bnb.bg/Statistics/index.htm
+    api_base: https://www.bnb.bg
+    formats: [XLS/XLSX/CSV files on web pages]
+    # No API. The website rejects automated clients (web application firewall),
+    # and since euro adoption BNB monetary statistics are also published through
+    # the ECB Data Portal, which is used instead. See docs/source-inventory.md.
+    enabled: false

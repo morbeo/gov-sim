@@ -1,0 +1,162 @@
+# Grafana alert rules. Thresholds for economic indicators live in
+# config/alerts.yaml (loaded into the alert_threshold table), so changing a
+# threshold needs no edit here. Notifications go to Grafana's default contact
+# point; configure email/Telegram/Slack etc. under Alerting > Contact points.
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: bgfin
+    folder: Bulgaria economy
+    interval: 15m
+    rules:
+      - uid: bgfin-threshold
+        title: Indicator threshold breached
+        condition: C
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: '{{ $labels.name }} ({{ $labels.indicator_code }}, {{ $labels.geo }}) crossed its threshold'
+          description: 'Threshold from config/alerts.yaml. See the "Alert thresholds" table on the overview dashboard.'
+        labels: {team: bgfin, kind: indicator}
+        data:
+          - refId: A
+            datasourceUid: bgfin-pg
+            relativeTimeRange: {from: 600, to: 0}
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              editorMode: code
+              rawSql: >-
+                SELECT name, indicator_code, geo, severity, CASE WHEN breached THEN 1 ELSE 0 END AS value
+                FROM bgfin.v_threshold_status
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions: [{evaluator: {type: gt, params: [0]}}]
+
+      - uid: bgfin-source-failed
+        title: Source collection failed
+        condition: C
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: 'Latest {{ $labels.source_code }} collection failed'
+          description: 'Check the Data health dashboard or run: docker compose logs collector'
+        labels: {team: bgfin, kind: collection}
+        data:
+          - refId: A
+            datasourceUid: bgfin-pg
+            relativeTimeRange: {from: 600, to: 0}
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              editorMode: code
+              rawSql: >-
+                SELECT source_code, CASE WHEN last_status = 'failed' THEN 1 ELSE 0 END AS value
+                FROM bgfin.v_source_health WHERE enabled AND last_run_at IS NOT NULL
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions: [{evaluator: {type: gt, params: [0]}}]
+
+      - uid: bgfin-source-overdue
+        title: Source not collected successfully for two intervals
+        condition: C
+        for: 30m
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: '{{ $labels.source_code }} has had no successful run for over twice its interval'
+        labels: {team: bgfin, kind: collection}
+        data:
+          - refId: A
+            datasourceUid: bgfin-pg
+            relativeTimeRange: {from: 600, to: 0}
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              editorMode: code
+              rawSql: >-
+                SELECT source_code,
+                       extract(epoch FROM now() - coalesce(last_success_at, '1970-01-01')) / 3600 / interval_hours AS value
+                FROM bgfin.v_source_health WHERE enabled
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions: [{evaluator: {type: gt, params: [2]}}]
+
+      - uid: bgfin-stale
+        title: Bulgarian primary series is stale
+        condition: C
+        for: 1h
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: 'No new {{ $labels.indicator_code }} data from {{ $labels.source_code }} within the expected publication lag'
+        labels: {team: bgfin, kind: freshness}
+        data:
+          - refId: A
+            datasourceUid: bgfin-pg
+            relativeTimeRange: {from: 600, to: 0}
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              editorMode: code
+              rawSql: >-
+                SELECT source_code, indicator_code, CASE WHEN is_stale THEN 1 ELSE 0 END AS value
+                FROM bgfin.v_freshness WHERE geo = 'BG' AND role IN ('primary', 'benchmark')
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions: [{evaluator: {type: gt, params: [0]}}]
+
+      - uid: bgfin-anomaly
+        title: New data anomaly or large revision
+        condition: C
+        for: 0m
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: '{{ $labels.check_name }}: new findings this week'
+          description: 'Review on the Data health dashboard; resolve with: bgfin issues --resolve ID'
+        labels: {team: bgfin, kind: quality}
+        data:
+          - refId: A
+            datasourceUid: bgfin-pg
+            relativeTimeRange: {from: 600, to: 0}
+            model:
+              refId: A
+              format: table
+              rawQuery: true
+              editorMode: code
+              rawSql: >-
+                SELECT c.check_name, count(q.id) AS value
+                FROM (VALUES ('outlier_change'), ('large_revision'), ('vanished_observation')) c(check_name)
+                LEFT JOIN bgfin.quality_issue q ON q.check_name = c.check_name AND q.resolved_at IS NULL
+                  AND q.first_detected_at > now() - interval '7 days'
+                GROUP BY c.check_name
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions: [{evaluator: {type: gt, params: [0]}}]

@@ -1,0 +1,240 @@
+{
+  "uid": "bgfin-peers",
+  "title": "Bulgaria vs EU and peers",
+  "description": "",
+  "tags": [
+    "bgfin"
+  ],
+  "timezone": "browser",
+  "style": "light",
+  "editable": false,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "time": {
+    "from": "now-20y",
+    "to": "now"
+  },
+  "refresh": "1h",
+  "templating": {
+    "list": [
+      {
+        "name": "indicator",
+        "label": "Indicator",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "bgfin-pg"
+        },
+        "query": "SELECT DISTINCT i.code AS __value, i.name AS __text FROM indicator i JOIN series s ON s.indicator_code = i.code WHERE s.role = 'primary' AND s.geo <> 'BG' ORDER BY 2",
+        "definition": "SELECT DISTINCT i.code AS __value, i.name AS __text FROM indicator i JOIN series s ON s.indicator_code = i.code WHERE s.role = 'primary' AND s.geo <> 'BG' ORDER BY 2",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "sort": 0,
+        "current": {
+          "text": "hicp_inflation",
+          "value": "hicp_inflation"
+        }
+      },
+      {
+        "name": "freq",
+        "label": "Frequency",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "bgfin-pg"
+        },
+        "query": "SELECT DISTINCT frequency FROM series WHERE indicator_code = '$indicator' AND role IN ('primary', 'benchmark')",
+        "definition": "SELECT DISTINCT frequency FROM series WHERE indicator_code = '$indicator' AND role IN ('primary', 'benchmark')",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "sort": 0
+      },
+      {
+        "name": "geo",
+        "label": "Compare with",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "bgfin-pg"
+        },
+        "query": "SELECT DISTINCT geo FROM series WHERE indicator_code = '$indicator' AND geo <> 'BG' ORDER BY 1",
+        "definition": "SELECT DISTINCT geo FROM series WHERE indicator_code = '$indicator' AND geo <> 'BG' ORDER BY 1",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Bulgaria vs peers",
+      "description": "Bulgaria drawn with a thicker line.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT period::timestamptz AS time, value, geo AS metric FROM v_indicator_values WHERE indicator_code = '$indicator' AND frequency = '$freq' AND role IN ('primary', 'benchmark') AND vintage = '' AND origin = 'raw' AND (geo = 'BG' OR geo IN ($geo)) AND $__timeFilter(period) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "drawStyle": "line",
+            "axisCenteredZero": false
+          },
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^BG.*"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 4
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 11
+      },
+      "id": 1
+    },
+    {
+      "type": "barchart",
+      "title": "Latest value by geography",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT geo, value FROM (SELECT DISTINCT ON (geo) geo, value, period FROM v_indicator_values WHERE indicator_code = '$indicator' AND frequency = '$freq' AND role IN ('primary', 'benchmark') AND vintage = '' AND origin = 'raw' AND (geo = 'BG' OR geo IN ($geo)) AND value IS NOT NULL ORDER BY geo, period DESC) t ORDER BY value DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xField": "geo",
+        "showValue": "always",
+        "legend": {
+          "showLegend": false
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 12,
+        "h": 12
+      },
+      "id": 2
+    },
+    {
+      "type": "table",
+      "title": "Bulgaria minus peer, latest common period",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "WITH v AS (SELECT geo, period, value FROM v_indicator_values WHERE indicator_code = '$indicator' AND frequency = '$freq' AND role IN ('primary', 'benchmark') AND vintage = '' AND origin = 'raw' AND value IS NOT NULL), p AS (SELECT DISTINCT ON (o.geo) o.geo, o.period, o.value AS peer, b.value AS bg FROM v o JOIN v b ON b.geo = 'BG' AND b.period = o.period WHERE o.geo IN ($geo) ORDER BY o.geo, o.period DESC) SELECT geo, period, round(bg::numeric, 2) AS bulgaria, round(peer::numeric, 2) AS peer, round((bg - peer)::numeric, 2) AS difference FROM p ORDER BY difference DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 12
+      },
+      "id": 3
+    }
+  ],
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "bgfin"
+      ],
+      "asDropdown": true,
+      "title": "bgfin dashboards"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+# Derived metrics. Computed from the current raw observations by
+# `bgfin derive` and stored in derived_observation with their inputs, so each
+# number can be traced back to the raw values it came from. Raw data is never
+# changed by this step.
+#
+# Functions (src/bgfin/derive.py):
+#   real_growth  (1 + nominal/100) / (1 + yoy(price_index)/100) - 1, in %;
+#                monthly price indices are averaged to the nominal frequency
+#   yoy_pct      percent change of a level on the previous year; for forecast
+#                inputs each vintage is processed separately
+
+derived:
+  - metric: real_wage_growth
+    function: real_growth
+    indicator: real_wage_growth
+    unit: "% change on same quarter of previous year"
+    inputs:
+      nominal: {indicator: wage_growth_nominal, source: eurostat}
+      price_index: {indicator: hicp_index, source: eurostat}
+
+  - metric: ameco_gdp_growth
+    function: yoy_pct
+    indicator: gdp_growth
+    unit: "% change on previous year"
+    inputs:
+      level: {indicator: gdp_real_level, source: ameco}
+
+  - metric: ameco_hicp_inflation
+    function: yoy_pct
+    indicator: hicp_inflation
+    unit: "% change on previous year"
+    inputs:
+      level: {indicator: hicp_index_annual, source: ameco}

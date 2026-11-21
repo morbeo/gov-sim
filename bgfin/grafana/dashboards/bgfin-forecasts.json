@@ -1,0 +1,244 @@
+{
+  "uid": "bgfin-forecasts",
+  "title": "Forecasts vs actuals",
+  "description": "",
+  "tags": [
+    "bgfin"
+  ],
+  "timezone": "browser",
+  "style": "light",
+  "editable": false,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "time": {
+    "from": "now-15y",
+    "to": "now+6y"
+  },
+  "refresh": "1h",
+  "templating": {
+    "list": [
+      {
+        "name": "indicator",
+        "label": "Indicator",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "bgfin-pg"
+        },
+        "query": "SELECT DISTINCT v.indicator_code AS __value, i.name AS __text FROM v_indicator_values v JOIN indicator i ON i.code = v.indicator_code WHERE v.obs_type = 'forecast' ORDER BY 2",
+        "definition": "SELECT DISTINCT v.indicator_code AS __value, i.name AS __text FROM v_indicator_values v JOIN indicator i ON i.code = v.indicator_code WHERE v.obs_type = 'forecast' ORDER BY 2",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "sort": 0,
+        "current": {
+          "text": "gdp_growth",
+          "value": "gdp_growth"
+        }
+      },
+      {
+        "name": "geo",
+        "label": "Geography",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "bgfin-pg"
+        },
+        "query": "SELECT DISTINCT geo FROM v_indicator_values WHERE indicator_code = '$indicator' AND obs_type = 'forecast' ORDER BY 1",
+        "definition": "SELECT DISTINCT geo FROM v_indicator_values WHERE indicator_code = '$indicator' AND obs_type = 'forecast' ORDER BY 1",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "sort": 0,
+        "current": {
+          "text": "BG",
+          "value": "BG"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Actual outcome and forecasts by vintage",
+      "description": "Each forecast round (IMF WEO, European Commission AMECO) is kept as its own line. Forecast error appears once the outcome for a forecast year is published.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT period::timestamptz AS time, value, 'actual: ' || source_code AS metric FROM v_indicator_values WHERE indicator_code = '$indicator' AND geo = '$geo' AND frequency = 'A' AND role IN ('benchmark') AND vintage = '' AND $__timeFilter(period) ORDER BY 1"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT period::timestamptz AS time, value, vintage AS metric FROM v_indicator_values WHERE indicator_code = '$indicator' AND geo = '$geo' AND frequency = 'A' AND vintage <> '' AND obs_type = 'forecast' AND $__timeFilter(period) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "drawStyle": "line",
+            "axisCenteredZero": false
+          },
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^BG.*"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 4
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 11
+      },
+      "id": 1
+    },
+    {
+      "type": "table",
+      "title": "Forecast vs actual",
+      "description": "Error = forecast minus actual; positive values mean the forecast was too high.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT period_label AS year, forecaster, vintage, round(forecast_value::numeric, 2) AS forecast, round(actual_value::numeric, 2) AS actual, round(forecast_error::numeric, 2) AS error, actual_source, actual_status FROM v_forecast_vs_actual WHERE indicator_code = '$indicator' AND geo = '$geo' ORDER BY period DESC, forecaster, vintage DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 12,
+        "h": 12
+      },
+      "id": 2
+    },
+    {
+      "type": "table",
+      "title": "Forecast revisions between vintages",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "bgfin-pg"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "bgfin-pg"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT period_label AS year, forecaster, previous_vintage, vintage, round(value::numeric, 2) AS forecast, round(change_vs_previous_vintage::numeric, 2) AS revision FROM v_forecast_revisions WHERE indicator_code = '$indicator' AND geo = '$geo' AND previous_vintage IS NOT NULL ORDER BY vintage DESC, period"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 12
+      },
+      "id": 3
+    }
+  ],
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "bgfin"
+      ],
+      "asDropdown": true,
+      "title": "bgfin dashboards"
+    }
+  ]
+}
