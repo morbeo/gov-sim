@@ -1,0 +1,301 @@
+# Indicator catalogue and source mappings.
+#
+# An indicator is a concept (e.g. "HICP inflation"). Each entry under
+# `series` maps it to one dataset at one source; a mapping with a `geo` list
+# expands to one series per geography.
+#
+# Series fields
+#   source      connector name from sources.yaml
+#   dataset     source dataset / dataflow id
+#   filters     dimension values (Eurostat, NSI)
+#   key         SDMX key template, {geo} is replaced (ECB, BIS, IMF)
+#   variable    AMECO variable code without the country prefix
+#   code        World Bank indicator code
+#   geo         list of geographies (Eurostat-style codes: BG, RO, EU27_2020, EA21)
+#   role        primary    the series dashboards and alerts use
+#               secondary  same concept from another source, for cross-checks
+#               benchmark  actual outcome used to score forecasts
+#               forecast   projections; stored per vintage
+#               input      only used to compute derived metrics
+#   frequency, unit, adjustment   override what the connector reports
+#   max_lag_days  days after period end before the series counts as stale
+#
+# Peer group used for comparisons: EU, euro area (21, fixed composition) and
+# regional / catching-up peers.
+
+peers: &peers [BG, EU27_2020, EA21, RO, HR, GR, HU, PL, CZ, SK, SI]
+peer_countries: &peer_countries [BG, RO, HR, GR, HU, PL, CZ, SK, SI]
+
+indicators:
+
+  # ---------------------------------------------------------------- activity
+  - code: gdp_growth
+    name: Real GDP growth, year on year
+    category: activity
+    unit: "% change on same period of previous year"
+    frequency: Q
+    priority: true
+    description: >-
+      Growth of GDP at chain-linked volumes. Quarterly series compare with the
+      same quarter a year earlier (seasonally and calendar adjusted); annual
+      series compare with the previous year.
+    series:
+      - {source: eurostat, dataset: namq_10_gdp, role: primary, adjustment: SCA,
+         filters: {na_item: B1GQ, unit: CLV_PCH_SM, s_adj: SCA}, geo: *peers}
+      - {source: eurostat, dataset: nama_10_gdp, role: benchmark, frequency: A,
+         filters: {na_item: B1GQ, unit: CLV_PCH_PRE}, geo: *peers}
+      - {source: imf, dataset: WEO, key: "{geo}.NGDP_RPCH.A", role: forecast, geo: *peer_countries}
+      - {source: worldbank, code: NY.GDP.MKTP.KD.ZG, role: secondary, geo: *peer_countries}
+
+  - code: gdp_growth_qoq
+    name: Real GDP growth, quarter on quarter
+    category: activity
+    unit: "% change on previous quarter"
+    frequency: Q
+    priority: true
+    series:
+      - {source: eurostat, dataset: namq_10_gdp, role: primary, adjustment: SCA,
+         filters: {na_item: B1GQ, unit: CLV_PCH_PRE, s_adj: SCA}, geo: *peers}
+
+  - code: gdp_real_level
+    name: Real GDP level (AMECO, 2020 reference levels)
+    category: activity
+    unit: bn EUR (2020 reference levels)
+    frequency: A
+    description: Used to derive AMECO GDP growth forecasts.
+    series:
+      - {source: ameco, variable: 1.1.0.0.OVGD, role: input, geo: *peers}
+
+  # --------------------------------------------------------------- inflation
+  - code: hicp_inflation
+    name: HICP inflation, annual rate
+    category: inflation
+    unit: "% change on same month of previous year"
+    frequency: M
+    priority: true
+    description: >-
+      Harmonised index of consumer prices, all items. From 2026 Eurostat
+      publishes HICP under ECOICOP version 2 (dataset prc_hicp_minr, base
+      2025=100); the old prc_hicp_manr ends in December 2025.
+    series:
+      - {source: eurostat, dataset: prc_hicp_minr, role: primary,
+         filters: {unit: RCH_A, coicop18: TOTAL}, geo: *peers}
+      - {source: eurostat, dataset: prc_hicp_ainr, role: benchmark, frequency: A,
+         filters: {unit: RCH_A_AVG, coicop18: TOTAL}, geo: *peers}
+      - {source: imf, dataset: WEO, key: "{geo}.PCPIPCH.A", role: forecast, geo: *peer_countries}
+
+  - code: core_inflation
+    name: Core inflation (HICP excluding energy, food, alcohol and tobacco)
+    category: inflation
+    unit: "% change on same month of previous year"
+    frequency: M
+    priority: true
+    series:
+      - {source: eurostat, dataset: prc_hicp_minr, role: primary,
+         filters: {unit: RCH_A, coicop18: TOT_X_NRG_FOOD}, geo: *peers}
+
+  - code: food_inflation
+    name: HICP food including alcohol and tobacco, annual rate
+    category: inflation
+    unit: "% change on same month of previous year"
+    frequency: M
+    series:
+      - {source: eurostat, dataset: prc_hicp_minr, role: primary,
+         filters: {unit: RCH_A, coicop18: FOOD}, geo: *peers}
+
+  - code: energy_inflation
+    name: HICP energy, annual rate
+    category: inflation
+    unit: "% change on same month of previous year"
+    frequency: M
+    series:
+      - {source: eurostat, dataset: prc_hicp_minr, role: primary,
+         filters: {unit: RCH_A, coicop18: NRG}, geo: *peers}
+
+  - code: hicp_index
+    name: HICP all-items index
+    category: inflation
+    unit: index 2025=100
+    frequency: M
+    description: Price deflator for real wage growth.
+    series:
+      - {source: eurostat, dataset: prc_hicp_minr, role: input,
+         filters: {unit: I25, coicop18: TOTAL}, geo: *peers}
+
+  - code: hicp_index_annual
+    name: HICP all-items index, annual (AMECO)
+    category: inflation
+    unit: index 2015=100
+    frequency: A
+    description: Used to derive AMECO inflation forecasts.
+    series:
+      - {source: ameco, variable: 1.0.0.0.ZCPIH, role: input, geo: *peers}
+
+  # --------------------------------------------------- wages / purchasing power
+  - code: wage_growth_nominal
+    name: Nominal wage growth (labour cost index, wages and salaries)
+    category: inflation
+    unit: "% change on same quarter of previous year"
+    frequency: Q
+    priority: true
+    description: >-
+      Hourly wages and salaries component (D11) of the labour cost index,
+      business economy and services (NACE B-S), not adjusted.
+    series:
+      - {source: eurostat, dataset: lc_lci_r2_q, role: primary,
+         filters: {lcstruct: D11, nace_r2: B-S, s_adj: NSA, unit: PCH_SM}, geo: *peers}
+
+  - code: real_wage_growth
+    name: Real wage growth
+    category: inflation
+    unit: "% change on same quarter of previous year"
+    frequency: Q
+    priority: true
+    description: >-
+      Derived: nominal wage growth deflated by HICP,
+      (1 + w) / (1 + p) - 1, where p is the year-on-year change of the
+      quarterly average HICP index. See config/derived.yaml.
+    series: []
+
+  # ---------------------------------------------------------------- labour
+  - code: unemployment_rate
+    name: Unemployment rate
+    category: labour
+    unit: "% of labour force"
+    frequency: M
+    priority: true
+    series:
+      - {source: eurostat, dataset: une_rt_m, role: primary, adjustment: SA,
+         filters: {s_adj: SA, age: TOTAL, sex: T, unit: PC_ACT}, geo: *peers}
+      - {source: eurostat, dataset: une_rt_a, role: benchmark, frequency: A,
+         filters: {age: Y15-74, sex: T, unit: PC_ACT}, geo: *peers}
+      - {source: nsi, dataset: "1103", role: secondary, frequency: Q,
+         filters: {Age10_LFS: "0", GenderID: "0"}, geo: [BG]}
+      - {source: imf, dataset: WEO, key: "{geo}.LUR.A", role: forecast, geo: *peer_countries}
+      - {source: ameco, variable: 1.0.0.0.ZUTN, role: forecast, geo: *peers}
+
+  - code: youth_unemployment_rate
+    name: Youth unemployment rate (15-24)
+    category: labour
+    unit: "% of labour force aged 15-24"
+    frequency: Q
+    series:
+      - {source: nsi, dataset: "1103", role: primary, frequency: Q,
+         filters: {Age10_LFS: "15 - 24", GenderID: "0"}, geo: [BG]}
+
+  # ------------------------------------------------------ government finances
+  - code: gov_balance
+    name: General government deficit (-) / surplus (+)
+    category: government
+    unit: "% of GDP"
+    frequency: A
+    priority: true
+    series:
+      - {source: eurostat, dataset: gov_10dd_edpt1, role: benchmark,
+         filters: {na_item: B9, sector: S13, unit: PC_GDP}, geo: *peers}
+      - {source: eurostat, dataset: gov_10q_ggnfa, role: secondary, adjustment: NSA, frequency: Q,
+         filters: {na_item: B9, sector: S13, unit: PC_GDP, s_adj: NSA}, geo: *peers}
+      - {source: imf, dataset: WEO, key: "{geo}.GGXCNL_NGDP.A", role: forecast, geo: *peer_countries}
+      - {source: ameco, variable: 1.0.319.0.UBLGE, role: forecast, geo: *peers}
+
+  - code: gov_debt
+    name: General government gross debt
+    category: government
+    unit: "% of GDP"
+    frequency: A
+    priority: true
+    series:
+      - {source: eurostat, dataset: gov_10dd_edpt1, role: benchmark,
+         filters: {na_item: GD, sector: S13, unit: PC_GDP}, geo: *peers}
+      - {source: eurostat, dataset: gov_10q_ggdebt, role: secondary, frequency: Q,
+         filters: {na_item: GD, sector: S13, unit: PC_GDP}, geo: *peers}
+      - {source: imf, dataset: WEO, key: "{geo}.GGXWDG_NGDP.A", role: forecast, geo: *peer_countries}
+      - {source: ameco, variable: 1.0.319.0.UDGG, role: forecast, geo: *peers}
+
+  # ------------------------------------------------- monetary and financial
+  - code: household_credit_growth
+    name: Loans to households, annual growth rate
+    category: monetary
+    unit: "% change on same month of previous year"
+    frequency: M
+    priority: true
+    description: >-
+      MFI loans to euro-area households, growth adjusted for reclassifications
+      and write-offs. ECB BSI coverage for Bulgaria starts in January 2023
+      (euro adoption reporting); earlier history is on bnb.bg only.
+    series:
+      - {source: ecb, dataset: BSI, key: "M.{geo}.N.A.A20.A.I.U2.2250.Z01.A",
+         role: primary, geo: [BG, U2]}
+
+  - code: corporate_credit_growth
+    name: Loans to non-financial corporations, annual growth rate
+    category: monetary
+    unit: "% change on same month of previous year"
+    frequency: M
+    series:
+      - {source: ecb, dataset: BSI, key: "M.{geo}.N.A.A20.A.I.U2.2240.Z01.A",
+         role: primary, geo: [BG, U2]}
+
+  - code: mortgage_rate
+    name: Cost of borrowing for households for house purchase
+    category: monetary
+    unit: "% per annum"
+    frequency: M
+    series:
+      - {source: ecb, dataset: MIR, key: "M.{geo}.B.A2C.AM.R.A.2250.EUR.N",
+         role: primary, geo: [BG, U2]}
+
+  - code: ecb_deposit_rate
+    name: ECB deposit facility rate
+    category: monetary
+    unit: "% per annum"
+    frequency: B
+    series:
+      - {source: ecb, dataset: FM, key: "B.U2.EUR.4F.KR.DFR.LEV", role: primary, geo: [U2],
+         max_lag_days: 400}
+
+  # ------------------------------------------------------------- external
+  - code: current_account
+    name: Current account balance
+    category: external
+    unit: "% of GDP"
+    frequency: Q
+    priority: true
+    series:
+      - {source: eurostat, dataset: bop_gdp6_q, role: primary, frequency: Q,
+         filters: {freq: Q, bop_item: CA, stk_flow: BAL, partner: WRL_REST, unit: PC_GDP, s_adj: NSA},
+         geo: *peers}
+      - {source: eurostat, dataset: bop_gdp6_q, role: benchmark, frequency: A,
+         filters: {freq: A, bop_item: CA, stk_flow: BAL, partner: WRL_REST, unit: PC_GDP, s_adj: NSA},
+         geo: *peers}
+      - {source: imf, dataset: WEO, key: "{geo}.BCA_NGDPD.A", role: forecast, geo: *peer_countries}
+      - {source: ameco, variable: 1.0.310.0.UBCA, role: forecast, geo: *peers}
+
+  # ------------------------------------------------------------ real estate
+  - code: house_price_growth
+    name: Residential property prices, annual growth
+    category: real_estate
+    unit: "% change on same quarter of previous year"
+    frequency: Q
+    priority: true
+    series:
+      - {source: eurostat, dataset: prc_hpi_q, role: primary,
+         filters: {purchase: TOTAL, unit: RCH_A}, geo: *peers}
+      - {source: bis, dataset: WS_SPP, key: "Q.{geo}.N.771", role: secondary, geo: [BG]}
+
+  - code: house_price_growth_real
+    name: Residential property prices, real annual growth
+    category: real_estate
+    unit: "% change on same quarter of previous year"
+    frequency: Q
+    series:
+      - {source: bis, dataset: WS_SPP, key: "Q.{geo}.R.771", role: primary, geo: *peer_countries}
+
+  # ------------------------------------------------- international comparison
+  - code: gdp_per_capita_usd
+    name: GDP per capita, current US dollars
+    category: forecasts
+    unit: current USD
+    frequency: A
+    series:
+      - {source: worldbank, code: NY.GDP.PCAP.CD, role: primary, geo: *peer_countries}

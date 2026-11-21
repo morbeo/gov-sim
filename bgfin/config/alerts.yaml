@@ -1,0 +1,87 @@
+# Alert thresholds. Loaded into the alert_threshold table by
+# `bgfin sync-config`; Grafana fires "Indicator threshold breached" for each
+# row whose latest value crosses its threshold. These are monitoring
+# tripwires you choose, not judgements built into the data.
+#
+#   measure  level       latest value
+#            change_pop  difference to previous period (pp for rates)
+#            change_yoy  difference to same period a year earlier
+#   frequency            defaults to the indicator's canonical frequency
+
+thresholds:
+  - name: hicp_above_4
+    indicator: hicp_inflation
+    operator: ">"
+    threshold: 4.0
+    description: Headline HICP inflation above 4%
+
+  - name: core_inflation_rising
+    indicator: core_inflation
+    measure: change_yoy
+    operator: ">"
+    threshold: 1.5
+    description: Core inflation up more than 1.5 pp in a year
+
+  - name: gdp_yoy_negative
+    indicator: gdp_growth
+    operator: "<"
+    threshold: 0.0
+    severity: critical
+    description: Real GDP lower than a year earlier
+
+  - name: gdp_qoq_negative
+    indicator: gdp_growth_qoq
+    operator: "<"
+    threshold: 0.0
+    description: Quarterly real GDP contraction
+
+  - name: real_wages_falling
+    indicator: real_wage_growth
+    operator: "<"
+    threshold: 0.0
+    description: Wages growing slower than consumer prices
+
+  - name: unemployment_rising
+    indicator: unemployment_rate
+    measure: change_yoy
+    operator: ">="
+    threshold: 1.0
+    description: Unemployment up 1 pp or more in a year
+
+  - name: deficit_above_3
+    indicator: gov_balance
+    operator: "<"
+    threshold: -3.0
+    description: General government deficit beyond the 3% of GDP reference value
+
+  - name: debt_above_60
+    indicator: gov_debt
+    operator: ">"
+    threshold: 60.0
+    description: Public debt beyond the 60% of GDP reference value
+
+  - name: household_credit_above_15
+    indicator: household_credit_growth
+    operator: ">"
+    threshold: 15.0
+    description: Household credit growing faster than 15% a year
+
+  - name: current_account_deficit_4
+    indicator: current_account
+    operator: "<"
+    threshold: -4.0
+    description: Quarterly current account deficit beyond 4% of GDP (MIP-style tripwire)
+
+  - name: house_prices_above_10
+    indicator: house_price_growth
+    operator: ">"
+    threshold: 10.0
+    description: House prices rising faster than 10% a year
+
+# Validation settings used by `bgfin validate`.
+validation:
+  outlier_z: 5.0               # robust z-score of the latest change vs 10-year history
+  min_history: 12              # changes needed before the outlier test runs
+  revision_abs_pp: 0.5         # revisions to percentage series larger than this (pp)
+  revision_rel_pct: 2.0        # revisions to level series larger than this (%)
+  revision_window_days: 30     # only flag revisions retrieved in this window
